@@ -57,7 +57,7 @@ function act(action) {
   render();
   // Whatever changed status pops, and so do the counts.
   let changed = false;
-  for (const row of $('bookings').querySelectorAll('.row')) {
+  for (const row of $('bookings').querySelectorAll('[data-booking]')) {
     if (before.get(row.dataset.booking) !== row.dataset.status) {
       pop(row.querySelector('.pill'), 0.8);
       changed = true;
@@ -121,6 +121,12 @@ function renderSummary(session, now) {
   $('summary').replaceChildren(info, side);
 }
 
+function row(...children) {
+  const node = el('div', undefined, 'g-row');
+  node.append(...children);
+  return node;
+}
+
 function actionButtons(booking, session, now) {
   const buttons = [];
   const ended = now.getTime() >= endOf(session);
@@ -132,7 +138,7 @@ function actionButtons(booking, session, now) {
       buttons.push(button);
     }
     if (now.getTime() >= Date.parse(session.startsAt)) {
-      const button = el('button', 'No-show', 'btn secondary');
+      const button = el('button', 'No-show', 'g-text destructive');
       button.addEventListener('click', () => act(() => markNoShow(store, booking.id)));
       buttons.push(button);
     }
@@ -141,7 +147,7 @@ function actionButtons(booking, session, now) {
   if (ended) {
     for (const [status, label] of [['attended', 'Označi dolazak'], ['no_show', 'Označi no-show']]) {
       if (booking.status === status) continue;
-      const button = el('button', label, 'btn secondary');
+      const button = el('button', label, status === 'no_show' ? 'g-text destructive' : 'g-text accent');
       button.addEventListener('click', () => act(() => correctStatus(store, booking.id, status, new Date())));
       buttons.push(button);
     }
@@ -153,29 +159,33 @@ function renderBookings(now) {
   const session = store.classes.find((c) => c.id === classId);
   const list = $('bookings');
   list.replaceChildren();
-  $('close').hidden = !(now.getTime() >= endOf(session) && store.bookings.some((b) => b.classId === classId && b.status === 'booked'));
+  $('close-wrap').hidden = !(now.getTime() >= endOf(session) && store.bookings.some((b) => b.classId === classId && b.status === 'booked'));
 
   const rows = store.bookings
     .filter((b) => b.classId === classId)
     .sort((a, b) => a.bikeNo - b.bikeNo);
 
   if (rows.length === 0) {
-    list.append(el('p', 'Još nema rezervacija za ovaj trening.', 'empty'));
+    list.append(row(el('span', 'Još nema rezervacija za ovaj trening.', 'g-sub')));
     return;
   }
 
   for (const booking of rows) {
     const account = store.accounts.find((a) => a.id === booking.accountId);
-    const row = el('article', undefined, `row row-${booking.status}`);
-    row.dataset.booking = booking.id;
-    row.dataset.status = booking.status;
-    const who = el('div', undefined, 'who');
-    who.append(el('div', account?.name ?? '', 'name'));
-    if (booking.guestName) who.append(el('div', `Gost: ${booking.guestName}`, 'meta'));
-    const buttons = el('div', undefined, 'actions');
-    buttons.append(el('span', STATUS_TEXT[booking.status], `pill pill-${booking.status}`), ...actionButtons(booking, session, now));
-    row.append(el('div', String(booking.bikeNo), 'bike-badge'), who, buttons);
-    list.append(row);
+    const item = el('div', undefined, `g-row r-row row-${booking.status}`);
+    item.dataset.booking = booking.id;
+    item.dataset.status = booking.status;
+    const who = el('div', undefined, 'g-main');
+    who.append(el('div', account?.name ?? '', 'g-title'));
+    if (booking.guestName) who.append(el('div', `Gost: ${booking.guestName}`, 'g-sub'));
+    item.append(el('div', String(booking.bikeNo), 'bike-badge'), who, el('span', STATUS_TEXT[booking.status], `pill pill-${booking.status}`));
+    const buttons = actionButtons(booking, session, now);
+    if (buttons.length) {
+      const actions = el('div', undefined, 'r-actions');
+      actions.append(...buttons);
+      item.append(actions);
+    }
+    list.append(item);
   }
 }
 
@@ -196,6 +206,7 @@ $('class').addEventListener('change', (event) => {
 });
 
 $('close').addEventListener('click', () => {
+  if (!window.confirm('Zatvoriti trening? Svi koji nisu došli bit će označeni kao no-show.')) return;
   act(() => closeClass(store, classId, new Date()));
 });
 

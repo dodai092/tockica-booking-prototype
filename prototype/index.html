@@ -33,13 +33,18 @@
 
   <section id="panel-recepcija" class="panel" role="tabpanel" aria-label="Recepcija" hidden>
     <h1 class="tab-title">Recepcija</h1>
-  <label class="field">Trening
-    <select id="r-class"></select>
-  </label>
-  <section id="r-summary" class="summary" aria-label="Trening"></section>
-  <button id="r-close" class="btn" hidden>Zatvori trening</button>
-  <section id="r-bookings" class="roster" aria-label="Rezervacije"></section>
-  <p id="r-message" class="message" role="status"></p>
+    <p id="r-message" class="message" role="status"></p>
+
+    <div class="group">
+      <label class="g-row"><span class="g-main g-title">Trening</span><select id="r-class" class="g-select"></select></label>
+    </div>
+    <section id="r-summary" class="summary" aria-label="Trening"></section>
+    <div id="r-close-wrap" class="group" hidden>
+      <button id="r-close" type="button" class="g-row g-action destructive">Zatvori trening</button>
+    </div>
+
+    <h2 class="g-header">Rezervacije</h2>
+    <section id="r-bookings" class="group" aria-label="Rezervacije"></section>
   </section>
 
   <section id="panel-admin" class="panel" role="tabpanel" aria-label="Admin" hidden>

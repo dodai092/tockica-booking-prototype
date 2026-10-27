@@ -165,9 +165,6 @@ main { max-width: 760px; margin: 0 auto; padding: 16px; }
 }
 
 h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform: uppercase; }
-.field select { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
-.field { display: flex; flex-direction: column; gap: 6px; font-size: 0.875rem; margin-bottom: 8px; }
-.actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
 
 /* Schedule: own bookings, bike confirmation, message banner, demo links */
 .card .mine { font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--green); margin-top: 4px; }
@@ -190,7 +187,7 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
   margin: 8px 0 16px;
   background: var(--dark);
   color: #fff;
-  border-radius: 12px;
+  border-radius: 20px;
 }
 .s-time { font-family: Montserrat, sans-serif; font-weight: 800; font-size: 2.5rem; line-height: 1; }
 .s-name { font-family: Montserrat, sans-serif; font-weight: 700; font-size: 1.25rem; margin-top: 6px; }
@@ -215,25 +212,9 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
 .pill-open, .pill-attended { background: var(--green); color: #fff; }
 .pill-wait { background: transparent; color: #fff; border: 1px solid #5A6475; }
 .pill-muted, .pill-cancelled, .pill-late_cancel { background: #3A4250; color: #B9C0CC; }
-.roster .pill-cancelled, .roster .pill-late_cancel { background: var(--border); color: var(--muted); }
+.r-row .pill-cancelled, .r-row .pill-late_cancel { background: var(--border); color: var(--muted); }
 .pill-no_show { background: #FBE9E7; color: #B3261E; }
 
-.roster { display: flex; flex-direction: column; gap: 8px; }
-.row {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-.row-cancelled, .row-late_cancel { opacity: .55; }
-.row .name { font-family: Montserrat, sans-serif; font-weight: 700; color: var(--ink); }
-.row .meta { font-size: 0.8125rem; color: var(--muted); }
-.row .actions { flex-direction: row; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-.row .btn.secondary { margin-left: 0; }
 .bike-badge {
   display: grid;
   place-items: center;
@@ -246,12 +227,9 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
   font-weight: 800;
 }
 .row-attended .bike-badge { background: var(--green); }
-.empty { padding: 32px 16px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--border); border-radius: 10px; }
 
 @media (max-width: 640px) {
   .s-side { align-items: flex-start; width: 100%; }
-  .row { grid-template-columns: auto 1fr; }
-  .row .actions { grid-column: 1 / -1; justify-content: flex-start; }
 }
 
 .guest { display: block; margin-top: 12px; }
@@ -376,10 +354,17 @@ body { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
 .switch:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 
 /* The result message stays in view at the top while you work further down the list. */
-#panel-admin .message { position: sticky; top: 8px; z-index: 5; box-shadow: 0 4px 16px rgba(0, 0, 0, .12); }
+#panel-admin .message, #panel-recepcija .message { position: sticky; top: 8px; z-index: 5; box-shadow: 0 4px 16px rgba(0, 0, 0, .12); }
 
 @media (prefers-reduced-motion: reduce) { .switch, .switch::after, .g-chevron, .g-action { transition: none; } }
 @media (prefers-color-scheme: dark) {
   .g-action.destructive, .g-text.destructive { color: #ff8a80; }
   .demo-tag { background: #3a3000; color: #f0d98a; }
 }
+
+/* Recepcija roster: actions sit under the name, lined up with it. */
+.r-row { flex-wrap: wrap; }
+.row-cancelled, .row-late_cancel { opacity: .55; }
+.r-actions { flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding-left: 52px; }
+.r-actions .btn { padding: 8px 18px; }
+.g-text.accent { color: var(--green-ink); }
