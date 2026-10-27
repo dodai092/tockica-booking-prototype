@@ -282,6 +282,9 @@ body { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
   --bg: #111418; --surface: #1b2027; --text: #e6e8eb; --ink: #f0f2f5; --dark: #2a3340;
   --border: #2f3744; --muted: #a3abb7; --green-ink: #6FCB69;
 }
+/* Theme change crossfades one snapshot of the whole page (theme.js), so text,
+   backgrounds and icons all switch together. */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 320ms; }
 [data-theme="dark"] .message { background: #1c3a1b; color: #a9e3a4; }
 [data-theme="dark"] .message.error { background: #3d1a17; color: #ffb4ab; }
 [data-theme="dark"] .tab-bar { background: rgba(27,32,39,.72); border-color: rgba(255,255,255,.08); }

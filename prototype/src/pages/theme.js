@@ -11,5 +11,8 @@ apply(root.dataset.theme);
 button.addEventListener('click', () => {
   const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
   localStorage.setItem('tockica-theme', next);
-  apply(next);
+  // Crossfade the whole page in one snapshot; see ::view-transition-* in styles.css.
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (document.startViewTransition && !reduce) document.startViewTransition(() => apply(next));
+  else apply(next);
 });
