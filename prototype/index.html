@@ -2,7 +2,7 @@
 <html lang="hr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Točkica: booking prototip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -16,6 +16,7 @@
 
 <main>
   <section id="panel-raspored" class="panel" role="tabpanel" aria-label="Raspored">
+    <h1 class="tab-title">Raspored</h1>
   <nav id="s-week" class="week" aria-label="Dani"></nav>
   <div class="account">
     <label>Demo račun
@@ -31,6 +32,7 @@
   </section>
 
   <section id="panel-recepcija" class="panel" role="tabpanel" aria-label="Recepcija" hidden>
+    <h1 class="tab-title">Recepcija</h1>
   <label class="field">Trening
     <select id="r-class"></select>
   </label>
@@ -41,6 +43,7 @@
   </section>
 
   <section id="panel-admin" class="panel" role="tabpanel" aria-label="Admin" hidden>
+    <h1 class="tab-title">Admin</h1>
   <h2>Računi</h2>
   <section id="a-accounts" aria-label="Računi"></section>
 
@@ -70,9 +73,9 @@
 </main>
 
 <nav class="tab-bar" role="tablist" aria-label="Stranice">
-    <button type="button" role="tab" id="tab-raspored" data-tab="raspored" aria-controls="panel-raspored" aria-label="Raspored" title="Raspored"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span aria-hidden="true">Raspored</span></button>
-    <button type="button" role="tab" id="tab-recepcija" data-tab="recepcija" aria-controls="panel-recepcija" aria-label="Recepcija" title="Recepcija"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6"/></svg><span aria-hidden="true">Recepcija</span></button>
-    <button type="button" role="tab" id="tab-admin" data-tab="admin" aria-controls="panel-admin" aria-label="Admin" title="Admin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span aria-hidden="true">Admin</span></button>
+    <button type="button" role="tab" id="tab-raspored" data-tab="raspored" aria-controls="panel-raspored" ><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span class="tab-label">Raspored</span><span class="tab-badge" id="badge-raspored" hidden></span></button>
+    <button type="button" role="tab" id="tab-recepcija" data-tab="recepcija" aria-controls="panel-recepcija" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6"/></svg><span class="tab-label">Recepcija</span></button>
+    <button type="button" role="tab" id="tab-admin" data-tab="admin" aria-controls="panel-admin" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span class="tab-label">Admin</span></button>
 </nav>
 
 <script type="module" src="src/pages/app.js"></script>

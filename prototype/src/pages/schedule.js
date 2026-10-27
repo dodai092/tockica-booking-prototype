@@ -244,6 +244,9 @@ function cancelControl(booking, session, current, label) {
 function renderMine() {
   const section = $('mine');
   const count = upcomingBookings(store, $('account').value, new Date()).length;
+  const badge = document.getElementById('badge-raspored');
+  badge.hidden = count === 0;
+  badge.textContent = String(count);
   $('mine-link').hidden = count === 0;
   $('mine-link').textContent = `Moje rezervacije (${count})`;
   section.replaceChildren(el('h2', 'Moje rezervacije'));
