@@ -225,7 +225,7 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
 .day[aria-pressed="true"] .dot.mine-dot { background: var(--green); }
 .day[aria-pressed="true"] .dot.none { background: none; }
 .card .few { color: #B54708; font-weight: 500; }
-.mine-link { display: inline-block; margin-bottom: 8px; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: #2B8A27; }
+.mine-link { display: block; width: fit-content; margin-bottom: 8px; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: #2B8A27; }
 
 /* Bottom nav: floating pill, icon over label. The chosen tab takes the brand green. */
 .tab-bar {
@@ -380,3 +380,6 @@ a.g-row .sheet-line { color: var(--green-ink); }
 .theme-button .sun { display: none; }
 [data-theme="dark"] .theme-button .sun { display: block; }
 [data-theme="dark"] .theme-button .moon { display: none; }
+
+/* No top margin: the link above it folds to nothing and hides, and a margin here would collapse differently in those two states, jumping the list. */
+#s-message { margin-top: 0; }

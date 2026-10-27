@@ -2,7 +2,7 @@ import { studioTime } from '../time.js';
 import { checkIn, checkInOpen, closeClass, correctStatus } from '../checkin.js';
 import { markNoShow } from '../booking.js';
 import { loadStore, saveStore } from './session.js';
-import { fadeIn, pop } from './motion.js';
+import { fadeIn, pop, showBanner } from './motion.js';
 
 const STATUS_TEXT = {
   booked: 'Rezervirano',
@@ -38,10 +38,7 @@ function endOf(session) {
 }
 
 function showMessage(text, isError = false) {
-  const node = $('message');
-  node.textContent = text;
-  node.classList.toggle('error', isError);
-  if (text) fadeIn(node, -4, 200);
+  showBanner($('message'), text, isError);
 }
 
 // Runs an action, saves, and re-renders. Errors show as a message.

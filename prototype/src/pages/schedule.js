@@ -12,7 +12,7 @@ import {
   NotBookableError,
 } from '../booking.js';
 import { loadStore, saveStore, mondayOf } from './session.js';
-import { fadeIn, slideIn, pop, popOut, expand, collapse, release } from './motion.js';
+import { fadeIn, slideIn, pop, popOut, expand, collapse, release, showBanner } from './motion.js';
 import { openSheet, closeSheet, bindSheet } from './sheet.js';
 
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
@@ -72,9 +72,7 @@ function el(tag, text, className) {
 }
 
 function showMessage(text, isError = false, node = $('message')) {
-  node.textContent = text;
-  node.classList.toggle('error', isError);
-  if (text) fadeIn(node, -4, 200);
+  showBanner(node, text, isError);
 }
 
 function renderAccount() {
@@ -285,11 +283,15 @@ function reveal(node, show, text, enter, leave) {
   }
 }
 
-function renderMine() {
-  const section = $('mine');
+function renderMineCount() {
   const count = upcomingBookings(store, $('account').value, new Date()).length;
   reveal(document.getElementById('badge-raspored'), count > 0, String(count), (n) => pop(n, 0.6), popOut);
   reveal($('mine-link'), count > 0, `Moje rezervacije (${count})`, expand, collapse);
+}
+
+function renderMine() {
+  const section = $('mine');
+  renderMineCount();
   section.replaceChildren(el('h2', 'Moje rezervacije'));
   const current = new Date();
   const rows = upcomingBookings(store, $('account').value, current);
@@ -371,29 +373,27 @@ function joinList(classId) {
   render();
 }
 
-// The booking's card, and its line in the class card when it is the only bike there, fold away first.
+// The cancel takes effect at once: banner, credit and counters change while the booking's card,
+// and its line in the class card, fold away. The lists are re-rendered when the fold is done.
 function cancelMine(bookingId) {
   const leaving = [
     document.querySelector(`#s-mine [data-booking="${bookingId}"]`),
     document.querySelector(`#s-classes .mine-block[data-bookings="${bookingId}"]`),
   ];
-  Promise.all(leaving.map((node) => collapse(node))).then(() => doCancel(bookingId));
-}
-
-function doCancel(bookingId) {
-  confirmingId = null;
-  const current = new Date();
-  const booking = cancelBooking(store, bookingId, current);
-  const session = store.classes.find((c) => c.id === booking.classId);
-  const cutoffPassed = booking.status === 'late_cancel';
+  const booking = cancelBooking(store, bookingId, new Date());
   showMessage(
-    cutoffPassed
+    booking.status === 'late_cancel'
       ? `Kasno otkazivanje: kredit se ne vraća.${mailCount()}`
       : `Otkazano. Kredit je vraćen.${mailCount()}`,
     false,
   );
-  if (session) openClassId = null;
-  render();
+  saveStore(store);
+  renderAccount();
+  renderMineCount();
+  Promise.all(leaving.map((node) => collapse(node))).then(() => {
+    confirmingId = null;
+    render();
+  });
 }
 
 function reserve(bikeNo) {
@@ -405,9 +405,9 @@ function reserve(bikeNo) {
       guestName: guestName.trim() || null,
       now: new Date(),
     });
-    showMessage(`Rezervirano: bicikl ${bikeNo}. Kredit: ${balance(store, $('account').value, new Date())}.`);
-    // Slide the sheet away, then let the new booking open into the lists.
+    // Slide the sheet away, then banner, credit and the new booking all arrive together.
     closeSheet($('book-sheet')).then(() => {
+      showMessage(`Rezervirano: bicikl ${bikeNo}. Kredit: ${balance(store, $('account').value, new Date())}.`);
       render();
       expand(document.querySelector(`#s-mine [data-booking="${booking.id}"]`));
       expand(document.querySelector(`#s-classes .mine-block[data-bookings~="${booking.id}"]`));

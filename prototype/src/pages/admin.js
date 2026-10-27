@@ -8,7 +8,7 @@ import {
 } from '../admin.js';
 import { addSoonClass, fillClass } from '../demo.js';
 import { loadStore, saveStore, resetStore } from './session.js';
-import { fadeIn, expand, collapse, release } from './motion.js';
+import { showBanner, expand, collapse, release } from './motion.js';
 
 const timeFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', hour: '2-digit', minute: '2-digit' });
 const dayFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', weekday: 'short', day: '2-digit', month: '2-digit' });
@@ -25,10 +25,7 @@ function el(tag, text, className) {
 }
 
 function showMessage(text, isError = false) {
-  const node = $('message');
-  node.textContent = text;
-  node.classList.toggle('error', isError);
-  if (text) fadeIn(node, -4, 200);
+  showBanner($('message'), text, isError);
 }
 
 // Runs an admin action, saves, and re-renders. Errors show as a message. Edits that already

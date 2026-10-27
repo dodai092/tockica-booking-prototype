@@ -74,3 +74,14 @@ export function release(node) {
   node.getAnimations().forEach((animation) => animation.cancel());
   node.style.overflow = '';
 }
+
+// A status banner. An empty one grows open, so the content below moves with it instead of
+// jumping; one that is already showing just fades the new text in.
+export function showBanner(node, text, isError = false) {
+  const wasShown = node.textContent !== '';
+  node.textContent = text;
+  node.classList.toggle('error', isError);
+  if (!text) return;
+  if (wasShown) fadeIn(node, -4, 200);
+  else expand(node);
+}
