@@ -290,6 +290,8 @@ function renderBikes() {
       render();
     });
     grid.append(button);
+    // Two rows of 10 with a gap after bike 5 and bike 15.
+    if (bikeNo % 10 === 5) grid.append(el('span', undefined, 'aisle'));
   }
   panel.append(grid);
 
