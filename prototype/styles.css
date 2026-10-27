@@ -182,7 +182,7 @@ h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; text-transform: up
 
 /* Schedule: own bookings, bike confirmation, message banner, demo links */
 .card .mine { font-family: Montserrat, sans-serif; font-weight: 700; font-size: 14px; color: var(--green); margin-top: 4px; }
-.card .mine + .btn.secondary { margin: 8px 8px 0 0; }
+.card .mine ~ .btn.secondary { margin: 8px 8px 0 0; }
 .bike[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
 .confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
 .confirm .meta { flex: 1 1 100%; }
