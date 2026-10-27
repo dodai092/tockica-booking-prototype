@@ -128,9 +128,10 @@ function statusButton(session, current) {
     waitlist.addEventListener('click', () => joinList(session.id));
     return waitlist;
   }
-  const button = el('button', 'rezerviraj', 'btn');
+  const isOpen = openClassId === session.id;
+  const button = el('button', isOpen ? 'zatvori' : 'rezerviraj', isOpen ? 'btn secondary' : 'btn');
   button.addEventListener('click', () => {
-    openClassId = session.id;
+    openClassId = isOpen ? null : session.id;
     pickedBike = null;
     render();
   });
@@ -173,8 +174,9 @@ function renderClasses() {
         info.append(cancel);
       }
     }
+    if (openClassId) card.classList.toggle('dimmed', session.id !== openClassId);
+    if (session.id === openClassId) card.append($('bikes'));
     list.append(card);
-    if (session.id === openClassId) list.append($('bikes'));
   }
 }
 
@@ -186,15 +188,11 @@ function renderBikes() {
     return;
   }
 
-  const session = store.classes.find((c) => c.id === openClassId);
   const taken = takenBikes(store, openClassId);
   panel.hidden = false;
   panel.replaceChildren();
 
-  panel.append(
-    el('h2', `Odaberi bajk: ${session.name}`),
-    el('p', `${instructorName(session.instructorId)} · ${timeFormat.format(new Date(session.startsAt))}`, 'sub'),
-  );
+  panel.append(el('h2', 'Odaberi bajk'));
 
   const grid = el('div', undefined, 'bike-grid');
   for (let bikeNo = 1; bikeNo <= BIKE_COUNT; bikeNo += 1) {
