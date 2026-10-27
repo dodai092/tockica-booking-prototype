@@ -45,6 +45,7 @@ const store = loadStore();
 saveStore(store);
 let pickedBike = null;
 let guestName = '';
+let confirmingId = null;
 let openClassId = null;
 
 const thisMonday = mondayOf(now);
@@ -182,9 +183,7 @@ function renderClasses() {
       const bikes = mine.map((b) => (b.guestName ? `${b.bikeNo} (${b.guestName})` : b.bikeNo)).join(', ');
       info.append(el('div', `${mine.length > 1 ? 'Tvoji bajkovi' : 'Tvoj bajk'}: ${bikes}`, 'mine'));
       for (const booking of mine) {
-        const cancel = el('button', mine.length > 1 ? `otkaži bajk ${booking.bikeNo}` : 'otkaži', 'btn secondary');
-        cancel.addEventListener('click', () => cancelMine(booking.id));
-        info.append(cancel);
+        info.append(...cancelControl(booking, session, current, mine.length > 1 ? `otkaži bajk ${booking.bikeNo}` : 'otkaži'));
       }
       info.append(el('div', cancelNote(session, current), 'meta'));
     }
@@ -199,6 +198,27 @@ function cancelNote(session, current) {
   return current < deadline
     ? `Otkazivanje je besplatno do ${whenFormat.format(deadline)} (6 sati prije treninga). Nakon toga kredit propada.`
     : 'Manje od 6 sati do treninga: ako otkažeš, kredit propada.';
+}
+
+// One extra step so a stray tap does not cancel. The question says what happens to the credit.
+function cancelControl(booking, session, current, label) {
+  if (confirmingId !== booking.id) {
+    const cancel = el('button', label, 'btn secondary cancel');
+    cancel.addEventListener('click', () => {
+      confirmingId = booking.id;
+      render();
+    });
+    return [cancel];
+  }
+  const refund = current < cancelDeadline(session) ? 'Kredit se vraća.' : 'Kredit se ne vraća.';
+  const yes = el('button', 'Da, otkaži', 'btn secondary cancel');
+  yes.addEventListener('click', () => cancelMine(booking.id));
+  const no = el('button', 'Ne', 'btn secondary cancel');
+  no.addEventListener('click', () => {
+    confirmingId = null;
+    render();
+  });
+  return [el('div', `Otkazati bajk ${booking.bikeNo}? ${refund}`, 'mine'), yes, no];
 }
 
 function renderMine() {
@@ -220,9 +240,8 @@ function renderMine() {
       el('div', `Bajk ${booking.bikeNo}${guest} · ${instructorName(session.instructorId)}`, 'meta'),
       el('div', cancelNote(session, current), 'meta'),
     );
-    const cancel = el('button', 'otkaži', 'btn secondary');
-    cancel.addEventListener('click', () => cancelMine(booking.id));
-    card.append(info, cancel);
+    info.append(...cancelControl(booking, session, current, 'otkaži'));
+    card.append(info);
     section.append(card);
   }
 }
@@ -298,6 +317,7 @@ function joinList(classId) {
 }
 
 function cancelMine(bookingId) {
+  confirmingId = null;
   const current = new Date();
   const booking = cancelBooking(store, bookingId, current);
   const session = store.classes.find((c) => c.id === booking.classId);

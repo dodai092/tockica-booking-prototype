@@ -270,3 +270,5 @@ h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; text-transform: up
 
 .demo-panel { margin-top: 32px; padding: 0 16px 8px; border: 2px dashed var(--border); border-radius: 12px; background: #fafafa; }
 .demo-panel h2 { margin-top: 16px; }
+
+.card .btn.cancel { margin: 8px 8px 0 0; }
