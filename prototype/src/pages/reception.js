@@ -79,7 +79,7 @@ function renderClassPicker(now) {
     const optgroup = el('optgroup');
     optgroup.label = label;
     for (const session of group) {
-      const option = el('option', `${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))} · ${session.name}`);
+      const option = el('option', `${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))} · ${session.name}${session.cancelled ? ' (otkazano)' : ''}`);
       option.value = session.id;
       option.selected = session.id === classId;
       optgroup.append(option);

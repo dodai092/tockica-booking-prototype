@@ -5,13 +5,19 @@ import {
   removeFromClass,
   setMultisportTag,
   setPackPrices,
+  setReleaseSettings,
+  addTemplateEntry,
+  removeTemplateEntry,
+  cancelClass,
 } from '../admin.js';
 import { addSoonClass, fillClass } from '../demo.js';
-import { loadStore, saveStore, resetStore } from './session.js';
+import { loadStore, saveStore, resetStore, generateUpcoming } from './session.js';
 import { showBanner, expand, collapse, release, pop } from './motion.js';
 
 const timeFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', hour: '2-digit', minute: '2-digit' });
 const dayFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', weekday: 'short', day: '2-digit', month: '2-digit' });
+
+const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
 
 const $ = (id) => document.getElementById('a-' + id);
 const store = loadStore();
@@ -31,11 +37,11 @@ function showMessage(text, isError = false) {
 // Runs an admin action, saves, and re-renders. Errors show as a message. Edits that already
 // show on screen (a switch, a price) pass rerender = false, so focus and the switch's own
 // animation are not thrown away. Returns whether the action worked.
-function act(action, rerender = true) {
+function act(action, rerender = true, text = 'Spremljeno.') {
   let ok = true;
   try {
     action();
-    showMessage('Spremljeno.');
+    showMessage(typeof text === 'function' ? text() : text);
   } catch (err) {
     ok = false;
     showMessage(err.message, true);
@@ -61,6 +67,24 @@ function chevron() {
   const node = el('span', undefined, 'g-chevron');
   node.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
   return node;
+}
+
+// A row that folds a panel open and shut.
+function foldToggle(toggle, panel, focusNode) {
+  toggle.addEventListener('click', () => {
+    const opening = panel.hidden;
+    toggle.setAttribute('aria-expanded', String(opening));
+    if (opening) {
+      panel.hidden = false;
+      expand(panel);
+      focusNode?.focus();
+    } else {
+      collapse(panel).then(() => {
+        release(panel);
+        panel.hidden = true;
+      });
+    }
+  });
 }
 
 function restoreForm(account, trail) {
@@ -122,20 +146,7 @@ function renderAccounts(now) {
     toggle.type = 'button';
     toggle.setAttribute('aria-expanded', 'false');
     toggle.append(el('span', 'Vrati kredit', 'g-main g-title'), chevron());
-    toggle.addEventListener('click', () => {
-      const opening = form.hidden;
-      toggle.setAttribute('aria-expanded', String(opening));
-      if (opening) {
-        form.hidden = false;
-        expand(form);
-        reason.focus();
-      } else {
-        collapse(form).then(() => {
-          release(form);
-          form.hidden = true;
-        });
-      }
-    });
+    foldToggle(toggle, form, reason);
     group.append(toggle, form);
     section.append(group);
   }
@@ -210,6 +221,142 @@ function renderPacks() {
   }
 }
 
+function selectRow(label, options, value, onChange) {
+  const select = el('select', undefined, 'g-select');
+  select.setAttribute('aria-label', label);
+  for (const [optionValue, text] of options) {
+    const option = el('option', text);
+    option.value = optionValue;
+    select.append(option);
+  }
+  select.value = value;
+  select.addEventListener('change', () => onChange(select));
+  const node = el('label', undefined, 'g-row');
+  node.append(el('span', label, 'g-main g-title'), select);
+  return node;
+}
+
+function upcomingClasses(now) {
+  return store.classes
+    .filter((c) => Date.parse(c.startsAt) > now.getTime() && !c.cancelled)
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+}
+
+const classLabel = (c) => `${dayFormat.format(new Date(c.startsAt))} ${timeFormat.format(new Date(c.startsAt))} · ${c.name}`;
+
+function renderSchedule(now) {
+  const section = $('schedule');
+  section.replaceChildren();
+  const instructors = store.instructors.map((i) => [i.id, i.name]);
+  const days = DAY_NAMES.map((name, i) => [String(i + 1), name]);
+
+  // When bookings open.
+  const { settings } = store;
+  const setting = (key) => (select) => act(() => setReleaseSettings(store, { ...settings, [key]: Number(select.value) }), false);
+  const opens = el('div', undefined, 'group');
+  opens.append(
+    selectRow('Rezervacije se otvaraju (dan)', days, String(settings.dayOfWeek), setting('dayOfWeek')),
+    selectRow('Sat otvaranja', Array.from({ length: 24 }, (_, h) => [String(h), `${String(h).padStart(2, '0')}:00`]), String(settings.hour), setting('hour')),
+    selectRow('Tjedana unaprijed', Array.from({ length: 8 }, (_, w) => [String(w + 1), String(w + 1)]), String(settings.weeksAhead), setting('weeksAhead')),
+  );
+  section.append(opens);
+
+  // The weekly template: list and add form.
+  const template = el('div', undefined, 'group');
+  const listToggle = el('button', undefined, 'g-row g-action');
+  listToggle.type = 'button';
+  listToggle.setAttribute('aria-expanded', 'false');
+  listToggle.append(el('span', `Tjedni predložak (${store.template.length})`, 'g-main g-title'), chevron());
+  const list = el('div', undefined, 'g-list');
+  list.hidden = true;
+  store.template.forEach((entry, index) => {
+    const item = row(main(`${DAY_NAMES[entry.dayOfWeek - 1]} ${entry.time} ${entry.name}`, store.instructors.find((i) => i.id === entry.instructorId)?.name));
+    const remove = el('button', 'Makni', 'g-text destructive');
+    remove.setAttribute('aria-label', `Makni iz predloška: ${entry.name}`);
+    remove.addEventListener('click', () => {
+      if (act(() => removeTemplateEntry(store, index), false)) collapse(item).then(render);
+    });
+    item.append(remove);
+    list.append(item);
+  });
+  foldToggle(listToggle, list);
+
+  const addToggle = el('button', undefined, 'g-row g-action');
+  addToggle.type = 'button';
+  addToggle.setAttribute('aria-expanded', 'false');
+  addToggle.append(el('span', 'Dodaj termin', 'g-main g-title'), chevron());
+  const form = el('form', undefined, 'g-form wrap');
+  form.hidden = true;
+  const day = el('select', undefined, 'g-select');
+  day.setAttribute('aria-label', 'Dan');
+  for (const [value, text] of days) {
+    const option = el('option', text);
+    option.value = value;
+    day.append(option);
+  }
+  const time = el('input', undefined, 'g-input');
+  time.type = 'time';
+  time.value = '18:00';
+  time.setAttribute('aria-label', 'Vrijeme');
+  const name = el('input', undefined, 'g-input g-name');
+  name.placeholder = 'Ime treninga';
+  name.setAttribute('aria-label', 'Ime treninga');
+  const instructor = el('select', undefined, 'g-select');
+  instructor.setAttribute('aria-label', 'Instruktor');
+  for (const [value, text] of instructors) {
+    const option = el('option', text);
+    option.value = value;
+    instructor.append(option);
+  }
+  const submit = el('button', 'Dodaj', 'btn');
+  submit.type = 'submit';
+  form.append(name, day, time, instructor, submit);
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const ok = act(() => {
+      addTemplateEntry(store, { dayOfWeek: Number(day.value), time: time.value, name: name.value, instructorId: instructor.value });
+      generateUpcoming(store, new Date());
+    }, false);
+    if (ok) collapse(form).then(render);
+  });
+  foldToggle(addToggle, form, name);
+  template.append(listToggle, list, addToggle, form);
+  section.append(template);
+
+  // The studio cancels a class.
+  const cancel = el('div', undefined, 'group');
+  const classes = upcomingClasses(now);
+  const picker = selectRow('Otkaži trening', classes.map((c) => [c.id, classLabel(c)]), classes[0]?.id ?? '', () => {});
+  const go = el('button', 'Otkaži odabrani trening', 'g-row g-action destructive');
+  go.type = 'button';
+  go.disabled = classes.length === 0;
+  go.addEventListener('click', () => {
+    const picked = classes.find((c) => c.id === picker.querySelector('select').value);
+    const booked = store.bookings.filter((b) => b.classId === picked.id && b.status === 'booked').length;
+    if (!window.confirm(`Otkazati trening ${picked.name}?\nRezervacija: ${booked}. Svi dobivaju kredit natrag i mail.`)) return;
+    let result;
+    act(() => {
+      result = cancelClass(store, picked.id, new Date());
+    }, true, () => `Trening otkazan. Kredit vraćen: ${result.cancelledBookings}.`);
+  });
+  cancel.append(picker, go);
+  section.append(cancel);
+}
+
+function renderMails() {
+  const section = $('mails');
+  section.replaceChildren();
+  if (store.outbox.length === 0) {
+    section.append(row(el('span', 'Još nema poslanih mailova.', 'g-sub')));
+    return;
+  }
+  for (const mail of [...store.outbox].reverse().slice(0, 8)) {
+    const item = row(main(mail.subject, `Za: ${mail.to}`, mail.body));
+    item.classList.add('g-mail');
+    section.append(item);
+  }
+}
+
 function renderDemoClasses(now) {
   const select = $('demo-class');
   const previous = select.value;
@@ -230,6 +377,8 @@ export function render() {
   renderAccounts(now);
   renderBookings(now);
   renderPacks();
+  renderSchedule(now);
+  renderMails();
   renderDemoClasses(now);
 }
 

@@ -87,3 +87,54 @@ export function priceFor(store, accountId, packId) {
   if (account.multisportTag && pack.multisportPriceEur !== null) return pack.multisportPriceEur;
   return pack.priceEur;
 }
+
+const isInt = (n, min, max) => Number.isInteger(n) && n >= min && n <= max;
+
+// When bookings open: weekday (1 = Monday), hour, and how many weeks ahead. Classes already
+// created keep the release they were created with.
+export function setReleaseSettings(store, { dayOfWeek, hour, weeksAhead }) {
+  if (!isInt(dayOfWeek, 1, 7) || !isInt(hour, 0, 23) || !isInt(weeksAhead, 1, 8)) {
+    throw new RangeError('Release settings out of range');
+  }
+  Object.assign(store.settings, { dayOfWeek, hour, weeksAhead });
+  return store.settings;
+}
+
+export function addTemplateEntry(store, { dayOfWeek, time, name, instructorId, themeName = null }) {
+  if (!isInt(dayOfWeek, 1, 7) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time) || !name.trim()) {
+    throw new RangeError('Template entry out of range');
+  }
+  const entry = { dayOfWeek, time, name: name.trim(), instructorId, themeName };
+  store.template.push(entry);
+  return entry;
+}
+
+export function removeTemplateEntry(store, index) {
+  return store.template.splice(index, 1)[0];
+}
+
+// The studio cancels a class: everyone booked gets the credit back and one mail.
+export function cancelClass(store, classId, now) {
+  const session = store.classes.find((c) => c.id === classId);
+  if (session.cancelled) throw new Error(`Class ${classId} is already cancelled`);
+  session.cancelled = true;
+
+  const booked = store.bookings.filter((b) => b.classId === classId && b.status === 'booked');
+  for (const booking of booked) {
+    booking.status = 'cancelled';
+    const lot = store.lots.find((l) => l.id === booking.creditLotId);
+    returnCredit(store, lot, now, store.settings.returnedCreditDays);
+    const account = store.accounts.find((a) => a.id === booking.accountId);
+    send(
+      store,
+      {
+        to: account.email,
+        subject: `Trening je otkazan: ${session.name}`,
+        body: `Trening ${session.name} je otkazan. Kredit je vraćen.`,
+      },
+      now,
+    );
+  }
+  store.waitlist = store.waitlist.filter((w) => w.classId !== classId);
+  return { cancelledBookings: booked.length };
+}

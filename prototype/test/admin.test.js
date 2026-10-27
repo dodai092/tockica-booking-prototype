@@ -12,8 +12,13 @@ import {
   setMultisportTag,
   setPackPrices,
   priceFor,
+  setReleaseSettings,
+  addTemplateEntry,
+  removeTemplateEntry,
+  cancelClass,
   RestoreError,
 } from '../src/admin.js';
+import { isBookable } from '../src/schedule.js';
 
 const NOW = new Date('2026-11-20T12:00:00Z');
 const MONDAY_30_NOV = studioTime.toUtc('2026-11-30T00:00');
@@ -150,4 +155,50 @@ test('setPackPrices updates both prices', () => {
 
   assert.equal(pack.priceEur, 16);
   assert.equal(pack.multisportPriceEur, 9);
+});
+
+test('release settings accept valid values and reject out of range ones', () => {
+  const { store } = setup();
+  setReleaseSettings(store, { dayOfWeek: 7, hour: 18, weeksAhead: 3 });
+  assert.deepEqual(
+    [store.settings.dayOfWeek, store.settings.hour, store.settings.weeksAhead],
+    [7, 18, 3],
+  );
+  for (const bad of [{ dayOfWeek: 0, hour: 10, weeksAhead: 2 }, { dayOfWeek: 1, hour: 24, weeksAhead: 2 }, { dayOfWeek: 1, hour: 10, weeksAhead: 0 }, { dayOfWeek: 1.5, hour: 10, weeksAhead: 2 }]) {
+    assert.throws(() => setReleaseSettings(store, bad), RangeError);
+  }
+  assert.equal(store.settings.dayOfWeek, 7);
+});
+
+test('template entries can be added and removed', () => {
+  const { store } = setup();
+  const before = store.template.length;
+  addTemplateEntry(store, { dayOfWeek: 3, time: '18:00', name: 'Nova', instructorId: 'ins_1' });
+  assert.equal(store.template.length, before + 1);
+  assert.equal(store.template.at(-1).name, 'Nova');
+  assert.throws(() => addTemplateEntry(store, { dayOfWeek: 3, time: '18:00', name: ' ', instructorId: 'ins_1' }), RangeError);
+  assert.throws(() => addTemplateEntry(store, { dayOfWeek: 3, time: '25:00', name: 'X', instructorId: 'ins_1' }), RangeError);
+
+  removeTemplateEntry(store, before);
+  assert.equal(store.template.length, before);
+});
+
+test('cancelling a class returns every credit, mails everyone and closes booking', () => {
+  const { store, session } = setup();
+  const at = new Date(Date.parse(session.startsAt) - 2 * HOUR);
+  session.releaseOpensAt = new Date(at.getTime() - HOUR).toISOString();
+  bookBike(store, { classId: session.id, bikeNo: 1, accountId: 'acc_test1', now: at });
+  bookBike(store, { classId: session.id, bikeNo: 2, accountId: 'acc_test2', now: at });
+  assert.equal(balance(store, 'acc_test1', at), 4);
+
+  const result = cancelClass(store, session.id, at);
+
+  assert.equal(result.cancelledBookings, 2);
+  assert.equal(balance(store, 'acc_test1', at), 5);
+  assert.equal(balance(store, 'acc_test2', at), 5);
+  assert.equal(store.outbox.length, 2);
+  assert.equal(session.cancelled, true);
+  assert.equal(isBookable(session, at), false);
+  assert.throws(() => bookBike(store, { classId: session.id, bikeNo: 3, accountId: 'acc_test1', now: at }));
+  assert.throws(() => cancelClass(store, session.id, at), /already/i);
 });

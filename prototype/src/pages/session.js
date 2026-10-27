@@ -30,14 +30,19 @@ const TEMPLATE = [
   dayOfWeek, time, name, instructorId: INSTRUCTORS[i % 2].id, themeName: null,
 }));
 
-function seed(now) {
-  const store = createStore(now);
-  store.instructors = INSTRUCTORS;
-  store.template = TEMPLATE;
+// Creates the template's classes for this week and the next ones. Existing classes are kept.
+export function generateUpcoming(store, now) {
   const monday = mondayOf(now);
   for (let w = 0; w < WEEKS_SEEDED; w += 1) {
     generateWeek(store, studioTime.toUtc(`${studioTime.addDays(monday, 7 * w)}T00:00`));
   }
+}
+
+function seed(now) {
+  const store = createStore(now);
+  store.instructors = INSTRUCTORS;
+  store.template = TEMPLATE;
+  generateUpcoming(store, now);
   grantPack(store, 'acc_test1', 'pk_5', now);
   grantPack(store, 'acc_test2', 'pk_5', now);
   return store;

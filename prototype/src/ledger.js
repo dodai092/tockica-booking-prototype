@@ -57,6 +57,14 @@ export function returnCredit(store, original, now, returnedDays) {
   return returned;
 }
 
+// When the credit that runs out first expires, or null when there is none to use.
+export function nextExpiry(store, accountId, now) {
+  const times = store.lots
+    .filter((l) => l.accountId === accountId && isUsable(l, now))
+    .map((l) => Date.parse(l.expiresAt));
+  return times.length ? new Date(Math.min(...times)).toISOString() : null;
+}
+
 export function balance(store, accountId, now) {
   return store.lots
     .filter((l) => l.accountId === accountId && isUsable(l, now))

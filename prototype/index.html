@@ -26,7 +26,11 @@
     <label>Demo račun
       <select id="s-account"></select>
     </label>
-    <span id="s-balance" class="balance"></span>
+    <span class="balance-wrap">
+      <span id="s-balance" class="balance"></span>
+      <span id="s-expiry" class="meta"></span>
+      <button id="s-buy" type="button" class="g-text accent">Kupi paket</button>
+    </span>
   </div>
   <a id="s-mine-link" class="mine-link" href="#" hidden></a>
   <p id="s-message" class="message" role="status"></p>
@@ -63,6 +67,14 @@
     <h2 class="g-header">Paketi</h2>
     <section id="a-packs" aria-label="Paketi"></section>
     <p class="g-footer">Cijene se spremaju čim ih promijeniš. Prazna Multisport cijena znači da je nema.</p>
+
+    <h2 class="g-header">Raspored</h2>
+    <section id="a-schedule" aria-label="Raspored"></section>
+    <p class="g-footer">Postavke otvaranja vrijede za treninge koji tek nastaju. Novi termin se odmah pojavljuje u rasporedu. Maknut termin ne briše već stvorene treninge, njih otkaži.</p>
+
+    <h2 class="g-header">Poslani mailovi</h2>
+    <section id="a-mails" class="group" aria-label="Poslani mailovi"></section>
+    <p class="g-footer">Mailovi se ne šalju. Ovo je pregled onoga što bi klijenti dobili.</p>
 
     <h2 class="g-header">Demo alati <span class="demo-tag">Samo prototip</span></h2>
     <section class="group" aria-label="Demo alati">
@@ -117,6 +129,17 @@
   <p id="s-book-message" class="message" role="status"></p>
   <div id="s-bikes" class="sheet-body"></div>
   <div id="s-book-bar" class="sheet-bar"></div>
+</dialog>
+
+<dialog id="s-buy-sheet" class="sheet" aria-labelledby="s-buy-title">
+  <div class="sheet-head">
+    <h2 id="s-buy-title">Kupi paket</h2>
+    <button type="button" class="g-text accent" id="s-buy-close">Zatvori</button>
+  </div>
+  <div class="sheet-body">
+    <div id="s-packs" class="group"></div>
+    <p class="g-footer">Plaćanje još nije spojeno. Ovo je simulacija: paket se odmah upiše na račun.</p>
+  </div>
 </dialog>
 
 <script type="module" src="src/pages/app.js"></script>

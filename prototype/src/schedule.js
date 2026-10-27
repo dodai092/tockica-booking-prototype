@@ -62,5 +62,5 @@ export function generateWeek(store, weekStartIso) {
 
 export function isBookable(session, now) {
   const t = now.getTime();
-  return t >= Date.parse(session.releaseOpensAt) && t < Date.parse(session.startsAt);
+  return !session.cancelled && t >= Date.parse(session.releaseOpensAt) && t < Date.parse(session.startsAt);
 }

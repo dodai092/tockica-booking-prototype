@@ -384,3 +384,14 @@ a.g-row .sheet-line { color: var(--green-ink); }
 
 /* No top margin: the link above it folds to nothing and hides, and a margin here would collapse differently in those two states, jumping the list. */
 #s-message { margin-top: 0; }
+
+.balance-wrap { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; }
+.balance-wrap .balance { margin-left: 0; }
+.balance-wrap .meta:empty { display: none; }
+.balance-wrap .g-text { padding: 2px 0; font-size: 0.875rem; }
+.g-row .btn { padding: 8px 18px; margin: 0; flex: none; }
+.g-form.wrap { flex-wrap: wrap; }
+.g-form.wrap .g-select { width: auto; }
+.g-form.wrap .g-name { flex: 1 1 100%; }
+.g-list { display: block; }
+.g-mail .g-sub { white-space: normal; }

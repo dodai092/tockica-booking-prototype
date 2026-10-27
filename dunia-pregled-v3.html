@@ -61,7 +61,8 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <div class="page">
 
 <h1>Booking sustav za Točkicu</h1>
-<p class="lead">Napravio sam prototip s lažnim podacima, ali pravi sustav (plaćanje, hosting, tvoja stranica) još nije izrađen.</p>
+<p class="lead">Napravio sam prototip (samo mock data), ali pravi sustav (plaćanje, hosting, tvoja stranica) još nije napravljen.</p>
+<p>Tri koraka: isprobaj prototip, odgovori na pitanja ispod i označi da ili ne u tablici.</p>
 
 <ul class="legend">
   <li><span class="tag same">Kako si tražila</span> radi točno tako</li>
@@ -74,13 +75,35 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <h2>Prototip koji možeš isprobati</h2>
 <p>Ovo je napravljeno do sada. Podaci su lažni, cijene su placeholderi i plaćanja nema. Radi i na mobitelu.</p>
 <ul>
-  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#raspored">Raspored</a>: kako ga vide klijenti. Odaberi dan, pritisni rezerviraj, odaberi bicikl na planu sobe, otkaži, uđi na listu čekanja.</li>
+  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#raspored">Raspored</a>: kako ga vide klijenti. Odaberi dan, pritisni rezerviraj, odaberi bicikl na planu sobe, otkaži, kupi paket, uđi na listu čekanja.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#recepcija">Recepcija</a>: check-in prije treninga i oznaka da klijent nije došao.</li>
-  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#admin">Admin</a>: računi, rezervacije, paketi i vraćanje kredita.</li>
+  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#admin">Admin</a>: računi, rezervacije, cijene paketa, raspored (otvaranje, termini, otkazivanje treninga), vraćanje kredita i poslani mailovi.</li>
 </ul>
-<p>Sve što klikneš ostaje samo u tvom pregledniku. Na adminu gumb "Resetiraj demo" vraća početno stanje. Napiši mi što ti se ne sviđa ili što fali.</p>
+<p>Isprobaj redom:</p>
+<ol>
+  <li>Raspored: rezerviraj bicikl. Kredit se smanji.</li>
+  <li>Otkaži rezervaciju (do 6 sati prije kredit se vraća, poslije propada), pa pritisni "Kupi paket" ispod kredita.</li>
+  <li>Admin, Demo alati: "Napuni trening (sve bicikle)". Na Rasporedu taj trening sada ima listu čekanja.</li>
+  <li>Admin, Demo alati: "Dodaj trening za 20 min". Rezerviraj ga na Rasporedu, pa u Recepciji označi dolazak.</li>
+  <li>Admin, Raspored: dodaj termin ili otkaži trening. U "Poslani mailovi" vidiš što su klijenti dobili.</li>
+</ol>
+<p>Račun mijenjaš izbornikom "Demo račun". Prijave i uloga nema, sve tri stranice vidi svatko. Sve što klikneš ostaje samo u tvom pregledniku. Na adminu gumb "Resetiraj demo" vraća početno stanje. Napiši mi što ti se ne sviđa ili što fali.</p>
 <p>Gore desno su prekidač za tamni način i gumb (i) s adresom, telefonom i radnim vremenom. Te podatke sam preuzeo s tvoje stranice 26.10., provjeri jesu li točni.</p>
-<p>U prototipu nema paketa i kupnje, izvještaja o plaćama, Sculpt Rooma, statistike ni "dovedi prijatelja".</p>
+<p>U prototipu nema pravog plaćanja (kupnja je simulacija), izvještaja o plaćama, Sculpt Rooma, statistike ni "dovedi prijatelja".</p>
+
+<h2>Što mi treba od tebe</h2>
+<div class="note"><ol>
+  <li>Vlastiti sustav ili gotov (Momence, bsport)? Predlažem vlastiti, u fazama, jer sama vraćaš kredite i određuješ cijene. Gotov sustav traži zakrpe za Multisport, Sculpt Room i plaćanje. Više u dodatku na dnu.</li>
+  <li>Neograničeni paket: da ili ne, i koliko dana?</li>
+  <li>Sculpt Room: što trener dobiva za 100 €?</li>
+  <li>Instruktori: ista cijena po treningu? Prag 15 za sve?</li>
+  <li>Benefit Systems: što piše u ugovoru o cijenama i ulazima?</li>
+  <li>Corvus: imaš li ugovor?</li>
+  <li>Kako sad vodite rezervacije i unaprijed plaćene treninge? Koliko ljudi ima neiskorištene?</li>
+  <li>Raspored bicikala u sobi: redovi, brojevi i gdje stoji instruktor.</li>
+  <li>Tablica "Predlažem, nisi tražila" niže: da ili ne za svaki prijedlog.</li>
+</ol></div>
+<p>Fiskalizaciju provjeravam s računovođom. Račune (Stripe, domena, baza, hosting, mail) otvaramo na ime Točkice, a ja sam dodan kao admin. </p>
 
 <h2>Prva verzija</h2>
 
@@ -123,7 +146,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 </details>
 
 <details>
-  <summary><span class="name">5. Izbor bicikla</span><span class="tag same">Kako si tražila</span></summary>
+  <summary><span class="name">5. Izbor bicikla</span><span class="tag open">Treba tvoj odgovor</span></summary>
   <div class="body">
     <p>Plan sobe s 20 bicikala: dva reda po 10, s prolazom nakon petog i petnaestog bicikla. Plan se otvara u prozoru kad pritisneš rezerviraj. Zauzeti su sivi. Instruktor je označen na vrhu plana, s fotografijom ili bez nje. Nema limita koliko bicikala rezerviraš, samo trebaš kredite.</p>
     <p><span class="tag open">Raspored bicikala</span> Kako su bicikli stvarno raspoređeni i numerirani, i gdje stoji instruktor? Plan u prototipu je moja pretpostavka.</p>
@@ -158,7 +181,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">9. Check-in i statusi</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Recepcija označava Booked, Attended, No-show, Cancelled (kredit se vraća) i Late cancel (ne vraća se). Kredite vraćaš samo ti, u adminu.</p>
+    <p>Recepcija označava Rezervirano, Došao, No-show, Otkazano (kredit se vraća) i Kasno otkazano (ne vraća se). Kredite vraćaš samo ti, u adminu.</p>
   </div>
 </details>
 
@@ -221,7 +244,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <h2>Predlažem, nisi tražila</h2>
 <table>
   <tr><th>Prijedlog</th><th>Što znači</th><th>Da ili ne</th></tr>
-  <tr><td>Studio otkazuje trening</td><td>Kredit se vraća svima, jedan mail.</td><td></td></tr>
+  <tr><td>Studio otkazuje trening</td><td>Kredit se vraća svima, jedan mail. U prototipu u Adminu.</td><td></td></tr>
   <tr><td>Prijava bez lozinke</td><td>Kod na mail. Ime, mail i telefon pri registraciji.</td><td></td></tr>
   <tr><td>Tjedni predložak rasporeda</td><td>Jedan tjedan iz kojeg nastaje svaki sljedeći.</td><td></td></tr>
   <tr><td>Početni klijenti (točka 12)</td><td>Unos preostalih treninga prije pokretanja.</td><td></td></tr>
@@ -237,21 +260,8 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
   <li>Mobilna aplikacija: web stranica za mobitel, bez prave aplikacije</li>
 </ul>
 
-<h2>Što mi treba od tebe</h2>
-<div class="note"><ol>
-  <li>Neograničeni paket: da ili ne, i koliko dana?</li>
-  <li>Sculpt Room: što trener dobiva za 100 €?</li>
-  <li>Instruktori: ista cijena po treningu? Prag 15 za sve?</li>
-  <li>Benefit Systems: što piše u ugovoru o cijenama i ulazima?</li>
-  <li>Corvus: imaš li ugovor?</li>
-  <li>Kako sad vodite rezervacije i unaprijed plaćene treninge? Koliko ljudi ima neiskorištene?</li>
-  <li>Raspored bicikala u sobi: redovi, brojevi i gdje stoji instruktor.</li>
-  <li>Tablica iznad: da ili ne za svaki prijedlog.</li>
-</ol></div>
-<p>Fiskalizaciju provjeravam s računovođom. Račune (Stripe, domena, baza, hosting, mail) otvaramo na ime Točkice, a ja sam dodan kao admin.</p>
-
 <h2>Dodatak: gotov sustav</h2>
-<p>Provjerio sam Glofox, bsport, Momence, Eversports, Mindbody, Wellness Living, Hapana i Anolla. Nijedna ne navodi Corvus Pay, trošenje paketa po isteku ni Multisport popust. Predlažem vlastiti sustav u fazama, jer sama vraćaš kredite i određuješ cijene. Alternativa je Momence ili bsport uz zakrpe za Multisport, Sculpt Room i plaćanje.</p>
+<p>Provjerio sam Glofox, bsport, Momence, Eversports, Mindbody, Wellness Living, Hapana i Anolla. Nijedna ne navodi Corvus Pay, trošenje paketa po isteku ni Multisport popust.</p>
 
 <footer>Ovaj dokument ažuriram kako se odluke mijenjaju. Zadnje ažuriranje: 27.10.2026.</footer>
 

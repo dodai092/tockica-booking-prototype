@@ -6,6 +6,7 @@ import {
   spendCredit,
   returnCredit,
   balance,
+  nextExpiry,
   NoCreditError,
 } from '../src/ledger.js';
 
@@ -110,4 +111,20 @@ test('balance counts only unexpired remaining credits', () => {
   lot(store, { remaining: 1, accountId: 'acc_test2', expiresAt: '2026-11-30T00:00:00.000Z' });
 
   assert.equal(balance(store, 'acc_test1', NOW), 2);
+});
+
+test('nextExpiry is the earliest expiry among usable lots', () => {
+  const store = createStore(NOW);
+  lot(store, { expiresAt: '2026-12-01T00:00:00.000Z' });
+  lot(store, { expiresAt: '2026-11-20T00:00:00.000Z' });
+  lot(store, { expiresAt: '2026-11-10T00:00:00.000Z', remaining: 0 });
+  lot(store, { expiresAt: '2026-11-01T00:00:00.000Z' });
+  lot(store, { accountId: 'acc_test2', expiresAt: '2026-11-06T00:00:00.000Z' });
+
+  assert.equal(nextExpiry(store, 'acc_test1', NOW), '2026-11-20T00:00:00.000Z');
+});
+
+test('nextExpiry is null when there is no usable credit', () => {
+  const store = createStore(NOW);
+  assert.equal(nextExpiry(store, 'acc_test1', NOW), null);
 });

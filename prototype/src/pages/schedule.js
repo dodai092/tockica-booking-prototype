@@ -1,6 +1,8 @@
 import { studioTime } from '../time.js';
 import { isBookable } from '../schedule.js';
-import { balance, NoCreditError } from '../ledger.js';
+import { balance, nextExpiry, NoCreditError } from '../ledger.js';
+import { purchasePack, canPurchase } from '../purchase.js';
+import { priceFor } from '../admin.js';
 import {
   bookBike,
   takenBikes,
@@ -32,6 +34,8 @@ const timeFormat = new Intl.DateTimeFormat('hr-HR', {
   hour: '2-digit',
   minute: '2-digit',
 });
+
+const dayMonthFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', day: 'numeric', month: 'numeric' });
 
 const whenFormat = new Intl.DateTimeFormat('hr-HR', {
   timeZone: 'Europe/Zagreb',
@@ -93,6 +97,8 @@ function renderAccount() {
   const text = `Kredit: ${balance(store, select.value, new Date())}`;
   if ($('balance').textContent && $('balance').textContent !== text) pop($('balance'), 0.85);
   $('balance').textContent = text;
+  const expiry = nextExpiry(store, select.value, new Date());
+  $('expiry').textContent = expiry ? `ističe ${dayMonthFormat.format(new Date(expiry))}` : '';
 }
 
 // Moves to another day or week, sliding the list from the side the new day sits on.
@@ -154,12 +160,21 @@ function instructorName(id) {
 
 function statusButton(session, current, hasBike) {
   const startsAt = Date.parse(session.startsAt);
+  if (session.cancelled) {
+    const cancelled = el('button', 'otkazano', 'btn');
+    cancelled.disabled = true;
+    return cancelled;
+  }
   if (current.getTime() >= startsAt) {
-    const past = el('button', 'rezerviraj', 'btn');
+    const past = el('button', 'završeno', 'btn');
     past.disabled = true;
     return past;
   }
-  if (!isBookable(session, current)) return el('button', 'uskoro', 'btn');
+  if (!isBookable(session, current)) {
+    const soon = el('button', 'uskoro', 'btn');
+    soon.disabled = true;
+    return soon;
+  }
   if (takenBikes(store, session.id).length >= BIKE_COUNT) {
     const waitlist = el('button', 'lista čekanja', 'btn');
     waitlist.addEventListener('click', () => joinList(session.id));
@@ -206,7 +221,11 @@ function renderClasses() {
     const mine = store.bookings
       .filter((b) => b.classId === session.id && b.accountId === $('account').value && b.status === 'booked')
       .sort((a, b) => a.bikeNo - b.bikeNo);
-    if (current.getTime() < Date.parse(session.startsAt) && isBookable(session, current)) {
+    if (session.cancelled) {
+      info.append(el('div', 'Trening je otkazan', 'meta few'));
+    } else if (current.getTime() < Date.parse(session.releaseOpensAt)) {
+      info.append(el('div', `Otvara se ${whenFormat.format(new Date(session.releaseOpensAt))}`, 'meta'));
+    } else if (current.getTime() < Date.parse(session.startsAt) && isBookable(session, current)) {
       const free = BIKE_COUNT - takenBikes(store, session.id).length;
       const text = free === 0 ? 'Popunjeno' : free <= 3 ? `Posljednja mjesta: ${free}` : `Slobodnih bicikala: ${free}`;
       info.append(el('div', text, free <= 3 ? 'meta few' : 'meta'));
@@ -416,6 +435,43 @@ export function render() {
   renderBikes();
   renderMine();
 }
+
+function renderPacks() {
+  const accountId = $('account').value;
+  const tagged = store.accounts.find((a) => a.id === accountId).multisportTag;
+  const list = $('packs');
+  list.replaceChildren();
+  for (const pack of store.packs) {
+    const price = priceFor(store, accountId, pack.id);
+    const sub = `Vrijedi ${pack.validDays} dana${tagged && price !== pack.priceEur ? ', Multisport cijena' : ''}`;
+    const text = el('div', undefined, 'g-main');
+    text.append(el('div', pack.name, 'g-title'), el('div', sub, 'g-sub'));
+    const bought = !canPurchase(store, accountId, pack.id);
+    const buy = el('button', bought ? 'kupljeno' : `${price} €`, 'btn');
+    buy.disabled = bought;
+    buy.addEventListener('click', () => buyPack(pack));
+    const row = el('div', undefined, 'g-row');
+    row.append(text, buy);
+    list.append(row);
+  }
+}
+
+function buyPack(pack) {
+  purchasePack(store, $('account').value, pack.id, new Date());
+  saveStore(store);
+  closeSheet($('buy-sheet')).then(() => {
+    showMessage(`Kupljeno: ${pack.name}. Kredit: ${balance(store, $('account').value, new Date())}.`);
+    render();
+  });
+}
+
+const buySheet = $('buy-sheet');
+bindSheet(buySheet);
+$('buy-close').addEventListener('click', () => closeSheet(buySheet));
+$('buy').addEventListener('click', () => {
+  renderPacks();
+  openSheet(buySheet);
+});
 
 const bookSheet = $('book-sheet');
 bindSheet(bookSheet);
