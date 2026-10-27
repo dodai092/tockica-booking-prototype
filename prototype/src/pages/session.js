@@ -43,9 +43,15 @@ function seed(now) {
   return store;
 }
 
+let shared = null;
+
+// One store object for all three tabs, so a change in one shows in the others.
 export function loadStore() {
-  const saved = sessionStorage.getItem(KEY);
-  return saved ? JSON.parse(saved) : seed(new Date());
+  if (!shared) {
+    const saved = sessionStorage.getItem(KEY);
+    shared = saved ? JSON.parse(saved) : seed(new Date());
+  }
+  return shared;
 }
 
 export function saveStore(store) {

@@ -20,7 +20,7 @@ const dayFormat = new Intl.DateTimeFormat('hr-HR', {
   month: '2-digit',
 });
 
-const $ = (id) => document.getElementById(id);
+const $ = (id) => document.getElementById('r-' + id);
 const store = loadStore();
 saveStore(store);
 let classId = null;
@@ -165,7 +165,7 @@ function renderBookings(now) {
   }
 }
 
-function render() {
+export function render() {
   const now = new Date();
   renderClassPicker(now);
   const session = store.classes.find((c) => c.id === classId);

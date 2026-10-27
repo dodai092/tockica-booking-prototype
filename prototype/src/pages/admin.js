@@ -12,7 +12,7 @@ import { loadStore, saveStore, resetStore } from './session.js';
 const timeFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', hour: '2-digit', minute: '2-digit' });
 const dayFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', weekday: 'short', day: '2-digit', month: '2-digit' });
 
-const $ = (id) => document.getElementById(id);
+const $ = (id) => document.getElementById('a-' + id);
 const store = loadStore();
 saveStore(store);
 
@@ -174,7 +174,7 @@ function renderDemoClasses(now) {
   if (upcoming.some((c) => c.id === previous)) select.value = previous;
 }
 
-function render() {
+export function render() {
   const now = new Date();
   renderAccounts(now);
   renderBookings(now);

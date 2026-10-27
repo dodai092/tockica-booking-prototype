@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Točkica: booking prototip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <img class="logo" src="assets/tockica-logo.svg" alt="Točkica na i">
+</header>
+
+<main>
+  <section id="panel-raspored" class="panel" role="tabpanel" aria-label="Raspored">
+  <nav id="s-week" class="week" aria-label="Dani"></nav>
+  <div class="account">
+    <label>Demo račun
+      <select id="s-account"></select>
+    </label>
+    <span id="s-balance" class="balance"></span>
+  </div>
+  <a id="s-mine-link" class="mine-link" href="#" hidden></a>
+  <p id="s-message" class="message" role="status"></p>
+  <section id="s-classes" class="classes" aria-label="Treninzi"></section>
+  <section id="s-mine" class="classes" aria-label="Moje rezervacije"></section>
+  <section id="s-bikes" class="bikes" hidden aria-label="Odabir bajka"></section>
+  </section>
+
+  <section id="panel-recepcija" class="panel" role="tabpanel" aria-label="Recepcija" hidden>
+  <label class="field">Trening
+    <select id="r-class"></select>
+  </label>
+  <section id="r-summary" class="summary" aria-label="Trening"></section>
+  <button id="r-close" class="btn" hidden>Zatvori trening</button>
+  <section id="r-bookings" class="roster" aria-label="Rezervacije"></section>
+  <p id="r-message" class="message" role="status"></p>
+  </section>
+
+  <section id="panel-admin" class="panel" role="tabpanel" aria-label="Admin" hidden>
+  <h2>Računi</h2>
+  <section id="a-accounts" aria-label="Računi"></section>
+
+  <h2>Nadolazeće rezervacije</h2>
+  <section id="a-bookings" aria-label="Rezervacije"></section>
+
+  <h2>Paketi</h2>
+  <section id="a-packs" aria-label="Paketi"></section>
+
+  <aside class="demo-panel" aria-label="Demo alati">
+    <h2>Demo alati</h2>
+    <p class="meta">Samo za prototip. Ovo ne postoji u pravoj aplikaciji.</p>
+    <section class="demo" aria-label="Demo alati">
+      <label class="field">Trening
+        <select id="a-demo-class"></select>
+      </label>
+      <p>
+        <button id="a-fill" class="btn secondary">Napuni trening (sve bajkove)</button>
+        <button id="a-soon" class="btn secondary">Dodaj trening za 20 min</button>
+      </p>
+    </section>
+    <p><button id="a-reset" class="btn secondary">Resetiraj demo</button></p>
+  </aside>
+
+  <p id="a-message" class="message" role="status"></p>
+  </section>
+</main>
+
+<nav class="tab-bar" role="tablist" aria-label="Stranice">
+    <button type="button" role="tab" id="tab-raspored" data-tab="raspored" aria-controls="panel-raspored" aria-label="Raspored" title="Raspored"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span aria-hidden="true">Raspored</span></button>
+    <button type="button" role="tab" id="tab-recepcija" data-tab="recepcija" aria-controls="panel-recepcija" aria-label="Recepcija" title="Recepcija"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6"/></svg><span aria-hidden="true">Recepcija</span></button>
+    <button type="button" role="tab" id="tab-admin" data-tab="admin" aria-controls="panel-admin" aria-label="Admin" title="Admin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span aria-hidden="true">Admin</span></button>
+</nav>
+
+<script type="module" src="src/pages/app.js"></script>
+</body>
+</html>

@@ -276,7 +276,7 @@ h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; text-transform: up
 .card .few { color: #B54708; font-weight: 500; }
 .mine-link { display: inline-block; margin-bottom: 8px; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 14px; color: #2B8A27; }
 
-/* Bottom nav: floating pill, icons only, current page shaded. */
+/* Bottom nav: floating pill, icons only. The chosen tab is shaded and shows its name for 3 seconds. */
 .tab-bar {
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 20;
@@ -286,23 +286,33 @@ h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; text-transform: up
   border: 1px solid rgba(255,255,255,.7);
   box-shadow: 0 8px 28px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.08);
 }
-.tab-bar a {
+.tab-bar button {
   display: flex; align-items: center; justify-content: center;
-  min-width: 56px; min-height: 52px; border-radius: 99px; color: var(--muted); text-decoration: none;
+  min-width: 56px; min-height: 52px; padding: 0; border: 0; border-radius: 99px;
+  background: none; color: var(--muted); cursor: pointer;
+  font-family: Montserrat, sans-serif; font-weight: 600; font-size: 13px;
+  transition: background .3s, color .2s, padding .3s, transform .1s ease-out;
 }
-.tab-bar svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.tab-bar a[aria-current="page"] { color: var(--dark); background: rgba(35,42,53,.1); }
-.tab-bar a[aria-current="page"] svg { stroke-width: 2.1; }
-.tab-bar a:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.tab-bar button:active { transform: scale(.94); }
+.tab-bar svg { width: 24px; height: 24px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab-bar button[aria-selected="true"] { color: var(--dark); background: rgba(35,42,53,.1); }
+.tab-bar button[aria-selected="true"] svg { stroke-width: 2.1; }
+.tab-bar button.show-label { padding: 0 16px; }
+.tab-bar span {
+  max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+  transition: max-width .3s ease, opacity .2s ease, margin .3s ease;
+}
+.tab-bar button.show-label span { max-width: 120px; opacity: 1; margin-left: 8px; }
+.tab-bar button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 @media (prefers-reduced-transparency: reduce) { .tab-bar { background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; } }
 
-/* The current page's label shows for 3 seconds after load, then folds away. */
-.tab-bar a[aria-current="page"] { gap: 8px; padding: 0 16px; }
-.tab-bar a span {
-  max-width: 120px; overflow: hidden; white-space: nowrap;
-  font-family: Montserrat, sans-serif; font-weight: 600; font-size: 13px;
-  animation: tab-label-hide .3s ease 3s forwards;
+/* Switching tabs: the new panel slides in from the side it sits on in the bar. */
+.panel.from-right { animation: panel-in-right .28s cubic-bezier(.2, .8, .2, 1); }
+.panel.from-left { animation: panel-in-left .28s cubic-bezier(.2, .8, .2, 1); }
+@keyframes panel-in-right { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes panel-in-left { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .panel.from-right, .panel.from-left { animation: none; }
+  .tab-bar button, .tab-bar span { transition: none; }
 }
-@keyframes tab-label-hide { to { max-width: 0; opacity: 0; margin-left: -8px; } }
-@media (prefers-reduced-motion: reduce) { .tab-bar a span { animation-duration: .01s; } }

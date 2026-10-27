@@ -60,7 +60,7 @@ let weekOffset = Math.floor(
   (Date.parse(`${selectedDay}T00:00:00Z`) - Date.parse(`${thisMonday}T00:00:00Z`)) / (7 * 24 * 60 * 60 * 1000),
 );
 
-const $ = (id) => document.getElementById(id);
+const $ = (id) => document.getElementById('s-' + id);
 
 function el(tag, text, className) {
   const node = document.createElement(tag);
@@ -379,7 +379,7 @@ function reserve(bikeNo) {
   render();
 }
 
-function render() {
+export function render() {
   saveStore(store);
   renderAccount();
   renderWeek();
@@ -387,5 +387,10 @@ function render() {
   renderBikes();
   renderMine();
 }
+
+$('mine-link').addEventListener('click', (event) => {
+  event.preventDefault();
+  $('mine').scrollIntoView({ behavior: 'smooth' });
+});
 
 render();
