@@ -295,7 +295,10 @@ body { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
 /* Bike buttons: as wide as 10 across allows on a phone, and 48px tall. */
 .bike { min-height: 48px; }
 @media (max-width: 640px) {
-  .card .bike-grid { margin: 0 -12px; gap: 4px 3px; grid-template-columns: repeat(5, 1fr) 10px repeat(5, 1fr); }
+  /* The panel itself is 12px wider on each side, so nothing pokes out of it and the open animation's clip cannot cut the edge bikes. */
+  .card .bikes { margin-left: -12px; margin-right: -12px; }
+  .card .bikes > :not(.bike-grid) { margin-left: 12px; margin-right: 12px; }
+  .card .bike-grid { gap: 4px 3px; grid-template-columns: repeat(5, 1fr) 10px repeat(5, 1fr); }
 }
 
 @media (prefers-color-scheme: dark) {
