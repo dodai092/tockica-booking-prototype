@@ -12,10 +12,13 @@ import {
   NotBookableError,
 } from '../booking.js';
 import { loadStore, saveStore, mondayOf } from './session.js';
+import { fadeIn, slideIn, pop, dimTo, undimFrom, ring, expand, collapse, release } from './motion.js';
 
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
 const BIKE_COUNT = 20;
 const WEEKS_SHOWN = 3;
+// The bike panel sits in the card's grid, so it also cancels the 12px row gap while shut.
+const PANEL_SHUT = { marginTop: '-12px' };
 
 const ERROR_TEXT = {
   BikeTakenError: 'Bajk je upravo zauzet.',
@@ -73,6 +76,7 @@ function showMessage(text, isError = false) {
   const node = $('message');
   node.textContent = text;
   node.classList.toggle('error', isError);
+  if (text) fadeIn(node, -4, 200);
 }
 
 function renderAccount() {
@@ -86,9 +90,27 @@ function renderAccount() {
     select.addEventListener('change', () => {
       openClassId = null;
       render();
+      fadeIn($('classes'), 6);
+      fadeIn($('mine'), 6);
     });
   }
-  $('balance').textContent = `Kredit: ${balance(store, select.value, new Date())}`;
+  const text = `Kredit: ${balance(store, select.value, new Date())}`;
+  if ($('balance').textContent && $('balance').textContent !== text) pop($('balance'), 0.85);
+  $('balance').textContent = text;
+}
+
+// Moves to another day or week, sliding the list from the side the new day sits on.
+function move(change) {
+  const dayBefore = selectedDay;
+  const weekBefore = weekOffset;
+  change();
+  openClassId = null;
+  render();
+  if (selectedDay === dayBefore) return;
+  const direction = selectedDay > dayBefore ? 1 : -1;
+  slideIn($('classes'), direction);
+  if (weekOffset !== weekBefore) slideIn($('week'), direction);
+  pop($('week').querySelector('.day[aria-pressed="true"]'), 0.92);
 }
 
 function renderWeek() {
@@ -102,11 +124,10 @@ function renderWeek() {
   );
   const prev = el('button', '‹', 'nav-week');
   prev.disabled = weekOffset === 0;
-  prev.addEventListener('click', () => {
+  prev.addEventListener('click', () => move(() => {
     weekOffset -= 1;
     selectedDay = studioTime.addDays(monday, -7);
-    render();
-  });
+  }));
   nav.append(prev);
 
   for (let i = 0; i < 7; i += 1) {
@@ -116,21 +137,18 @@ function renderWeek() {
     const dot = el('span', undefined, myDays.has(day) ? 'dot mine-dot' : classDays.has(day) ? 'dot' : 'dot none');
     button.append(el('small', DAY_NAMES[i]), el('strong', day.slice(8)), dot);
     if (myDays.has(day)) button.setAttribute('aria-label', `${DAY_NAMES[i]} ${day.slice(8)}, imaš rezervaciju`);
-    button.addEventListener('click', () => {
+    button.addEventListener('click', () => move(() => {
       selectedDay = day;
-      openClassId = null;
-      render();
-    });
+    }));
     nav.append(button);
   }
 
   const next = el('button', '›', 'nav-week');
   next.disabled = weekOffset === WEEKS_SHOWN - 1;
-  next.addEventListener('click', () => {
+  next.addEventListener('click', () => move(() => {
     weekOffset += 1;
     selectedDay = studioTime.addDays(monday, 7);
-    render();
-  });
+  }));
   nav.append(next);
 }
 
@@ -154,12 +172,42 @@ function statusButton(session, current, hasBike) {
   const isOpen = openClassId === session.id;
   const button = el('button', isOpen ? 'zatvori' : hasBike ? 'dodaj bajk' : 'rezerviraj', isOpen ? 'btn secondary' : 'btn');
   button.addEventListener('click', () => {
-    openClassId = isOpen ? null : session.id;
-    pickedBike = null;
-    guestName = '';
-    render();
+    if (isOpen) closeCard();
+    else openCard(session.id);
   });
   return button;
+}
+
+function openCard(classId) {
+  openClassId = classId;
+  pickedBike = null;
+  guestName = '';
+  render();
+  const card = $('bikes').closest('.card');
+  expand($('bikes'), PANEL_SHUT);
+  ring(card, true);
+  for (const other of $('classes').querySelectorAll('.card.dimmed')) dimTo(other, 0.55);
+}
+
+// Folds the panel shut first, then re-renders without it. `change` runs just before the render.
+let closing = false;
+function closeCard(change = () => {}, after = () => {}) {
+  if (closing) return;
+  closing = true;
+  const open = openClassId;
+  collapse($('bikes'), PANEL_SHUT).then(() => {
+    release($('bikes'));
+    closing = false;
+    openClassId = null;
+    pickedBike = null;
+    change();
+    render();
+    for (const card of $('classes').querySelectorAll('.card')) {
+      if (card.dataset.classId === open) ring(card, false);
+      else undimFrom(card, 0.55);
+    }
+    after();
+  });
 }
 
 function renderClasses() {
@@ -179,6 +227,7 @@ function renderClasses() {
 
   for (const session of sessions) {
     const card = el('article', undefined, 'card');
+    card.dataset.classId = session.id;
     const info = el('div');
     info.append(
       el('div', timeFormat.format(new Date(session.startsAt)), 'time'),
@@ -196,11 +245,14 @@ function renderClasses() {
     card.append(info, statusButton(session, current, mine.length > 0));
     if (mine.length && current.getTime() < Date.parse(session.startsAt)) {
       const bikes = mine.map((b) => (b.guestName ? `${b.bikeNo} (${b.guestName})` : b.bikeNo)).join(', ');
-      info.append(el('div', `${mine.length > 1 ? 'Tvoji bajkovi' : 'Tvoj bajk'}: ${bikes}`, 'mine'));
+      const block = el('div', undefined, 'mine-block');
+      block.dataset.bookings = mine.map((b) => b.id).join(' ');
+      block.append(el('div', `${mine.length > 1 ? 'Tvoji bajkovi' : 'Tvoj bajk'}: ${bikes}`, 'mine'));
       for (const booking of mine) {
-        info.append(...cancelControl(booking, session, current, mine.length > 1 ? `otkaži bajk ${booking.bikeNo}` : 'otkaži'));
+        block.append(...cancelControl(booking, session, current, mine.length > 1 ? `otkaži bajk ${booking.bikeNo}` : 'otkaži'));
       }
-      info.append(el('div', cancelNote(session, current, true), 'meta'));
+      block.append(el('div', cancelNote(session, current, true), 'meta'));
+      info.append(block);
     }
     if (openClassId) card.classList.toggle('dimmed', session.id !== openClassId);
     if (session.id === openClassId) card.append($('bikes'));
@@ -223,28 +275,29 @@ function cancelNote(session, current, short = false) {
 // One extra step so a stray tap does not cancel. The question says what happens to the credit.
 function cancelControl(booking, session, current, label) {
   if (confirmingId !== booking.id) {
-    const cancel = el('button', label, 'btn secondary cancel');
-    cancel.addEventListener('click', () => {
-      confirmingId = booking.id;
-      render();
-    });
+    const cancel = el('button', label, 'btn secondary cancel cancel-ctl');
+    cancel.addEventListener('click', () => toggleConfirm(booking.id));
     return [cancel];
   }
   const refund = current < cancelDeadline(session) ? 'Kredit se vraća.' : 'Kredit se ne vraća.';
-  const yes = el('button', 'Da, otkaži', 'btn secondary cancel');
+  const yes = el('button', 'Da, otkaži', 'btn secondary cancel cancel-ctl');
   yes.addEventListener('click', () => cancelMine(booking.id));
-  const no = el('button', 'Ne', 'btn secondary cancel');
-  no.addEventListener('click', () => {
-    confirmingId = null;
-    render();
-  });
-  return [el('div', `Otkazati bajk ${booking.bikeNo}? ${refund}`, 'mine'), yes, no];
+  const no = el('button', 'Ne', 'btn secondary cancel cancel-ctl');
+  no.addEventListener('click', () => toggleConfirm(null));
+  return [el('div', `Otkazati bajk ${booking.bikeNo}? ${refund}`, 'mine cancel-ctl'), yes, no];
+}
+
+function toggleConfirm(bookingId) {
+  confirmingId = bookingId;
+  render();
+  for (const node of document.querySelectorAll('#panel-raspored .cancel-ctl')) fadeIn(node, 4, 180);
 }
 
 function renderMine() {
   const section = $('mine');
   const count = upcomingBookings(store, $('account').value, new Date()).length;
   const badge = document.getElementById('badge-raspored');
+  if (badge.textContent !== String(count) && count > 0) pop(badge, 0.6);
   badge.hidden = count === 0;
   badge.textContent = String(count);
   $('mine-link').hidden = count === 0;
@@ -258,6 +311,7 @@ function renderMine() {
   }
   for (const { booking, session } of rows) {
     const card = el('article', undefined, 'card');
+    card.dataset.booking = booking.id;
     const info = el('div');
     const guest = booking.guestName ? ` (${booking.guestName})` : '';
     info.append(
@@ -293,8 +347,11 @@ function renderBikes() {
     button.disabled = taken.includes(bikeNo);
     button.setAttribute('aria-pressed', String(bikeNo === pickedBike));
     button.addEventListener('click', () => {
+      const first = pickedBike === null;
       pickedBike = bikeNo;
       render();
+      pop($('bikes').querySelector('.bike[aria-pressed="true"]'), 0.85);
+      if (first) fadeIn($('bikes').querySelector('.confirm'), 6, 200);
     });
     grid.append(button);
     // Two rows of 10 with a gap after bike 5 and bike 15.
@@ -317,11 +374,7 @@ function renderBikes() {
     const book = el('button', `Rezerviraj bajk ${pickedBike}`, 'btn');
     book.addEventListener('click', () => reserve(pickedBike));
     const cancel = el('button', 'Odustani', 'btn secondary');
-    cancel.addEventListener('click', () => {
-      openClassId = null;
-      pickedBike = null;
-      render();
-    });
+    cancel.addEventListener('click', () => closeCard());
     confirm.append(el('span', 'Rezervacija košta 1 kredit.', 'meta'), book, cancel);
   } else {
     confirm.append(el('span', 'Odaberi slobodan bajk. Rezervacija košta 1 kredit.', 'meta'));
@@ -344,7 +397,16 @@ function joinList(classId) {
   render();
 }
 
+// The booking's card, and its line in the class card when it is the only bike there, fold away first.
 function cancelMine(bookingId) {
+  const leaving = [
+    document.querySelector(`#s-mine [data-booking="${bookingId}"]`),
+    document.querySelector(`#s-classes .mine-block[data-bookings="${bookingId}"]`),
+  ];
+  Promise.all(leaving.map((node) => collapse(node))).then(() => doCancel(bookingId));
+}
+
+function doCancel(bookingId) {
   confirmingId = null;
   const current = new Date();
   const booking = cancelBooking(store, bookingId, current);
@@ -362,7 +424,7 @@ function cancelMine(bookingId) {
 
 function reserve(bikeNo) {
   try {
-    bookBike(store, {
+    const booking = bookBike(store, {
       classId: openClassId,
       bikeNo,
       accountId: $('account').value,
@@ -370,9 +432,17 @@ function reserve(bikeNo) {
       now: new Date(),
     });
     showMessage(`Rezervirano: bajk ${bikeNo}. Kredit: ${balance(store, $('account').value, new Date())}.`);
-    openClassId = null;
-    pickedBike = null;
-    guestName = '';
+    // Fold the panel away, then let the new booking open into the lists.
+    closeCard(
+      () => {
+        guestName = '';
+      },
+      () => {
+        expand(document.querySelector(`#s-mine [data-booking="${booking.id}"]`));
+        expand(document.querySelector(`#s-classes .mine-block[data-bookings~="${booking.id}"]`));
+      },
+    );
+    return;
   } catch (err) {
     showMessage(ERROR_TEXT[err.name] ?? 'Nešto je pošlo krivo.', true);
     if (!(err instanceof BikeTakenError || err instanceof NoCreditError || err instanceof NotBookableError)) {

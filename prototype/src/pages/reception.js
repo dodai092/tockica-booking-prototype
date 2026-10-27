@@ -2,6 +2,7 @@ import { studioTime } from '../time.js';
 import { checkIn, checkInOpen, closeClass, correctStatus } from '../checkin.js';
 import { markNoShow } from '../booking.js';
 import { loadStore, saveStore } from './session.js';
+import { fadeIn, pop } from './motion.js';
 
 const STATUS_TEXT = {
   booked: 'Rezervirano',
@@ -40,10 +41,12 @@ function showMessage(text, isError = false) {
   const node = $('message');
   node.textContent = text;
   node.classList.toggle('error', isError);
+  if (text) fadeIn(node, -4, 200);
 }
 
 // Runs an action, saves, and re-renders. Errors show as a message.
 function act(action) {
+  const before = new Map(store.bookings.map((b) => [b.id, b.status]));
   try {
     action();
     showMessage('Spremljeno.');
@@ -52,6 +55,15 @@ function act(action) {
   }
   saveStore(store);
   render();
+  // Whatever changed status pops, and so do the counts.
+  let changed = false;
+  for (const row of $('bookings').querySelectorAll('.row')) {
+    if (before.get(row.dataset.booking) !== row.dataset.status) {
+      pop(row.querySelector('.pill'), 0.8);
+      changed = true;
+    }
+  }
+  if (changed) for (const count of $('summary').querySelectorAll('.s-counts strong')) pop(count, 0.85);
 }
 
 function renderClassPicker(now) {
@@ -155,6 +167,8 @@ function renderBookings(now) {
   for (const booking of rows) {
     const account = store.accounts.find((a) => a.id === booking.accountId);
     const row = el('article', undefined, `row row-${booking.status}`);
+    row.dataset.booking = booking.id;
+    row.dataset.status = booking.status;
     const who = el('div', undefined, 'who');
     who.append(el('div', account?.name ?? '', 'name'));
     if (booking.guestName) who.append(el('div', `Gost: ${booking.guestName}`, 'meta'));
@@ -177,6 +191,8 @@ $('class').addEventListener('change', (event) => {
   classId = event.target.value;
   showMessage('');
   render();
+  fadeIn($('summary'), 6);
+  fadeIn($('bookings'), 6);
 });
 
 $('close').addEventListener('click', () => {

@@ -339,3 +339,8 @@ body { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
   .tab-badge { color: #111418; }
   .btn:disabled { background: #2a3340; color: #8b93a0; }
 }
+
+/* Press feedback: a small squeeze, released with a spring. */
+.btn, .day, .nav-week, .bike { transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), background-color .2s, color .2s, border-color .2s; }
+.btn:active:not(:disabled), .day:active, .nav-week:active:not(:disabled), .bike:active:not(:disabled) { transform: scale(.96); transition-duration: .08s; }
+@media (prefers-reduced-motion: reduce) { .btn, .day, .nav-week, .bike { transition: none; } }
