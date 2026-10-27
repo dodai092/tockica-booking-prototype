@@ -22,22 +22,8 @@ export const slideIn = (node, direction) =>
 export const pop = (node, from = 0.9) =>
   run(node, [{ transform: `scale(${from})` }, { transform: 'none' }], { duration: 380, easing: SPRING });
 
-export const dimTo = (node, opacity) => run(node, [{ opacity: 1 }, { opacity }], { duration: 260 });
-export const undimFrom = (node, opacity) => run(node, [{ opacity }, { opacity: 1 }], { duration: 260 });
-
-// A selection ring that fades in or out on a card.
-export function ring(node, on) {
-  const cs = getComputedStyle(node);
-  const green = getComputedStyle(document.documentElement).getPropertyValue('--green').trim();
-  const border = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
-  const shown = { boxShadow: `0 0 0 1px ${green}`, borderColor: green };
-  const hidden = { boxShadow: `0 0 0 1px transparent`, borderColor: on ? border : cs.borderColor };
-  return run(node, on ? [hidden, shown] : [shown, { ...hidden, borderColor: border }], { duration: 260 });
-}
-
-// Height, spacing and opacity between "shut" and the node's natural size. `shutOverrides`
-// lets a node that sits in a grid cancel the row gap (marginTop: '-12px').
-function boxFrames(node, shutOverrides) {
+// Height, spacing and opacity between "shut" and the node's natural size.
+function boxFrames(node) {
   const cs = getComputedStyle(node);
   const open = {
     height: `${node.getBoundingClientRect().height}px`,
@@ -58,14 +44,13 @@ function boxFrames(node, shutOverrides) {
     marginBottom: '0px',
     borderTopWidth: '0px',
     borderBottomWidth: '0px',
-    ...shutOverrides,
   };
   return [open, shut];
 }
 
-export function expand(node, shutOverrides) {
+export function expand(node) {
   if (!node || reduced()) return Promise.resolve();
-  const [open, shut] = boxFrames(node, shutOverrides);
+  const [open, shut] = boxFrames(node);
   node.style.overflow = 'hidden';
   return run(node, [shut, open], { duration: 300 }).finally(() => {
     node.style.overflow = '';
@@ -73,9 +58,9 @@ export function expand(node, shutOverrides) {
 }
 
 // Holds the shut state afterwards, because callers remove or re-render the node next.
-export function collapse(node, shutOverrides) {
+export function collapse(node) {
   if (!node || reduced()) return Promise.resolve();
-  const [open, shut] = boxFrames(node, shutOverrides);
+  const [open, shut] = boxFrames(node);
   node.style.overflow = 'hidden';
   return run(node, [open, shut], { duration: 240, fill: 'forwards' });
 }

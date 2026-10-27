@@ -12,13 +12,12 @@ import {
   NotBookableError,
 } from '../booking.js';
 import { loadStore, saveStore, mondayOf } from './session.js';
-import { fadeIn, slideIn, pop, dimTo, undimFrom, ring, expand, collapse, release } from './motion.js';
+import { fadeIn, slideIn, pop, expand, collapse } from './motion.js';
+import { openSheet, closeSheet, bindSheet } from './sheet.js';
 
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
 const BIKE_COUNT = 20;
 const WEEKS_SHOWN = 3;
-// The bike panel sits in the card's grid, so it also cancels the 12px row gap while shut.
-const PANEL_SHUT = { marginTop: '-12px' };
 
 const ERROR_TEXT = {
   BikeTakenError: 'Bicikl je upravo zauzet.',
@@ -72,8 +71,7 @@ function el(tag, text, className) {
   return node;
 }
 
-function showMessage(text, isError = false) {
-  const node = $('message');
+function showMessage(text, isError = false, node = $('message')) {
   node.textContent = text;
   node.classList.toggle('error', isError);
   if (text) fadeIn(node, -4, 200);
@@ -169,51 +167,24 @@ function statusButton(session, current, hasBike) {
     waitlist.addEventListener('click', () => joinList(session.id));
     return waitlist;
   }
-  const isOpen = openClassId === session.id;
-  const button = el('button', isOpen ? 'zatvori' : hasBike ? 'dodaj bicikl' : 'rezerviraj', isOpen ? 'btn secondary' : 'btn');
-  button.addEventListener('click', () => {
-    if (isOpen) closeCard();
-    else openCard(session.id);
-  });
+  const button = el('button', hasBike ? 'dodaj bicikl' : 'rezerviraj', 'btn');
+  button.addEventListener('click', () => openBooking(session));
   return button;
 }
 
-function openCard(classId) {
-  openClassId = classId;
+function openBooking(session) {
+  openClassId = session.id;
   pickedBike = null;
   guestName = '';
-  render();
-  const card = $('bikes').closest('.card');
-  expand($('bikes'), PANEL_SHUT);
-  ring(card, true);
-  for (const other of $('classes').querySelectorAll('.card.dimmed')) dimTo(other, 0.55);
-}
-
-// Folds the panel shut first, then re-renders without it. `change` runs just before the render.
-let closing = false;
-function closeCard(change = () => {}, after = () => {}) {
-  if (closing) return;
-  closing = true;
-  const open = openClassId;
-  collapse($('bikes'), PANEL_SHUT).then(() => {
-    release($('bikes'));
-    closing = false;
-    openClassId = null;
-    pickedBike = null;
-    change();
-    render();
-    for (const card of $('classes').querySelectorAll('.card')) {
-      if (card.dataset.classId === open) ring(card, false);
-      else undimFrom(card, 0.55);
-    }
-    after();
-  });
+  $('book-title').textContent = session.name;
+  $('book-sub').textContent = [whenFormat.format(new Date(session.startsAt)), instructorName(session.instructorId)].filter(Boolean).join(' · ');
+  showMessage('', false, $('book-message'));
+  renderBikes();
+  openSheet($('book-sheet'));
 }
 
 function renderClasses() {
   const list = $('classes');
-  // Park the bike panel outside the list so replaceChildren does not detach it.
-  list.after($('bikes'));
   list.replaceChildren();
   const current = new Date();
   const sessions = store.classes
@@ -254,8 +225,6 @@ function renderClasses() {
       block.append(el('div', cancelNote(session, current, true), 'meta'));
       info.append(block);
     }
-    if (openClassId) card.classList.toggle('dimmed', session.id !== openClassId);
-    if (session.id === openClassId) card.append($('bikes'));
     list.append(card);
   }
 }
@@ -327,18 +296,10 @@ function renderMine() {
 }
 
 function renderBikes() {
+  if (!openClassId) return;
   const panel = $('bikes');
-  if (!openClassId) {
-    panel.hidden = true;
-    panel.replaceChildren();
-    return;
-  }
-
   const taken = takenBikes(store, openClassId);
-  panel.hidden = false;
   panel.replaceChildren();
-
-  panel.append(el('h2', 'Odaberi bicikl'));
 
   panel.append(el('div', 'Instruktor', 'stage'));
   const grid = el('div', undefined, 'bike-grid');
@@ -349,9 +310,9 @@ function renderBikes() {
     button.addEventListener('click', () => {
       const first = pickedBike === null;
       pickedBike = bikeNo;
-      render();
+      renderBikes();
       pop($('bikes').querySelector('.bike[aria-pressed="true"]'), 0.85);
-      if (first) fadeIn($('bikes').querySelector('.confirm'), 6, 200);
+      if (first) fadeIn($('book-bar'), 6, 200);
     });
     grid.append(button);
     // Two rows of 10 with a gap after bike 5 and bike 15.
@@ -369,17 +330,11 @@ function renderBikes() {
   guest.append(guestInput);
   panel.append(guest);
 
-  const confirm = el('div', undefined, 'confirm');
-  if (pickedBike) {
-    const book = el('button', `Rezerviraj bicikl ${pickedBike}`, 'btn');
-    book.addEventListener('click', () => reserve(pickedBike));
-    const cancel = el('button', 'Odustani', 'btn secondary');
-    cancel.addEventListener('click', () => closeCard());
-    confirm.append(el('span', 'Rezervacija košta 1 kredit.', 'meta'), book, cancel);
-  } else {
-    confirm.append(el('span', 'Odaberi slobodan bicikl. Rezervacija košta 1 kredit.', 'meta'));
-  }
-  panel.append(confirm);
+  const bar = $('book-bar');
+  const book = el('button', pickedBike ? `Rezerviraj bicikl ${pickedBike}` : 'Rezerviraj bicikl', 'btn');
+  book.disabled = !pickedBike;
+  book.addEventListener('click', () => reserve(pickedBike));
+  bar.replaceChildren(el('span', pickedBike ? 'Rezervacija košta 1 kredit.' : 'Odaberi slobodan bicikl. Rezervacija košta 1 kredit.', 'meta'), book);
 }
 
 function mailCount() {
@@ -432,24 +387,20 @@ function reserve(bikeNo) {
       now: new Date(),
     });
     showMessage(`Rezervirano: bicikl ${bikeNo}. Kredit: ${balance(store, $('account').value, new Date())}.`);
-    // Fold the panel away, then let the new booking open into the lists.
-    closeCard(
-      () => {
-        guestName = '';
-      },
-      () => {
-        expand(document.querySelector(`#s-mine [data-booking="${booking.id}"]`));
-        expand(document.querySelector(`#s-classes .mine-block[data-bookings~="${booking.id}"]`));
-      },
-    );
-    return;
+    // Slide the sheet away, then let the new booking open into the lists.
+    closeSheet($('book-sheet')).then(() => {
+      render();
+      expand(document.querySelector(`#s-mine [data-booking="${booking.id}"]`));
+      expand(document.querySelector(`#s-classes .mine-block[data-bookings~="${booking.id}"]`));
+    });
   } catch (err) {
-    showMessage(ERROR_TEXT[err.name] ?? 'Nešto je pošlo krivo.', true);
+    showMessage(ERROR_TEXT[err.name] ?? 'Nešto je pošlo krivo.', true, $('book-message'));
     if (!(err instanceof BikeTakenError || err instanceof NoCreditError || err instanceof NotBookableError)) {
       throw err;
     }
+    if (err instanceof BikeTakenError) pickedBike = null;
+    renderBikes();
   }
-  render();
 }
 
 export function render() {
@@ -460,6 +411,15 @@ export function render() {
   renderBikes();
   renderMine();
 }
+
+const bookSheet = $('book-sheet');
+bindSheet(bookSheet);
+$('book-close').addEventListener('click', () => closeSheet(bookSheet));
+bookSheet.addEventListener('close', () => {
+  openClassId = null;
+  pickedBike = null;
+  guestName = '';
+});
 
 $('mine-link').addEventListener('click', (event) => {
   event.preventDefault();

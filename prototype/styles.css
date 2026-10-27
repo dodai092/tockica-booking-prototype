@@ -99,26 +99,6 @@ main { max-width: 760px; margin: 0 auto; padding: 16px; }
 }
 .btn:disabled { background: var(--border); color: var(--muted); cursor: default; }
 
-.bikes {
-  margin: 16px 0;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-.card .bikes {
-  grid-column: 1 / -1;
-  margin: 4px 0 0;
-  padding: 16px 0 0;
-  background: none;
-  border: 0;
-  border-top: 1px solid var(--border);
-  border-radius: 0;
-}
-.card.dimmed { opacity: .55; }
-.card:has(.bikes:not([hidden])) { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
-.bikes h2 { font-size: 1rem; margin: 0 0 12px; color: var(--ink); text-transform: none; }
-
 .stage {
   max-width: 520px;
   margin: 0 auto 12px;
@@ -170,9 +150,6 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
 .card .mine { font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--green); margin-top: 4px; }
 .card .mine ~ .btn.secondary { margin: 8px 8px 0 0; }
 .bike[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
-.confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
-.confirm .meta { flex: 1 1 100%; }
-.confirm .btn.secondary { margin-left: 0; }
 .message:empty { display: none; }
 .message { min-height: 0; padding: 10px 14px; border-radius: 8px; background: #E8F5E7; color: #1F6B1B; }
 .message.error { background: #FBE9E7; color: #B3261E; }
@@ -295,10 +272,7 @@ body { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
 /* Bike buttons: as wide as 10 across allows on a phone, and 48px tall. */
 .bike { min-height: 48px; }
 @media (max-width: 640px) {
-  /* The panel itself is 12px wider on each side, so nothing pokes out of it and the open animation's clip cannot cut the edge bikes. */
-  .card .bikes { margin-left: -12px; margin-right: -12px; }
-  .card .bikes > :not(.bike-grid) { margin-left: 12px; margin-right: 12px; }
-  .card .bike-grid { gap: 4px 3px; grid-template-columns: repeat(5, 1fr) 10px repeat(5, 1fr); }
+  .bike-grid { gap: 4px 3px; grid-template-columns: repeat(5, 1fr) 10px repeat(5, 1fr); }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -385,6 +359,7 @@ body { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
 .sheet-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: var(--bg); }
 .sheet-head h2 { margin: 0; font-size: 1.125rem; text-transform: none; }
 .sheet-body { padding: 0 16px calc(20px + env(safe-area-inset-bottom)); }
+#s-bikes.sheet-body { padding-bottom: 8px; }
 .sheet-body .g-header:first-child { margin-top: 0; }
 .sheet-line { display: block; }
 .sheet-rule { line-height: 1.45; }
@@ -393,3 +368,10 @@ body { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
 }
 a.g-row { text-decoration: none; }
 a.g-row .sheet-line { color: var(--green-ink); }
+
+/* Booking sheet: the bike map scrolls, the book bar stays at the bottom. */
+.sheet-head .meta { font-size: 0.875rem; color: var(--muted); }
+#s-book-message { margin: 0 16px 8px; }
+.sheet-bar { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--border); }
+.sheet-bar .meta { flex: 1 1 100%; font-size: 0.875rem; color: var(--muted); }
+.sheet-bar .btn { flex: 1 1 100%; }

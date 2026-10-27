@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Točkica: booking prototip</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%233AAA35'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
@@ -29,7 +30,6 @@
   <p id="s-message" class="message" role="status"></p>
   <section id="s-classes" class="classes" aria-label="Treninzi"></section>
   <section id="s-mine" class="classes" aria-label="Moje rezervacije"></section>
-  <section id="s-bikes" class="bikes" hidden aria-label="Odabir bicikla"></section>
   </section>
 
   <section id="panel-recepcija" class="panel" role="tabpanel" aria-label="Recepcija" hidden>
@@ -102,6 +102,19 @@
     </div>
     <p class="g-footer">Adresa, telefon i radno vrijeme s tockicanai.hr.</p>
   </div>
+</dialog>
+
+<dialog id="s-book-sheet" class="sheet" aria-labelledby="s-book-title">
+  <div class="sheet-head">
+    <div>
+      <h2 id="s-book-title"></h2>
+      <div id="s-book-sub" class="meta"></div>
+    </div>
+    <button type="button" class="g-text accent" id="s-book-close">Zatvori</button>
+  </div>
+  <p id="s-book-message" class="message" role="status"></p>
+  <div id="s-bikes" class="sheet-body"></div>
+  <div id="s-book-bar" class="sheet-bar"></div>
 </dialog>
 
 <script type="module" src="src/pages/app.js"></script>
