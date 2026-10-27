@@ -137,6 +137,8 @@ function statusButton(session, current) {
 
 function renderClasses() {
   const list = $('classes');
+  // Park the bike panel outside the list so replaceChildren does not detach it.
+  list.after($('bikes'));
   list.replaceChildren();
   const current = new Date();
   const sessions = store.classes
@@ -166,6 +168,7 @@ function renderClasses() {
       info.append(cancel);
     }
     list.append(card);
+    if (session.id === openClassId) list.append($('bikes'));
   }
 }
 
