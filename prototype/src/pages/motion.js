@@ -85,3 +85,36 @@ export function showBanner(node, text, isError = false) {
   if (wasShown) fadeIn(node, -4, 200);
   else expand(node);
 }
+
+// Shows or hides a node with motion. `enter` runs when it appears, `leave` before it is hidden.
+// With a `text`, a change on a node that stays visible pops.
+export function reveal(node, show, text, enter, leave) {
+  if (show) {
+    delete node.dataset.leaving;
+    release(node);
+    const wasHidden = node.hidden;
+    const changed = text !== undefined && node.textContent !== text;
+    node.hidden = false;
+    if (text !== undefined) node.textContent = text;
+    if (wasHidden) enter(node);
+    else if (changed) pop(node, 0.9);
+  } else if (!node.hidden && !node.dataset.leaving) {
+    node.dataset.leaving = '1';
+    leave(node).then(() => {
+      if (!node.dataset.leaving) return;
+      delete node.dataset.leaving;
+      node.hidden = true;
+      release(node);
+    });
+  }
+}
+
+// For a node that was re-rendered with a new height: glides from the height it had before.
+export function resize(node, from) {
+  const to = node.getBoundingClientRect().height;
+  if (reduced() || Math.abs(from - to) < 1) return Promise.resolve();
+  node.style.overflow = 'hidden';
+  return run(node, [{ height: `${from}px` }, { height: `${to}px` }], { duration: 240 }).finally(() => {
+    node.style.overflow = '';
+  });
+}

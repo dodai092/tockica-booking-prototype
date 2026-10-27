@@ -2,7 +2,7 @@ import { studioTime } from '../time.js';
 import { checkIn, checkInOpen, closeClass, correctStatus } from '../checkin.js';
 import { markNoShow } from '../booking.js';
 import { loadStore, saveStore } from './session.js';
-import { fadeIn, pop, showBanner } from './motion.js';
+import { fadeIn, pop, showBanner, reveal, resize, expand, collapse } from './motion.js';
 
 const STATUS_TEXT = {
   booked: 'Rezervirano',
@@ -44,6 +44,7 @@ function showMessage(text, isError = false) {
 // Runs an action, saves, and re-renders. Errors show as a message.
 function act(action) {
   const before = new Map(store.bookings.map((b) => [b.id, b.status]));
+  const heights = new Map([...$('bookings').querySelectorAll('[data-booking]')].map((row) => [row.dataset.booking, row.getBoundingClientRect().height]));
   try {
     action();
     showMessage('Spremljeno.');
@@ -55,6 +56,8 @@ function act(action) {
   // Whatever changed status pops, and so do the counts.
   let changed = false;
   for (const row of $('bookings').querySelectorAll('[data-booking]')) {
+    // A row that gained or lost action buttons glides to its new height.
+    if (heights.has(row.dataset.booking)) resize(row, heights.get(row.dataset.booking));
     if (before.get(row.dataset.booking) !== row.dataset.status) {
       pop(row.querySelector('.pill'), 0.8);
       changed = true;
@@ -156,7 +159,7 @@ function renderBookings(now) {
   const session = store.classes.find((c) => c.id === classId);
   const list = $('bookings');
   list.replaceChildren();
-  $('close-wrap').hidden = !(now.getTime() >= endOf(session) && store.bookings.some((b) => b.classId === classId && b.status === 'booked'));
+  reveal($('close-wrap'), now.getTime() >= endOf(session) && store.bookings.some((b) => b.classId === classId && b.status === 'booked'), undefined, expand, collapse);
 
   const rows = store.bookings
     .filter((b) => b.classId === classId)

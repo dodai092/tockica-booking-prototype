@@ -8,7 +8,7 @@ import {
 } from '../admin.js';
 import { addSoonClass, fillClass } from '../demo.js';
 import { loadStore, saveStore, resetStore } from './session.js';
-import { showBanner, expand, collapse, release } from './motion.js';
+import { showBanner, expand, collapse, release, pop } from './motion.js';
 
 const timeFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', hour: '2-digit', minute: '2-digit' });
 const dayFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', weekday: 'short', day: '2-digit', month: '2-digit' });
@@ -30,16 +30,19 @@ function showMessage(text, isError = false) {
 
 // Runs an admin action, saves, and re-renders. Errors show as a message. Edits that already
 // show on screen (a switch, a price) pass rerender = false, so focus and the switch's own
-// animation are not thrown away.
+// animation are not thrown away. Returns whether the action worked.
 function act(action, rerender = true) {
+  let ok = true;
   try {
     action();
     showMessage('Spremljeno.');
   } catch (err) {
+    ok = false;
     showMessage(err.message, true);
   }
   saveStore(store);
   if (rerender) render();
+  return ok;
 }
 
 function row(...children) {
@@ -60,7 +63,7 @@ function chevron() {
   return node;
 }
 
-function restoreForm(account) {
+function restoreForm(account, trail) {
   const form = el('form', undefined, 'g-form');
   form.hidden = true;
   const count = el('input', undefined, 'g-input g-count');
@@ -82,12 +85,17 @@ function restoreForm(account) {
     }
     const sure = window.confirm(`Vratiti ${count.value} kredita za ${account.name}?\nRazlog: ${reason.value.trim()}`);
     if (!sure) return;
-    act(() => restoreCredit(store, {
+    const ok = act(() => restoreCredit(store, {
       accountId: account.id,
       count: Number(count.value),
       reason: reason.value.trim(),
       now: new Date(),
-    }));
+    }), false);
+    if (!ok) return;
+    // The new credit shows at once while the form folds shut.
+    trail.textContent = `Kredit ${balance(store, account.id, new Date())}`;
+    pop(trail, 0.85);
+    collapse(form).then(render);
   });
   return { form, reason };
 }
@@ -97,7 +105,8 @@ function renderAccounts(now) {
   section.replaceChildren();
   for (const account of store.accounts) {
     const group = el('div', undefined, 'group');
-    group.append(row(main(account.name, account.email), el('span', `Kredit ${balance(store, account.id, now)}`, 'g-trail')));
+    const trail = el('span', `Kredit ${balance(store, account.id, now)}`, 'g-trail');
+    group.append(row(main(account.name, account.email), trail));
 
     const switchRow = el('label', undefined, 'g-row');
     const box = el('input', undefined, 'switch');
@@ -108,7 +117,7 @@ function renderAccounts(now) {
     switchRow.append(el('span', 'Multisport', 'g-main g-title'), box);
     group.append(switchRow);
 
-    const { form, reason } = restoreForm(account);
+    const { form, reason } = restoreForm(account, trail);
     const toggle = el('button', undefined, 'g-row g-action');
     toggle.type = 'button';
     toggle.setAttribute('aria-expanded', 'false');
@@ -160,7 +169,9 @@ function renderBookings(now) {
         `Makni ${account?.name ?? 'klijenta'} (bicikl ${booking.bikeNo}) s treninga ${session.name}?\nKredit se vraća, a klijent dobiva mail.`,
       );
       if (!sure) return;
-      collapse(item).then(() => act(() => removeFromClass(store, { bookingId: booking.id, reason: reason.trim(), now: new Date() })));
+      // The banner shows at once while the row folds away.
+      const ok = act(() => removeFromClass(store, { bookingId: booking.id, reason: reason.trim(), now: new Date() }), false);
+      if (ok) collapse(item).then(render);
     });
     item.append(remove);
     section.append(item);

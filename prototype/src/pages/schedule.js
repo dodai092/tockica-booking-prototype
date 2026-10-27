@@ -12,7 +12,7 @@ import {
   NotBookableError,
 } from '../booking.js';
 import { loadStore, saveStore, mondayOf } from './session.js';
-import { fadeIn, slideIn, pop, popOut, expand, collapse, release, showBanner } from './motion.js';
+import { fadeIn, slideIn, pop, popOut, expand, collapse, reveal, showBanner } from './motion.js';
 import { openSheet, closeSheet, bindSheet } from './sheet.js';
 
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
@@ -260,29 +260,6 @@ function toggleConfirm(bookingId) {
   for (const node of document.querySelectorAll('#panel-raspored .cancel-ctl')) fadeIn(node, 4, 180);
 }
 
-// Shows or hides a node with motion. `enter` runs when it appears, `leave` before it is hidden.
-// A changed text on a node that stays visible pops.
-function reveal(node, show, text, enter, leave) {
-  if (show) {
-    delete node.dataset.leaving;
-    release(node);
-    const wasHidden = node.hidden;
-    const changed = node.textContent !== text;
-    node.hidden = false;
-    node.textContent = text;
-    if (wasHidden) enter(node);
-    else if (changed) pop(node, 0.9);
-  } else if (!node.hidden && !node.dataset.leaving) {
-    node.dataset.leaving = '1';
-    leave(node).then(() => {
-      if (!node.dataset.leaving) return;
-      delete node.dataset.leaving;
-      node.hidden = true;
-      release(node);
-    });
-  }
-}
-
 function renderMineCount() {
   const count = upcomingBookings(store, $('account').value, new Date()).length;
   reveal(document.getElementById('badge-raspored'), count > 0, String(count), (n) => pop(n, 0.6), popOut);
@@ -292,12 +269,21 @@ function renderMineCount() {
 function renderMine() {
   const section = $('mine');
   renderMineCount();
+  const hadCards = section.querySelector('.card') !== null;
+  const ghost = section.querySelector('.empty');
   section.replaceChildren(el('h2', 'Moje rezervacije'));
   const current = new Date();
   const rows = upcomingBookings(store, $('account').value, current);
   if (rows.length === 0) {
-    section.append(el('p', 'Nemaš nadolazećih rezervacija.', 'meta'));
+    const empty = el('p', 'Nemaš nadolazećih rezervacija.', 'meta empty');
+    section.append(empty);
+    if (hadCards) expand(empty);
     return;
+  }
+  // The "no bookings" line folds away as the first booking opens in.
+  if (ghost) {
+    section.append(ghost);
+    collapse(ghost).then(() => ghost.remove());
   }
   for (const { booking, session } of rows) {
     const card = el('article', undefined, 'card');

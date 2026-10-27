@@ -322,7 +322,8 @@ body { padding-bottom: calc(108px + env(safe-area-inset-bottom)); }
 .g-price { width: 96px; text-align: right; }
 .g-price::-webkit-outer-spin-button, .g-price::-webkit-inner-spin-button, .g-count::-webkit-outer-spin-button, .g-count::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .g-price, .g-count { -moz-appearance: textfield; appearance: textfield; }
-.g-select { max-width: 60%; padding: 6px 8px; border: 0; border-radius: 8px; background: rgba(127, 127, 127, .12); color: var(--ink); font: inherit; }
+.g-row:has(.g-select) { flex-direction: column; align-items: stretch; gap: 6px; }
+.g-select { width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; background: rgba(127, 127, 127, .12); color: var(--ink); font: inherit; }
 
 /* iOS-style switch. */
 .switch { appearance: none; -webkit-appearance: none; position: relative; flex: none; width: 51px; height: 31px; margin: 0; border-radius: 16px; background: rgba(120, 120, 128, .32); cursor: pointer; transition: background .25s; }
