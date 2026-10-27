@@ -144,7 +144,7 @@ export function onBikeFreed(store, classId, now, exceptAccountId = null) {
         {
           to: account.email,
           subject: `Oslobodilo se mjesto: ${session.name}`,
-          body: `Oslobodilo se mjesto na treningu ${session.name}. Tko prvi rezervira, dobiva bajk.`,
+          body: `Oslobodilo se mjesto na treningu ${session.name}. Tko prvi rezervira, dobiva bicikl.`,
         },
         now,
       );

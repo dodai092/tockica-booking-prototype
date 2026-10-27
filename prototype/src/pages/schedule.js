@@ -21,11 +21,11 @@ const WEEKS_SHOWN = 3;
 const PANEL_SHUT = { marginTop: '-12px' };
 
 const ERROR_TEXT = {
-  BikeTakenError: 'Bajk je upravo zauzet.',
+  BikeTakenError: 'Bicikl je upravo zauzet.',
   NoCreditError: 'Nemaš kredita. Kupi paket.',
   NotBookableError: 'Ovaj trening još nije otvoren za rezervacije.',
-  NotFullError: 'Ima slobodnih bajkova, rezerviraj jedan.',
-  AlreadyBookedError: 'Već imaš bajk na ovom treningu.',
+  NotFullError: 'Ima slobodnih bicikala, rezerviraj jedan.',
+  AlreadyBookedError: 'Već imaš bicikl na ovom treningu.',
 };
 
 const timeFormat = new Intl.DateTimeFormat('hr-HR', {
@@ -170,7 +170,7 @@ function statusButton(session, current, hasBike) {
     return waitlist;
   }
   const isOpen = openClassId === session.id;
-  const button = el('button', isOpen ? 'zatvori' : hasBike ? 'dodaj bajk' : 'rezerviraj', isOpen ? 'btn secondary' : 'btn');
+  const button = el('button', isOpen ? 'zatvori' : hasBike ? 'dodaj bicikl' : 'rezerviraj', isOpen ? 'btn secondary' : 'btn');
   button.addEventListener('click', () => {
     if (isOpen) closeCard();
     else openCard(session.id);
@@ -239,7 +239,7 @@ function renderClasses() {
       .sort((a, b) => a.bikeNo - b.bikeNo);
     if (current.getTime() < Date.parse(session.startsAt) && isBookable(session, current)) {
       const free = BIKE_COUNT - takenBikes(store, session.id).length;
-      const text = free === 0 ? 'Popunjeno' : free <= 3 ? `Posljednja mjesta: ${free}` : `Slobodnih bajkova: ${free}`;
+      const text = free === 0 ? 'Popunjeno' : free <= 3 ? `Posljednja mjesta: ${free}` : `Slobodnih bicikala: ${free}`;
       info.append(el('div', text, free <= 3 ? 'meta few' : 'meta'));
     }
     card.append(info, statusButton(session, current, mine.length > 0));
@@ -247,9 +247,9 @@ function renderClasses() {
       const bikes = mine.map((b) => (b.guestName ? `${b.bikeNo} (${b.guestName})` : b.bikeNo)).join(', ');
       const block = el('div', undefined, 'mine-block');
       block.dataset.bookings = mine.map((b) => b.id).join(' ');
-      block.append(el('div', `${mine.length > 1 ? 'Tvoji bajkovi' : 'Tvoj bajk'}: ${bikes}`, 'mine'));
+      block.append(el('div', `${mine.length > 1 ? 'Tvoji bicikli' : 'Tvoj bicikl'}: ${bikes}`, 'mine'));
       for (const booking of mine) {
-        block.append(...cancelControl(booking, session, current, mine.length > 1 ? `otkaži bajk ${booking.bikeNo}` : 'otkaži'));
+        block.append(...cancelControl(booking, session, current, mine.length > 1 ? `otkaži bicikl ${booking.bikeNo}` : 'otkaži'));
       }
       block.append(el('div', cancelNote(session, current, true), 'meta'));
       info.append(block);
@@ -284,7 +284,7 @@ function cancelControl(booking, session, current, label) {
   yes.addEventListener('click', () => cancelMine(booking.id));
   const no = el('button', 'Ne', 'btn secondary cancel cancel-ctl');
   no.addEventListener('click', () => toggleConfirm(null));
-  return [el('div', `Otkazati bajk ${booking.bikeNo}? ${refund}`, 'mine cancel-ctl'), yes, no];
+  return [el('div', `Otkazati bicikl ${booking.bikeNo}? ${refund}`, 'mine cancel-ctl'), yes, no];
 }
 
 function toggleConfirm(bookingId) {
@@ -317,7 +317,7 @@ function renderMine() {
     info.append(
       el('div', whenFormat.format(new Date(session.startsAt)), 'time'),
       el('div', session.name, 'name'),
-      el('div', `Bajk ${booking.bikeNo}${guest} · ${instructorName(session.instructorId)}`, 'meta'),
+      el('div', `Bicikl ${booking.bikeNo}${guest} · ${instructorName(session.instructorId)}`, 'meta'),
       el('div', cancelNote(session, current), 'meta'),
     );
     info.append(...cancelControl(booking, session, current, 'otkaži'));
@@ -338,7 +338,7 @@ function renderBikes() {
   panel.hidden = false;
   panel.replaceChildren();
 
-  panel.append(el('h2', 'Odaberi bajk'));
+  panel.append(el('h2', 'Odaberi bicikl'));
 
   panel.append(el('div', 'Instruktor', 'stage'));
   const grid = el('div', undefined, 'bike-grid');
@@ -371,13 +371,13 @@ function renderBikes() {
 
   const confirm = el('div', undefined, 'confirm');
   if (pickedBike) {
-    const book = el('button', `Rezerviraj bajk ${pickedBike}`, 'btn');
+    const book = el('button', `Rezerviraj bicikl ${pickedBike}`, 'btn');
     book.addEventListener('click', () => reserve(pickedBike));
     const cancel = el('button', 'Odustani', 'btn secondary');
     cancel.addEventListener('click', () => closeCard());
     confirm.append(el('span', 'Rezervacija košta 1 kredit.', 'meta'), book, cancel);
   } else {
-    confirm.append(el('span', 'Odaberi slobodan bajk. Rezervacija košta 1 kredit.', 'meta'));
+    confirm.append(el('span', 'Odaberi slobodan bicikl. Rezervacija košta 1 kredit.', 'meta'));
   }
   panel.append(confirm);
 }
@@ -431,7 +431,7 @@ function reserve(bikeNo) {
       guestName: guestName.trim() || null,
       now: new Date(),
     });
-    showMessage(`Rezervirano: bajk ${bikeNo}. Kredit: ${balance(store, $('account').value, new Date())}.`);
+    showMessage(`Rezervirano: bicikl ${bikeNo}. Kredit: ${balance(store, $('account').value, new Date())}.`);
     // Fold the panel away, then let the new booking open into the lists.
     closeCard(
       () => {

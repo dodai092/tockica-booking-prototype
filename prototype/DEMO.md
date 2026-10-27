@@ -23,41 +23,41 @@ ako je prvi ponedjeljak više od 6 sati u budućnosti.
 - **Radnja:** klikni prvi dan s treninzima u traci dana (ponedjeljak).
 - **Očekivano:** tri treninga: 17:45 "Funky Spin", 18:45 "Rhythm Spin" i 19:45 "Fresh Start Spin". Kredit: 5.
 
-## 2. Rezervacija bajka
+## 2. Rezervacija bicikla
 
 - **Kartica:** Raspored
-- **Radnja:** klikni "rezerviraj" pri 17:45, pa bajk 3 i "Rezerviraj bajk 3".
-- **Očekivano:** poruka "Rezervirano: bajk 3. Kredit: 4.", kredit 4.
+- **Radnja:** klikni "rezerviraj" pri 17:45, pa bicikl 3 i "Rezerviraj bicikl 3".
+- **Očekivano:** poruka "Rezervirano: bicikl 3. Kredit: 4.", kredit 4.
 
-## 3. Zauzet bajk
+## 3. Zauzet bicikl
 
 - **Kartica:** Raspored
-- **Radnja:** klikni "dodaj bajk" pri 17:45.
-- **Očekivano:** bajk 3 je siv i ne može se kliknuti.
+- **Radnja:** klikni "dodaj bicikl" pri 17:45.
+- **Očekivano:** bicikl 3 je siv i ne može se kliknuti.
 
 ## 4. Popunjen trening i lista čekanja
 
 - **Kartica:** Admin, odjeljak "Demo alati"
-- **Radnja:** u padajućem izborniku odaberi ponedjeljak 17:45 "Funky Spin", klikni "Napuni trening (sve bajkove)". Zatim se vrati na karticu Raspored.
+- **Radnja:** u padajućem izborniku odaberi ponedjeljak 17:45 "Funky Spin", klikni "Napuni trening (sve bicikle)". Zatim se vrati na karticu Raspored.
 - **Očekivano:** pri 17:45 umjesto "rezerviraj" piše "lista čekanja". Klik na njega daje poruku "Na listi čekanja. Dobit ćeš mail kad se mjesto oslobodi." s brojem poslanih mailova.
 - **Napomena:** sadržaj mailova nije prikazan u prototipu, samo broj.
 
 ## 5. Kasno otkazivanje (unutar 6 sati)
 
 - **Kartica:** Admin, pa Raspored
-- **Radnja:** na adminu klikni "Dodaj trening za 20 min". Na rasporedu, za današnji dan, rezerviraj bajk 5 (odaberi, pa potvrdi) na "Demo: za 20 min", pa klikni "otkaži".
+- **Radnja:** na adminu klikni "Dodaj trening za 20 min". Na rasporedu, za današnji dan, rezerviraj bicikl 5 (odaberi, pa potvrdi) na "Demo: za 20 min", pa klikni "otkaži".
 - **Očekivano:** poruka "Kasno otkazivanje: kredit se ne vraća.", kredit ostaje isti (3).
 
 ## 6. Otkazivanje više od 6 sati ranije
 
 - **Kartica:** Raspored
-- **Radnja:** za prvi ponedjeljak, klikni "rezerviraj" pri 18:45, pa bajk 7 i "Rezerviraj bajk 7". Zatim klikni "otkaži" na kartici 18:45. Ne na kartici 17:45, gdje je tvoja rezervacija bajka 3 iz koraka 2.
+- **Radnja:** za prvi ponedjeljak, klikni "rezerviraj" pri 18:45, pa bicikl 7 i "Rezerviraj bicikl 7". Zatim klikni "otkaži" na kartici 18:45. Ne na kartici 17:45, gdje je tvoja rezervacija bicikla 3 iz koraka 2.
 - **Očekivano:** poruka "Otkazano. Kredit je vraćen.". Kredit: 3, pa 2 pri rezervaciji, pa 3 nakon otkazivanja.
 
 ## 7. Dolazak na recepciji
 
 - **Kartica:** Raspored, pa Recepcija
-- **Radnja:** na rasporedu rezerviraj bajk 6 (odaberi, pa potvrdi) na "Demo: za 20 min". Na recepciji je trening već odabran. Klikni "Dolazak" pri bajku 6.
+- **Radnja:** na rasporedu rezerviraj bicikl 6 (odaberi, pa potvrdi) na "Demo: za 20 min". Na recepciji je trening već odabran. Klikni "Dolazak" pri biciklu 6.
 - **Očekivano:** status "Došao". Ako check-in nije otvoren, piše kad se otvara.
 
 ## 8. Vraćanje kredita (vlasnica)

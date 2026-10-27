@@ -153,14 +153,14 @@ function renderBookings(now) {
     const account = store.accounts.find((a) => a.id === booking.accountId);
     const when = `${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))}`;
     const guest = booking.guestName ? ` · Gost: ${booking.guestName}` : '';
-    const item = row(main(session.name, when, `Bajk ${booking.bikeNo} · ${account?.name ?? ''}${guest}`));
+    const item = row(main(session.name, when, `Bicikl ${booking.bikeNo} · ${account?.name ?? ''}${guest}`));
     const remove = el('button', 'Makni', 'g-text destructive');
-    remove.setAttribute('aria-label', `Makni s treninga: ${account?.name ?? ''}, bajk ${booking.bikeNo}`);
+    remove.setAttribute('aria-label', `Makni s treninga: ${account?.name ?? ''}, bicikl ${booking.bikeNo}`);
     remove.addEventListener('click', () => {
       const reason = window.prompt('Razlog za micanje s treninga:');
       if (!reason || !reason.trim()) return;
       const sure = window.confirm(
-        `Makni ${account?.name ?? 'klijenta'} (bajk ${booking.bikeNo}) s treninga ${session.name}?\nKredit se vraća, a klijent dobiva mail.`,
+        `Makni ${account?.name ?? 'klijenta'} (bicikl ${booking.bikeNo}) s treninga ${session.name}?\nKredit se vraća, a klijent dobiva mail.`,
       );
       if (!sure) return;
       collapse(item).then(() => act(() => removeFromClass(store, { bookingId: booking.id, reason: reason.trim(), now: new Date() })));

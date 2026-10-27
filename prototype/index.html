@@ -12,6 +12,7 @@
 
 <header class="top">
   <img class="logo" src="assets/tockica-logo.svg" alt="Točkica na i">
+  <button id="info-button" type="button" class="info-button" aria-label="Informacije o studiju" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button>
 </header>
 
 <main>
@@ -28,7 +29,7 @@
   <p id="s-message" class="message" role="status"></p>
   <section id="s-classes" class="classes" aria-label="Treninzi"></section>
   <section id="s-mine" class="classes" aria-label="Moje rezervacije"></section>
-  <section id="s-bikes" class="bikes" hidden aria-label="Odabir bajka"></section>
+  <section id="s-bikes" class="bikes" hidden aria-label="Odabir bicikla"></section>
   </section>
 
   <section id="panel-recepcija" class="panel" role="tabpanel" aria-label="Recepcija" hidden>
@@ -64,7 +65,7 @@
     <h2 class="g-header">Demo alati <span class="demo-tag">Samo prototip</span></h2>
     <section class="group" aria-label="Demo alati">
       <label class="g-row"><span class="g-main g-title">Trening</span><select id="a-demo-class" class="g-select"></select></label>
-      <button id="a-fill" type="button" class="g-row g-action">Napuni trening (sve bajkove)</button>
+      <button id="a-fill" type="button" class="g-row g-action">Napuni trening (sve bicikle)</button>
       <button id="a-soon" type="button" class="g-row g-action">Dodaj trening za 20 min</button>
       <button id="a-reset" type="button" class="g-row g-action destructive">Resetiraj demo</button>
     </section>
@@ -77,6 +78,31 @@
     <button type="button" role="tab" id="tab-recepcija" data-tab="recepcija" aria-controls="panel-recepcija" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6"/></svg><span class="tab-label">Recepcija</span></button>
     <button type="button" role="tab" id="tab-admin" data-tab="admin" aria-controls="panel-admin" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span class="tab-label">Admin</span></button>
 </nav>
+
+<dialog id="info-sheet" class="sheet" aria-labelledby="info-title">
+  <div class="sheet-head">
+    <h2 id="info-title">Točkica na i</h2>
+    <button type="button" class="g-text accent" id="info-close">Zatvori</button>
+  </div>
+  <div class="sheet-body">
+    <div class="group">
+      <div class="g-row"><span class="g-main"><span class="g-sub">Adresa</span><span class="g-title sheet-line">Rusanova 8, Zagreb</span></span></div>
+      <a class="g-row g-action" href="tel:+385958651335"><span class="g-main"><span class="g-sub">Telefon</span><span class="g-title sheet-line">095 8651 335</span></span></a>
+      <a class="g-row g-action" href="mailto:info@tockicanai.hr"><span class="g-main"><span class="g-sub">E-mail</span><span class="g-title sheet-line">info@tockicanai.hr</span></span></a>
+    </div>
+    <h3 class="g-header">Radno vrijeme</h3>
+    <div class="group">
+      <div class="g-row"><span class="g-main g-title">Ponedjeljak do petak</span><span class="g-trail">15:30 do 22:00</span></div>
+      <div class="g-row"><span class="g-main g-title">Subota</span><span class="g-trail">9:00 do 13:00, 16:00 do 19:00</span></div>
+      <div class="g-row"><span class="g-main g-title">Nedjelja</span><span class="g-trail">zatvoreno</span></div>
+    </div>
+    <h3 class="g-header">Otkazivanje</h3>
+    <div class="group">
+      <div class="g-row"><span class="g-main g-sub sheet-rule">Otkazivanje je besplatno do 6 sati prije treninga i kredit se vraća. Kasnije kredit propada.</span></div>
+    </div>
+    <p class="g-footer">Adresa, telefon i radno vrijeme s tockicanai.hr.</p>
+  </div>
+</dialog>
 
 <script type="module" src="src/pages/app.js"></script>
 </body>
