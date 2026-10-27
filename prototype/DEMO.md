@@ -6,7 +6,7 @@ Pokreni lokalno iz mape `prototype/`:
 python3 -m http.server 8000
 ```
 
-Otvori `http://localhost:8000/schedule.html`. Recepcija i admin nisu u izborniku klijenta: otvaraju se linkovima na dnu rasporeda. Sve je u memoriji preglednika, a stanje se dijeli
+Otvori `http://localhost:8000/schedule.html`. Sve je u memoriji preglednika, a stanje se dijeli
 između stranica dok je tab otvoren. Gumb "Resetiraj demo" na admin stranici vraća početno stanje.
 
 Početno stanje: dva test računa, svaki s 5 kredita. Test Klijent 1 nema Multisport oznaku,

@@ -194,6 +194,7 @@ function renderBikes() {
 
   panel.append(el('h2', 'Odaberi bajk'));
 
+  panel.append(el('div', 'Instruktor', 'stage'));
   const grid = el('div', undefined, 'bike-grid');
   for (let bikeNo = 1; bikeNo <= BIKE_COUNT; bikeNo += 1) {
     const button = el('button', String(bikeNo), 'bike');

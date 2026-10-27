@@ -118,16 +118,31 @@ main { max-width: 760px; margin: 0 auto; padding: 16px; }
 .card:has(.bikes:not([hidden])) { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
 .bikes h2 { font-size: 16px; margin: 0 0 12px; color: var(--dark); text-transform: none; }
 
+.stage {
+  max-width: 320px;
+  margin: 0 auto 12px;
+  padding: 6px 0;
+  border-radius: 8px;
+  background: var(--dark);
+  color: #fff;
+  text-align: center;
+  font-family: Montserrat, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
 .bike-grid {
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 8px;
-  max-width: 480px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  max-width: 320px;
+  margin: 0 auto;
 }
 .bike {
   font-family: Montserrat, sans-serif;
   font-weight: 700;
-  padding: 10px 0;
+  padding: 12px 0;
   border: 1px solid var(--dark);
   border-radius: 8px;
   background: var(--surface);
@@ -175,8 +190,6 @@ h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; text-transform: up
 .message:empty { display: none; }
 .message { min-height: 0; padding: 10px 14px; border-radius: 8px; background: #E8F5E7; color: #1F6B1B; }
 .message.error { background: #FBE9E7; color: #B3261E; }
-.demo-links { margin-top: 32px; font-size: 13px; color: var(--muted); text-align: center; }
-.demo-links a { color: var(--muted); }
 
 /* Reception */
 .summary {
