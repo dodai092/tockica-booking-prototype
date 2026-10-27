@@ -155,3 +155,90 @@ h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; text-transform: up
 .toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; margin-top: 6px; }
 .actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
 .card form.pack { margin-top: 0; }
+
+/* Schedule: own bookings, bike confirmation, message banner, demo links */
+.card .mine { font-family: Montserrat, sans-serif; font-weight: 700; font-size: 14px; color: var(--green); margin-top: 4px; }
+.card .mine + .btn.secondary { margin: 8px 8px 0 0; }
+.bike[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+.confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+.confirm .meta { flex: 1 1 100%; }
+.confirm .btn.secondary { margin-left: 0; }
+.message:empty { display: none; }
+.message { min-height: 0; padding: 10px 14px; border-radius: 8px; background: #E8F5E7; color: #1F6B1B; }
+.message.error { background: #FBE9E7; color: #B3261E; }
+.demo-links { margin-top: 32px; font-size: 13px; color: var(--muted); text-align: center; }
+.demo-links a { color: var(--muted); }
+
+/* Reception */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  margin: 8px 0 16px;
+  background: var(--dark);
+  color: #fff;
+  border-radius: 12px;
+}
+.s-time { font-family: Montserrat, sans-serif; font-weight: 800; font-size: 40px; line-height: 1; }
+.s-name { font-family: Montserrat, sans-serif; font-weight: 700; font-size: 20px; margin-top: 6px; }
+.s-meta { font-size: 14px; color: #B9C0CC; }
+.s-side { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.s-counts { display: flex; gap: 24px; }
+.s-counts div { display: flex; flex-direction: column; align-items: flex-end; }
+.s-counts strong { font-family: Montserrat, sans-serif; font-size: 22px; }
+.s-counts span { font-size: 12px; color: #B9C0CC; }
+
+.pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-family: Montserrat, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+  background: var(--border);
+  color: var(--dark);
+}
+.pill-open, .pill-attended { background: var(--green); color: #fff; }
+.pill-wait { background: transparent; color: #fff; border: 1px solid #5A6475; }
+.pill-muted, .pill-cancelled, .pill-late_cancel { background: #3A4250; color: #B9C0CC; }
+.roster .pill-cancelled, .roster .pill-late_cancel { background: var(--border); color: var(--muted); }
+.pill-no_show { background: #FBE9E7; color: #B3261E; }
+
+.roster { display: flex; flex-direction: column; gap: 8px; }
+.row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.row-cancelled, .row-late_cancel { opacity: .55; }
+.row .name { font-family: Montserrat, sans-serif; font-weight: 700; color: var(--dark); }
+.row .meta { font-size: 13px; color: var(--muted); }
+.row .actions { flex-direction: row; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.row .btn.secondary { margin-left: 0; }
+.bike-badge {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--dark);
+  color: #fff;
+  font-family: Montserrat, sans-serif;
+  font-weight: 800;
+}
+.row-attended .bike-badge { background: var(--green); }
+.empty { padding: 32px 16px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--border); border-radius: 10px; }
+
+@media (max-width: 640px) {
+  .s-side { align-items: flex-start; width: 100%; }
+  .row { grid-template-columns: auto 1fr; }
+  .row .actions { grid-column: 1 / -1; justify-content: flex-start; }
+}

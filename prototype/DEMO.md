@@ -6,7 +6,7 @@ Pokreni lokalno iz mape `prototype/`:
 python3 -m http.server 8000
 ```
 
-Otvori `http://localhost:8000/schedule.html`. Sve je u memoriji preglednika, a stanje se dijeli
+Otvori `http://localhost:8000/schedule.html`. Recepcija i admin nisu u izborniku klijenta: otvaraju se linkovima na dnu rasporeda. Sve je u memoriji preglednika, a stanje se dijeli
 između stranica dok je tab otvoren. Gumb "Resetiraj demo" na admin stranici vraća početno stanje.
 
 Početno stanje: dva test računa, svaki s 5 kredita. Test Klijent 1 nema Multisport oznaku,
@@ -26,14 +26,14 @@ ako je prvi ponedjeljak više od 6 sati u budućnosti.
 ## 2. Rezervacija bajka
 
 - **Stranica:** `schedule.html`
-- **Radnja:** klikni "rezerviraj" pri 10:00, pa bicikl 3.
-- **Očekivano:** poruka "Rezervirano: bicikl 3.", kredit 4.
+- **Radnja:** klikni "rezerviraj" pri 10:00, pa bajk 3 i "Rezerviraj bajk 3".
+- **Očekivano:** poruka "Rezervirano: bajk 3. Kredit: 4.", kredit 4.
 
 ## 3. Zauzet bajk
 
 - **Stranica:** `schedule.html`
 - **Radnja:** klikni "rezerviraj" pri 10:00 ponovo.
-- **Očekivano:** bicikl 3 je siv i ne može se kliknuti.
+- **Očekivano:** bajk 3 je siv i ne može se kliknuti.
 
 ## 4. Popunjen trening i lista čekanja
 
@@ -45,19 +45,19 @@ ako je prvi ponedjeljak više od 6 sati u budućnosti.
 ## 5. Kasno otkazivanje (unutar 6 sati)
 
 - **Stranica:** `admin.html`, pa `schedule.html`
-- **Radnja:** na adminu klikni "Dodaj trening za 20 min". Na rasporedu, za današnji dan, rezerviraj bicikl 5 na "Demo: za 20 min", pa klikni "otkaži".
+- **Radnja:** na adminu klikni "Dodaj trening za 20 min". Na rasporedu, za današnji dan, rezerviraj bajk 5 (odaberi, pa potvrdi) na "Demo: za 20 min", pa klikni "otkaži".
 - **Očekivano:** poruka "Kasno otkazivanje: kredit se ne vraća.", kredit ostaje isti (3).
 
 ## 6. Otkazivanje više od 6 sati ranije
 
 - **Stranica:** `schedule.html`
-- **Radnja:** za prvi ponedjeljak, klikni "rezerviraj" pri 16:30, pa bicikl 7. Zatim klikni "otkaži" na kartici 16:30. Ne na kartici 10:00, gdje je tvoja rezervacija bicikla 3 iz koraka 2.
+- **Radnja:** za prvi ponedjeljak, klikni "rezerviraj" pri 16:30, pa bajk 7 i "Rezerviraj bajk 7". Zatim klikni "otkaži" na kartici 16:30. Ne na kartici 10:00, gdje je tvoja rezervacija bajka 3 iz koraka 2.
 - **Očekivano:** poruka "Otkazano. Kredit je vraćen.". Kredit: 3, pa 2 pri rezervaciji, pa 3 nakon otkazivanja.
 
 ## 7. Dolazak na recepciji
 
 - **Stranica:** `schedule.html`, pa `reception.html`
-- **Radnja:** na rasporedu rezerviraj bicikl 6 na "Demo: za 20 min". Na recepciji je trening već odabran. Klikni "Dolazak" pri biciklu 6.
+- **Radnja:** na rasporedu rezerviraj bajk 6 (odaberi, pa potvrdi) na "Demo: za 20 min". Na recepciji je trening već odabran. Klikni "Dolazak" pri bajku 6.
 - **Očekivano:** status "Došao". Ako check-in nije otvoren, piše kad se otvara.
 
 ## 8. Vraćanje kredita (vlasnica)

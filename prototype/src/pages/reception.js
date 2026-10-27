@@ -57,25 +57,56 @@ function act(action) {
 function renderClassPicker(now) {
   const select = $('class');
   const sorted = [...store.classes].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-  if (!classId) {
-    classId = (sorted.find((c) => endOf(c) > now.getTime()) ?? sorted[0]).id;
-  }
+  const upcoming = sorted.filter((c) => endOf(c) > now.getTime());
+  const past = sorted.filter((c) => endOf(c) <= now.getTime()).reverse();
+  if (!classId) classId = (upcoming[0] ?? sorted[0]).id;
+
   select.replaceChildren();
-  for (const session of sorted) {
-    const option = el('option', `${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))} · ${session.name}`);
-    option.value = session.id;
-    option.selected = session.id === classId;
-    select.append(option);
+  for (const [label, group] of [['Nadolazeći treninzi', upcoming], ['Prošli treninzi', past]]) {
+    if (group.length === 0) continue;
+    const optgroup = el('optgroup');
+    optgroup.label = label;
+    for (const session of group) {
+      const option = el('option', `${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))} · ${session.name}`);
+      option.value = session.id;
+      option.selected = session.id === classId;
+      optgroup.append(option);
+    }
+    select.append(optgroup);
   }
 }
 
-function renderState(session, now) {
+function renderSummary(session, now) {
   const start = Date.parse(session.startsAt);
-  let text;
-  if (now.getTime() >= endOf(session)) text = 'Trening je završio.';
-  else if (checkInOpen(session, now)) text = 'Check-in je otvoren.';
-  else text = `Check-in se otvara u ${timeFormat.format(new Date(start - 30 * CLASS_MIN_MS))}.`;
-  $('state').textContent = text;
+  const instructor = store.instructors.find((i) => i.id === session.instructorId)?.name ?? '';
+  const rows = store.bookings.filter((b) => b.classId === session.id);
+  const reserved = rows.filter((b) => ['booked', 'attended', 'no_show'].includes(b.status)).length;
+  const attended = rows.filter((b) => b.status === 'attended').length;
+
+  let state;
+  let tone;
+  if (now.getTime() >= endOf(session)) [state, tone] = ['Trening je završio', 'muted'];
+  else if (checkInOpen(session, now)) [state, tone] = ['Check-in je otvoren', 'open'];
+  else {
+    const opens = new Date(start - 30 * CLASS_MIN_MS);
+    [state, tone] = [`Check-in se otvara ${dayFormat.format(opens)} u ${timeFormat.format(opens)}`, 'wait'];
+  }
+
+  const info = el('div');
+  info.append(
+    el('div', timeFormat.format(new Date(start)), 's-time'),
+    el('div', session.name, 's-name'),
+    el('div', [instructor, session.themeName, dayFormat.format(new Date(start))].filter(Boolean).join(' · '), 's-meta'),
+  );
+  const side = el('div', undefined, 's-side');
+  const counts = el('div', undefined, 's-counts');
+  for (const [value, label] of [[`${reserved}/${session.bikeCount}`, 'rezervirano'], [String(attended), 'došlo']]) {
+    const box = el('div');
+    box.append(el('strong', value), el('span', label));
+    counts.append(box);
+  }
+  side.append(el('span', state, `pill pill-${tone}`), counts);
+  $('summary').replaceChildren(info, side);
 }
 
 function actionButtons(booking, session, now) {
@@ -117,22 +148,19 @@ function renderBookings(now) {
     .sort((a, b) => a.bikeNo - b.bikeNo);
 
   if (rows.length === 0) {
-    list.append(el('p', 'Nema rezervacija za ovaj trening.', 'meta'));
+    list.append(el('p', 'Još nema rezervacija za ovaj trening.', 'empty'));
     return;
   }
 
   for (const booking of rows) {
     const account = store.accounts.find((a) => a.id === booking.accountId);
-    const row = el('article', undefined, 'card');
-    const info = el('div');
-    info.append(
-      el('div', `Bicikl ${booking.bikeNo}`, 'name'),
-      el('div', [account?.name, booking.guestName].filter(Boolean).join(' · '), 'meta'),
-      el('div', STATUS_TEXT[booking.status], 'time'),
-    );
+    const row = el('article', undefined, `row row-${booking.status}`);
+    const who = el('div', undefined, 'who');
+    who.append(el('div', account?.name ?? '', 'name'));
+    if (booking.guestName) who.append(el('div', `Gost: ${booking.guestName}`, 'meta'));
     const buttons = el('div', undefined, 'actions');
-    buttons.append(...actionButtons(booking, session, now));
-    row.append(info, buttons);
+    buttons.append(el('span', STATUS_TEXT[booking.status], `pill pill-${booking.status}`), ...actionButtons(booking, session, now));
+    row.append(el('div', String(booking.bikeNo), 'bike-badge'), who, buttons);
     list.append(row);
   }
 }
@@ -141,7 +169,7 @@ function render() {
   const now = new Date();
   renderClassPicker(now);
   const session = store.classes.find((c) => c.id === classId);
-  renderState(session, now);
+  renderSummary(session, now);
   renderBookings(now);
 }
 

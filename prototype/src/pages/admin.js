@@ -110,7 +110,7 @@ function renderBookings(now) {
     const info = el('div');
     info.append(
       el('div', `${session.name} · ${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))}`, 'name'),
-      el('div', `Bicikl ${booking.bikeNo} · ${account?.name ?? ''}`, 'meta'),
+      el('div', `Bajk ${booking.bikeNo} · ${account?.name ?? ''}`, 'meta'),
     );
     const remove = el('button', 'Makni s treninga', 'btn secondary');
     remove.addEventListener('click', () => {

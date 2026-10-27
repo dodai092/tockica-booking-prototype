@@ -16,7 +16,7 @@ const BIKE_COUNT = 20;
 const WEEKS_SHOWN = 3;
 
 const ERROR_TEXT = {
-  BikeTakenError: 'Bicikl je upravo zauzet.',
+  BikeTakenError: 'Bajk je upravo zauzet.',
   NoCreditError: 'Nemaš kredita. Kupi paket.',
   NotBookableError: 'Ovaj trening još nije otvoren za rezervacije.',
   NotFullError: 'Ima slobodnih bajkova, rezerviraj jedan.',
@@ -32,6 +32,7 @@ const timeFormat = new Intl.DateTimeFormat('hr-HR', {
 const now = new Date();
 const store = loadStore();
 saveStore(store);
+let pickedBike = null;
 let openClassId = null;
 
 const thisMonday = mondayOf(now);
@@ -130,6 +131,7 @@ function statusButton(session, current) {
   const button = el('button', 'rezerviraj', 'btn');
   button.addEventListener('click', () => {
     openClassId = session.id;
+    pickedBike = null;
     render();
   });
   return button;
@@ -159,13 +161,17 @@ function renderClasses() {
       el('div', [instructorName(session.instructorId), session.themeName].filter(Boolean).join(' · '), 'meta'),
     );
     card.append(info, statusButton(session, current));
-    const mine = store.bookings.find(
-      (b) => b.classId === session.id && b.accountId === $('account').value && b.status === 'booked',
-    );
-    if (mine && current.getTime() < Date.parse(session.startsAt)) {
-      const cancel = el('button', 'otkaži', 'btn secondary');
-      cancel.addEventListener('click', () => cancelMine(mine.id));
-      info.append(cancel);
+    const mine = store.bookings
+      .filter((b) => b.classId === session.id && b.accountId === $('account').value && b.status === 'booked')
+      .sort((a, b) => a.bikeNo - b.bikeNo);
+    if (mine.length && current.getTime() < Date.parse(session.startsAt)) {
+      const bikes = mine.map((b) => b.bikeNo).join(', ');
+      info.append(el('div', `${mine.length > 1 ? 'Tvoji bajkovi' : 'Tvoj bajk'}: ${bikes}`, 'mine'));
+      for (const booking of mine) {
+        const cancel = el('button', mine.length > 1 ? `otkaži bajk ${booking.bikeNo}` : 'otkaži', 'btn secondary');
+        cancel.addEventListener('click', () => cancelMine(booking.id));
+        info.append(cancel);
+      }
     }
     list.append(card);
     if (session.id === openClassId) list.append($('bikes'));
@@ -186,7 +192,7 @@ function renderBikes() {
   panel.replaceChildren();
 
   panel.append(
-    el('h2', `Odaberi bicikl: ${session.name}`),
+    el('h2', `Odaberi bajk: ${session.name}`),
     el('p', `${instructorName(session.instructorId)} · ${timeFormat.format(new Date(session.startsAt))}`, 'sub'),
   );
 
@@ -194,10 +200,30 @@ function renderBikes() {
   for (let bikeNo = 1; bikeNo <= BIKE_COUNT; bikeNo += 1) {
     const button = el('button', String(bikeNo), 'bike');
     button.disabled = taken.includes(bikeNo);
-    button.addEventListener('click', () => reserve(bikeNo));
+    button.setAttribute('aria-pressed', String(bikeNo === pickedBike));
+    button.addEventListener('click', () => {
+      pickedBike = bikeNo;
+      render();
+    });
     grid.append(button);
   }
   panel.append(grid);
+
+  const confirm = el('div', undefined, 'confirm');
+  if (pickedBike) {
+    const book = el('button', `Rezerviraj bajk ${pickedBike}`, 'btn');
+    book.addEventListener('click', () => reserve(pickedBike));
+    const cancel = el('button', 'Odustani', 'btn secondary');
+    cancel.addEventListener('click', () => {
+      openClassId = null;
+      pickedBike = null;
+      render();
+    });
+    confirm.append(el('span', 'Rezervacija košta 1 kredit.', 'meta'), book, cancel);
+  } else {
+    confirm.append(el('span', 'Odaberi slobodan bajk. Rezervacija košta 1 kredit.', 'meta'));
+  }
+  panel.append(confirm);
 }
 
 function mailCount() {
@@ -238,8 +264,9 @@ function reserve(bikeNo) {
       accountId: $('account').value,
       now: new Date(),
     });
-    showMessage(`Rezervirano: bicikl ${bikeNo}.`);
+    showMessage(`Rezervirano: bajk ${bikeNo}. Kredit: ${balance(store, $('account').value, new Date())}.`);
     openClassId = null;
+    pickedBike = null;
   } catch (err) {
     showMessage(ERROR_TEXT[err.name] ?? 'Nešto je pošlo krivo.', true);
     if (!(err instanceof BikeTakenError || err instanceof NoCreditError || err instanceof NotBookableError)) {
