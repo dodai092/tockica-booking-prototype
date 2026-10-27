@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Točkica: raspored</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <img class="logo" src="assets/tockica-logo.svg" alt="Točkica na i">
+  <nav class="pages" aria-label="Stranice">
+    <a href="schedule.html" aria-current="page">Raspored</a>
+    <a href="reception.html">Recepcija</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+  <div class="account">
+    <label>Račun
+      <select id="account"></select>
+    </label>
+    <span id="balance" class="balance"></span>
+  </div>
+</header>
+
+<main>
+  <nav id="week" class="week" aria-label="Dani"></nav>
+  <section id="classes" class="classes" aria-label="Treninzi"></section>
+  <section id="bikes" class="bikes" hidden aria-label="Odabir bicikla"></section>
+  <p id="message" class="message" role="status"></p>
+</main>
+
+<script type="module" src="src/pages/schedule.js"></script>
+</body>
+</html>

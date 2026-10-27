@@ -1,0 +1,7 @@
+# Whitelist: only the prototype, the overview and its assets are published.
+/*
+!/.gitignore
+!/prototype/
+!/dunja-pregled-v3.html
+!/assets/
+node_modules/

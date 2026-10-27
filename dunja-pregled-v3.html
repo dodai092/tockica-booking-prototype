@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Točkica booking: pregled odluka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAF8;--surface:#EEF4FB;--ink:#1E3348;--muted:#47617C;--accent:#3C6FA6;--border:#D6E4F0;--navy:#243F5C}
+*{box-sizing:border-box}
+body{margin:0;padding:0 0 4rem;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.55;font-size:16px}
+.page{max-width:900px;margin:0 auto;padding:1.5rem 1.5rem 0}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;line-height:1.2;margin:0}
+h1{font-size:clamp(1.8rem,4vw,2.4rem);margin-bottom:.75rem}
+h2{font-size:1.45rem;margin:2.75rem 0 .5rem}
+p{margin:.5rem 0}
+.lead{color:var(--muted);font-size:1.05rem;max-width:62ch}
+.brand-bar{position:sticky;top:4px;z-index:100;max-width:min(900px,calc(100% - 8px));margin:4px auto 2.5rem;border-radius:10px;background:#243F5C;padding:13px clamp(16px,4vw,28px);box-sizing:border-box;transition:transform .25s ease}
+.brand-bar--hidden{transform:translateY(calc(-100% - 12px))}
+@media (prefers-reduced-motion:reduce){.brand-bar{transition:none}}
+.brand-bar__inner{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand-bar__inner img.client{height:34px;width:auto;display:block;flex:0 0 auto}
+.brand-bar__inner img.dodai{height:24px;width:auto;display:block;flex:0 0 auto;filter:brightness(0) invert(1);order:-1}
+.legend{display:flex;flex-wrap:wrap;gap:.5rem 1.25rem;margin:1rem 0 0;padding:0;list-style:none;font-size:.9rem;color:var(--muted)}
+.tag{display:inline-block;font-size:.78rem;font-weight:700;padding:.1rem .55rem;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--navy);white-space:nowrap}
+.tag.same{background:#E6F2E9;border-color:#BFDCC6;color:#25573A}
+.tag.diff{background:#FFF1DC;border-color:#F0D6A8;color:#7A4E0C}
+.tag.open{background:#FBE7E7;border-color:#EBC0C0;color:#7C2D2D}
+.tag.later{background:#EEEEEE;border-color:#DADADA;color:#555}
+details{border:1px solid var(--border);border-radius:10px;background:#fff;margin:.6rem 0}
+summary{cursor:pointer;list-style:none;padding:.85rem 1rem;display:flex;gap:.75rem;align-items:center;justify-content:space-between;font-weight:700}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:1.3rem;color:var(--accent);flex:0 0 auto}
+details[open] summary::after{content:"\2212"}
+summary .name{flex:1}
+.body{padding:0 1rem 1rem;border-top:1px solid var(--border)}
+.body p{margin:.6rem 0 0}
+.ref{display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;margin:.75rem 0 .25rem}
+.ref img{width:200px;max-width:100%;height:auto;border:1px solid var(--border);border-radius:10px;background:#fff}
+.ref p{margin:0;max-width:40ch;color:var(--muted);font-size:.92rem;flex:1 1 220px}
+.note{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin:1rem 0}
+ul,ol{padding-left:1.2rem;margin:.4rem 0}
+li{margin:.25rem 0}
+table{width:100%;border-collapse:collapse;margin:.75rem 0;font-size:.95rem}
+th,td{text-align:left;padding:.55rem .6rem;border-bottom:1px solid var(--border);vertical-align:top}
+th{color:var(--muted);font-size:.85rem}
+footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="brand-bar__inner">
+    <img class="client" src="assets/tockica-logo.svg" alt="Točkica na i">
+    <img class="dodai" src="assets/dodai-logo.png" alt="Dodai">
+  </div>
+</div>
+
+<div class="page">
+
+<h1>Booking sustav za Točkicu: što predlažem i zašto</h1>
+<p class="lead">Napravio sam prototip s lažnim podacima, ali pravi sustav (plaćanje, hosting, tvoja stranica) još nije izrađen. Ovo su dogovori, pa ih je sad najjeftinije mijenjati.</p>
+
+<ul class="legend">
+  <li><span class="tag same">Kako si tražila</span> radi točno tako</li>
+  <li><span class="tag diff">Malo drukčije</span> razlikuje se od tvoje želje</li>
+  <li><span class="tag open">Treba tvoj odgovor</span> ne mogu dalje bez toga</li>
+  <li><span class="tag">Predlažem</span> nisi to tražila, potvrdi ili odbij</li>
+  <li><span class="tag later">Kasnije</span> nije u prvoj verziji</li>
+</ul>
+
+<h2>Prva verzija</h2>
+
+<details>
+  <summary><span class="name">1. Raspored treninga</span><span class="tag same">Kako si tražila</span></summary>
+  <div class="body">
+    <p>Ponedjeljkom u 10:00 otvara se novih 14 dana. Dan, sat i broj tjedana postavljaš ti u adminu. Kartica: trener, vrijeme, ime treninga, tema.</p>
+    <div class="ref">
+      <img src="assets/referenca/raspored.png" alt="Referenca: raspored treninga">
+      <p>Referenca iz tvoje poruke. Preuzimamo raspored, ne boje ni brand.</p>
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">2. Paketi</span><span class="tag diff">Malo drukčije</span></summary>
+  <div class="body">
+    <p>Paketi s rokom, jednokratni (npr. 5 treninga, 45 dana). Jedan kredit je jedan bajk. Bez automatske mjesečne naplate.</p>
+    <p><span class="tag open">Neograničeni paket</span> Na screenshotu postoji (14 ili 30 dana). Želiš li ga u prvoj verziji?</p>
+    <div class="ref">
+      <img src="assets/referenca/paketi.png" alt="Referenca: članarine i paketi">
+      <p>Referenca iz tvoje poruke. Preuzimamo raspored, ne cijene ni valutu.</p>
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">3. Multisport popust</span><span class="tag diff">Malo drukčije</span></summary>
+  <div class="body">
+    <p>Oznaku postavljaš ti ili recepcija, ne korisnik. Nema koda, pa se ne može prenijeti. Svaki proizvod ima standardnu i Multisport cijenu, fiksne iznose.</p>
+    <p><span class="tag open">Ugovor</span> Plaća li Benefit Systems po ulazu? Smije li se online naplaćivati popust?</p>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">4. Početnički paketi (nice to have)</span><span class="tag same">Kako si tražila</span></summary>
+  <div class="body">
+    <p>Svaki račun kupi jednom: 1 trening za 5 €, 3 treninga za 20 €.</p>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">5. Izbor bajka</span><span class="tag same">Kako si tražila</span></summary>
+  <div class="body">
+    <p>Plan sobe s 20 bajkova. Zauzeti su sivi. Instruktor je na sredini, s fotografijom ili bez nje. Nema limita koliko bajkova rezerviraš, samo trebaš kredite.</p>
+    <div class="ref">
+      <img src="assets/referenca/izbor-bajka.png" alt="Referenca: izbor bajka">
+      <p>Referenca iz tvoje poruke. Preuzimamo način odabira, ne broj bajkova s ove slike.</p>
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">6. Više bajkova na jednom računu</span><span class="tag same">Kako si tražila</span></summary>
+  <div class="body">
+    <p>Jedan račun, više bajkova. Svaki bajk je zasebna rezervacija. Ime gosta je opcionalno.</p>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">7. Otkazivanje i no-show</span><span class="tag same">Kako si tražila</span></summary>
+  <div class="body">
+    <p>Otkazivanje do 6 sati prije vraća kredit. Kasnije ili no-show oduzima kredit, čak i ako lista čekanja popuni bajk. Kredit možeš ručno vratiti.</p>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">8. Lista čekanja</span><span class="tag same">Kako si tražila</span></summary>
+  <div class="body">
+    <p>Kad su svih 20 bajkova puno, ide se na listu čekanja. Kad netko otkaže, svi s liste dobiju mail. Tko prvi rezervira, dobiva bajk. Tko već ima bajk na tom treningu, ne može na listu čekanja.</p>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">9. Check-in i statusi</span><span class="tag same">Kako si tražila</span></summary>
+  <div class="body">
+    <p>Recepcija označava Booked, Attended, No-show, Cancelled (kredit se vraća) i Late cancel (ne vraća se). Kredite vraćaš samo ti, u adminu.</p>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">10. Rok trajanja i vraćeni kredit</span><span class="tag same">Kako si tražila</span></summary>
+  <div class="body">
+    <p>Troši se paket koji najranije ističe. Vraćeni kredit vrijedi do kasnijeg od dva datuma: isteka paketa ili 7 dana od vraćanja.</p>
+    <p><span class="tag">Predlažem</span> 7 dana. Može se promijeniti.</p>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">11. Plaćanje</span><span class="tag open">Treba tvoj odgovor</span></summary>
+  <div class="body">
+    <p>Corvus: 0,5 % po transakciji, minimum 0,02 € po transakciji i 30 € mjesečno (plus PDV). Bez naknade za postavljanje na njihovoj stranici.</p>
+    <p>Stripe: 1,5 % + 0,25 € za kartice iz EEA. Za hrvatski račun nismo potvrdili da je dostupan.</p>
+    <p>Gotovina na recepciji radi odmah. Imaš li ugovor s Corvusom? Ako nemaš, prvo provjeravam Stripe za Hrvatsku.</p>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">12. Početni klijenti</span><span class="tag">Predlažem</span></summary>
+  <div class="body">
+    <p>Računi iz starog sustava se ne prenose. Klijenti se registriraju iznova. Prije pokretanja unosiš preostale treninge i rok. Za manje od 50 ljudi ručni unos je brži.</p>
+  </div>
+</details>
+
+<h2>Faza 2</h2>
+
+<details>
+  <summary><span class="name">13. Instruktori: izvještaj i plaća</span><span class="tag diff">Malo drukčije</span></summary>
+  <div class="body">
+    <p>Izvještaj od 1. do zadnjeg dana u mjesecu: tko je koliko držao, tko je koga mijenjao, dolaznost. Plaća po održanom treningu. Bonus: nakon 15 od 20 bajkova, 2 € po dodatnom.</p>
+    <p><span class="tag open">Cijene</span> Ista cijena po treningu za sve ili po instruktoru? Prag 15 za sve?</p>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">14. Sculpt Room</span><span class="tag open">Treba tvoj odgovor</span></summary>
+  <div class="body">
+    <p>Trener plaća 100 € mjesečno, ti ručno označiš plaćeno. Dok je plaćeno: do 2 sata dnevno, do 30 dana unaprijed, termini se ne preklapaju.</p>
+    <p><span class="tag open">Što dobiva</span> Što trener dobiva za 100 €?</p>
+  </div>
+</details>
+
+<details>
+  <summary><span class="name">15. Analitika klijenata (interno)</span><span class="tag same">Kako si tražila</span></summary>
+  <div class="body">
+    <p>Najpopularniji termin i trener. Broj dolazaka za 50. i 100. sat, računa se samo po vožnjama vlasnika računa.</p>
+  </div>
+</details>
+
+<h2>Uloge u adminu</h2>
+<div class="note"><ul>
+  <li>Vlasnica: sve.</li>
+  <li>Recepcija: check-in i no-show.</li>
+  <li>Instruktor: svoji treninzi.</li>
+</ul></div>
+
+<h2>Predlažem, nisi tražila</h2>
+<table>
+  <tr><th>Prijedlog</th><th>Što znači</th><th>Da ili ne</th></tr>
+  <tr><td>Studio otkazuje trening</td><td>Kredit se vraća svima, jedan mail.</td><td></td></tr>
+  <tr><td>Prijava bez lozinke</td><td>Kod na mail. Ime, mail i telefon pri registraciji.</td><td></td></tr>
+  <tr><td>Tjedni predložak rasporeda</td><td>Jedan tjedan iz kojeg nastaje svaki sljedeći.</td><td></td></tr>
+  <tr><td>Početni klijenti (točka 12)</td><td>Unos preostalih treninga prije pokretanja.</td><td></td></tr>
+  <tr><td>Uvjeti i privatnost</td><td>Obavezno prije pokretanja. Nacrt pripremamo mi, ti ili pravnik odobri.</td><td>Obavezno</td></tr>
+</table>
+
+<h2>Kasnije</h2>
+<ul>
+  <li>Dashboard za korisnike</li>
+  <li>Refer a friend (vidi pitanja)</li>
+  <li>Tematski eventi i nagrade</li>
+  <li>Push i SMS obavijesti</li>
+  <li>Mobilna aplikacija: web stranica za mobitel, bez prave aplikacije</li>
+</ul>
+
+<h2>Što mi treba od tebe</h2>
+<div class="note"><ol>
+  <li>Neograničeni paket: da ili ne, i koliko dana?</li>
+  <li>Refer a friend: besplatan trening dobiva onaj tko preporučuje ili onaj koga preporuče?</li>
+  <li>Sculpt Room: što trener dobiva za 100 €?</li>
+  <li>Instruktori: ista cijena po treningu? Prag 15 za sve?</li>
+  <li>Benefit Systems: što piše u ugovoru o cijenama i ulazima?</li>
+  <li>Corvus: imaš li ugovor?</li>
+  <li>Kako sad vodite rezervacije i unaprijed plaćene treninge? Koliko ljudi ima neiskorištene?</li>
+  <li>Tablica iznad: da ili ne za svaki prijedlog.</li>
+</ol></div>
+<p>Fiskalizaciju provjeravam s računovođom. Račune (Stripe, domena, baza, hosting, mail) otvaramo na ime Točkice, a ja sam dodan kao admin.</p>
+
+<h2>Dodatak: gotov sustav</h2>
+<p>Provjerio sam Glofox, bsport, Momence, Eversports, Mindbody, Wellness Living, Hapana i Anolla. Nijedna ne navodi Corvus Pay, trošenje paketa po isteku ni Multisport popust. Predlažem vlastiti sustav u fazama, jer sama vraćaš kredite i određuješ cijene. Alternativa je Momence ili bsport uz zakrpe za Multisport, Sculpt Room i plaćanje.</p>
+
+<footer>Ovaj dokument ažuriram kako se odluke mijenjaju. Zadnje ažuriranje: 27.10.2026.</footer>
+
+</div>
+
+<script>
+(function () {
+  var bar = document.querySelector('.brand-bar');
+  if (!bar) return;
+  var lastY = window.scrollY || 0, threshold = 8, topOffset = 80, ticking = false;
+  function onScroll() {
+    var y = window.scrollY || 0;
+    if (y <= topOffset) { bar.classList.remove('brand-bar--hidden'); lastY = y; ticking = false; return; }
+    var d = y - lastY;
+    if (d > threshold) { bar.classList.add('brand-bar--hidden'); lastY = y; }
+    else if (d < -threshold) { bar.classList.remove('brand-bar--hidden'); lastY = y; }
+    ticking = false;
+  }
+  window.addEventListener('scroll', function () {
+    if (!ticking) { window.requestAnimationFrame(onScroll); ticking = true; }
+  }, { passive: true });
+})();
+</script>
+</body>
+</html>

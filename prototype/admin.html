@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Točkica: admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <img class="logo" src="assets/tockica-logo.svg" alt="Točkica na i">
+  <nav class="pages" aria-label="Stranice">
+    <a href="schedule.html">Raspored</a>
+    <a href="reception.html">Recepcija</a>
+    <a href="admin.html" aria-current="page">Admin</a>
+  </nav>
+</header>
+
+<main>
+  <h2>Računi</h2>
+  <section id="accounts" aria-label="Računi"></section>
+
+  <h2>Nadolazeće rezervacije</h2>
+  <section id="bookings" aria-label="Rezervacije"></section>
+
+  <h2>Paketi</h2>
+  <section id="packs" aria-label="Paketi"></section>
+
+  <h2>Demo alati</h2>
+  <section class="demo" aria-label="Demo alati">
+    <label class="field">Trening
+      <select id="demo-class"></select>
+    </label>
+    <p>
+      <button id="fill" class="btn secondary">Napuni trening (sve bajkove)</button>
+      <button id="soon" class="btn secondary">Dodaj trening za 20 min</button>
+    </p>
+  </section>
+
+  <p><button id="reset" class="btn secondary">Resetiraj demo</button></p>
+  <p id="message" class="message" role="status"></p>
+</main>
+
+<script type="module" src="src/pages/admin.js"></script>
+</body>
+</html>
