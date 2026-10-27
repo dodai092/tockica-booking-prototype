@@ -8,7 +8,7 @@ import {
 } from '../admin.js';
 import { addSoonClass, fillClass } from '../demo.js';
 import { loadStore, saveStore, resetStore } from './session.js';
-import { fadeIn, collapse } from './motion.js';
+import { fadeIn, expand, collapse, release } from './motion.js';
 
 const timeFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', hour: '2-digit', minute: '2-digit' });
 const dayFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', weekday: 'short', day: '2-digit', month: '2-digit' });
@@ -31,8 +31,10 @@ function showMessage(text, isError = false) {
   if (text) fadeIn(node, -4, 200);
 }
 
-// Runs an admin action, saves, and re-renders. Errors show as a message.
-function act(action) {
+// Runs an admin action, saves, and re-renders. Errors show as a message. Edits that already
+// show on screen (a switch, a price) pass rerender = false, so focus and the switch's own
+// animation are not thrown away.
+function act(action, rerender = true) {
   try {
     action();
     showMessage('Spremljeno.');
@@ -40,57 +42,96 @@ function act(action) {
     showMessage(err.message, true);
   }
   saveStore(store);
-  render();
+  if (rerender) render();
+}
+
+function row(...children) {
+  const node = el('div', undefined, 'g-row');
+  node.append(...children);
+  return node;
+}
+
+function main(title, ...subs) {
+  const node = el('div', undefined, 'g-main');
+  node.append(el('div', title, 'g-title'), ...subs.filter(Boolean).map((text) => el('div', text, 'g-sub')));
+  return node;
+}
+
+function chevron() {
+  const node = el('span', undefined, 'g-chevron');
+  node.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  return node;
+}
+
+function restoreForm(account) {
+  const form = el('form', undefined, 'g-form');
+  form.hidden = true;
+  const count = el('input', undefined, 'g-input g-count');
+  count.type = 'number';
+  count.min = '1';
+  count.value = '1';
+  count.setAttribute('aria-label', 'Broj kredita');
+  const reason = el('input', undefined, 'g-input g-reason');
+  reason.placeholder = 'Razlog';
+  reason.setAttribute('aria-label', 'Razlog');
+  const submit = el('button', 'Vrati', 'btn');
+  submit.type = 'submit';
+  form.append(count, reason, submit);
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!reason.value.trim()) {
+      showMessage('Upiši razlog.', true);
+      return;
+    }
+    const sure = window.confirm(`Vratiti ${count.value} kredita za ${account.name}?\nRazlog: ${reason.value.trim()}`);
+    if (!sure) return;
+    act(() => restoreCredit(store, {
+      accountId: account.id,
+      count: Number(count.value),
+      reason: reason.value.trim(),
+      now: new Date(),
+    }));
+  });
+  return { form, reason };
 }
 
 function renderAccounts(now) {
   const section = $('accounts');
   section.replaceChildren();
   for (const account of store.accounts) {
-    const card = el('article', undefined, 'card');
-    const info = el('div');
-    info.append(
-      el('div', account.name, 'name'),
-      el('div', `${account.email} · kredit: ${balance(store, account.id, now)}`, 'meta'),
-    );
+    const group = el('div', undefined, 'group');
+    group.append(row(main(account.name, account.email), el('span', `Kredit ${balance(store, account.id, now)}`, 'g-trail')));
 
-    const tag = el('label', undefined, 'toggle');
-    const box = el('input');
+    const switchRow = el('label', undefined, 'g-row');
+    const box = el('input', undefined, 'switch');
     box.type = 'checkbox';
+    box.setAttribute('role', 'switch');
     box.checked = account.multisportTag;
-    box.addEventListener('change', () => act(() => setMultisportTag(store, account.id, box.checked)));
-    tag.append(box, ' Multisport');
+    box.addEventListener('change', () => act(() => setMultisportTag(store, account.id, box.checked), false));
+    switchRow.append(el('span', 'Multisport', 'g-main g-title'), box);
+    group.append(switchRow);
 
-    const restore = el('form', undefined, 'restore');
-    const count = el('input');
-    count.type = 'number';
-    count.min = '1';
-    count.value = '1';
-    count.setAttribute('aria-label', 'Broj kredita');
-    const reason = el('input');
-    reason.placeholder = 'Razlog';
-    reason.setAttribute('aria-label', 'Razlog');
-    const submit = el('button', 'Vrati kredit', 'btn secondary');
-    submit.type = 'submit';
-    restore.append(count, reason, submit);
-    restore.addEventListener('submit', (event) => {
-      event.preventDefault();
-      if (!reason.value.trim()) {
-        showMessage('Upiši razlog.', true);
-        return;
+    const { form, reason } = restoreForm(account);
+    const toggle = el('button', undefined, 'g-row g-action');
+    toggle.type = 'button';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.append(el('span', 'Vrati kredit', 'g-main g-title'), chevron());
+    toggle.addEventListener('click', () => {
+      const opening = form.hidden;
+      toggle.setAttribute('aria-expanded', String(opening));
+      if (opening) {
+        form.hidden = false;
+        expand(form);
+        reason.focus();
+      } else {
+        collapse(form).then(() => {
+          release(form);
+          form.hidden = true;
+        });
       }
-      const sure = window.confirm(`Vratiti ${count.value} kredita za ${account.name}?\nRazlog: ${reason.value.trim()}`);
-      if (!sure) return;
-      act(() => restoreCredit(store, {
-        accountId: account.id,
-        count: Number(count.value),
-        reason: reason.value.trim(),
-        now: new Date(),
-      }));
     });
-
-    card.append(info, tag, restore);
-    section.append(card);
+    group.append(toggle, form);
+    section.append(group);
   }
 }
 
@@ -104,19 +145,17 @@ function renderBookings(now) {
     .sort((a, b) => a.session.startsAt.localeCompare(b.session.startsAt));
 
   if (upcoming.length === 0) {
-    section.append(el('p', 'Nema nadolazećih rezervacija.', 'meta'));
+    section.append(row(el('span', 'Nema nadolazećih rezervacija.', 'g-sub')));
     return;
   }
 
   for (const { booking, session } of upcoming) {
     const account = store.accounts.find((a) => a.id === booking.accountId);
-    const card = el('article', undefined, 'card');
-    const info = el('div');
-    info.append(
-      el('div', `${session.name} · ${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))}`, 'name'),
-      el('div', `Bajk ${booking.bikeNo} · ${account?.name ?? ''}`, 'meta'),
-    );
-    const remove = el('button', 'Makni s treninga', 'btn secondary');
+    const when = `${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))}`;
+    const guest = booking.guestName ? ` · Gost: ${booking.guestName}` : '';
+    const item = row(main(session.name, when, `Bajk ${booking.bikeNo} · ${account?.name ?? ''}${guest}`));
+    const remove = el('button', 'Makni', 'g-text destructive');
+    remove.setAttribute('aria-label', `Makni s treninga: ${account?.name ?? ''}, bajk ${booking.bikeNo}`);
     remove.addEventListener('click', () => {
       const reason = window.prompt('Razlog za micanje s treninga:');
       if (!reason || !reason.trim()) return;
@@ -124,40 +163,42 @@ function renderBookings(now) {
         `Makni ${account?.name ?? 'klijenta'} (bajk ${booking.bikeNo}) s treninga ${session.name}?\nKredit se vraća, a klijent dobiva mail.`,
       );
       if (!sure) return;
-      collapse(card).then(() => act(() => removeFromClass(store, { bookingId: booking.id, reason: reason.trim(), now: new Date() })));
+      collapse(item).then(() => act(() => removeFromClass(store, { bookingId: booking.id, reason: reason.trim(), now: new Date() })));
     });
-    card.append(info, remove);
-    section.append(card);
+    item.append(remove);
+    section.append(item);
   }
+}
+
+function priceRow(label, value, placeholder) {
+  const input = el('input', undefined, 'g-input g-price');
+  input.type = 'number';
+  input.min = '0';
+  input.inputMode = 'decimal';
+  input.value = value;
+  input.placeholder = placeholder;
+  input.setAttribute('aria-label', label);
+  const node = el('label', undefined, 'g-row');
+  node.append(el('span', label, 'g-main g-title'), input, el('span', '€', 'g-trail'));
+  return { node, input };
 }
 
 function renderPacks() {
   const section = $('packs');
   section.replaceChildren();
   for (const pack of store.packs) {
-    const form = el('form', undefined, 'pack');
-    const price = el('input');
-    price.type = 'number';
-    price.min = '0';
-    price.value = String(pack.priceEur);
-    price.setAttribute('aria-label', `Cijena: ${pack.name}`);
-    const multi = el('input');
-    multi.type = 'number';
-    multi.min = '0';
-    multi.value = pack.multisportPriceEur === null ? '' : String(pack.multisportPriceEur);
-    multi.placeholder = 'Multisport (prazno = nema)';
-    multi.setAttribute('aria-label', `Multisport cijena: ${pack.name}`);
-    const submit = el('button', 'Spremi', 'btn secondary');
-    submit.type = 'submit';
-    form.append(el('strong', pack.name), price, el('span', '€'), multi, submit);
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      act(() => setPackPrices(store, pack.id, {
-        priceEur: Number(price.value),
-        multisportPriceEur: multi.value === '' ? null : Number(multi.value),
-      }));
-    });
-    section.append(form);
+    const group = el('div', undefined, 'group');
+    group.append(row(main(pack.name, `${pack.validDays} dana`)));
+    const price = priceRow('Cijena', String(pack.priceEur), '0');
+    const multi = priceRow('Multisport cijena', pack.multisportPriceEur ?? '', 'nema');
+    const save = () => act(() => setPackPrices(store, pack.id, {
+      priceEur: Number(price.input.value),
+      multisportPriceEur: multi.input.value === '' ? null : Number(multi.input.value),
+    }), false);
+    price.input.addEventListener('change', save);
+    multi.input.addEventListener('change', save);
+    group.append(price.node, multi.node);
+    section.append(group);
   }
 }
 

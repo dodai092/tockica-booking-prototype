@@ -44,31 +44,26 @@
 
   <section id="panel-admin" class="panel" role="tabpanel" aria-label="Admin" hidden>
     <h1 class="tab-title">Admin</h1>
-  <h2>Računi</h2>
-  <section id="a-accounts" aria-label="Računi"></section>
+    <p id="a-message" class="message" role="status"></p>
 
-  <h2>Nadolazeće rezervacije</h2>
-  <section id="a-bookings" aria-label="Rezervacije"></section>
+    <h2 class="g-header">Računi</h2>
+    <section id="a-accounts" aria-label="Računi"></section>
 
-  <h2>Paketi</h2>
-  <section id="a-packs" aria-label="Paketi"></section>
+    <h2 class="g-header">Nadolazeće rezervacije</h2>
+    <section id="a-bookings" class="group" aria-label="Rezervacije"></section>
 
-  <aside class="demo-panel" aria-label="Demo alati">
-    <h2>Demo alati</h2>
-    <p class="meta">Samo za prototip. Ovo ne postoji u pravoj aplikaciji.</p>
-    <section class="demo" aria-label="Demo alati">
-      <label class="field">Trening
-        <select id="a-demo-class"></select>
-      </label>
-      <p>
-        <button id="a-fill" class="btn secondary">Napuni trening (sve bajkove)</button>
-        <button id="a-soon" class="btn secondary">Dodaj trening za 20 min</button>
-      </p>
+    <h2 class="g-header">Paketi</h2>
+    <section id="a-packs" aria-label="Paketi"></section>
+    <p class="g-footer">Cijene se spremaju čim ih promijeniš. Prazna Multisport cijena znači da je nema.</p>
+
+    <h2 class="g-header">Demo alati <span class="demo-tag">Samo prototip</span></h2>
+    <section class="group" aria-label="Demo alati">
+      <label class="g-row"><span class="g-main g-title">Trening</span><select id="a-demo-class" class="g-select"></select></label>
+      <button id="a-fill" type="button" class="g-row g-action">Napuni trening (sve bajkove)</button>
+      <button id="a-soon" type="button" class="g-row g-action">Dodaj trening za 20 min</button>
+      <button id="a-reset" type="button" class="g-row g-action destructive">Resetiraj demo</button>
     </section>
-    <p><button id="a-reset" class="btn secondary">Resetiraj demo</button></p>
-  </aside>
-
-  <p id="a-message" class="message" role="status"></p>
+    <p class="g-footer">Ovo ne postoji u pravoj aplikaciji.</p>
   </section>
 </main>
 
