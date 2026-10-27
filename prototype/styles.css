@@ -6,7 +6,7 @@
   --dark: #232A35;
   --green: #3AAA35;
   --border: #EBEBEB;
-  --muted: #8A8F98;
+  --muted: #636B76;
 }
 
 * { box-sizing: border-box; }
@@ -275,3 +275,12 @@ h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; text-transform: up
 
 /* Keep the status button in place and the same width when the bike panel opens. */
 .card > .btn { align-self: start; min-width: 112px; margin-left: 0; }
+
+.day .dot { display: block; width: 6px; height: 6px; margin: 4px auto 0; border-radius: 50%; background: var(--muted); opacity: .45; }
+.day .dot.none { background: none; }
+.day .dot.mine-dot { background: var(--green); opacity: 1; }
+.day[aria-pressed="true"] .dot { background: #fff; }
+.day[aria-pressed="true"] .dot.mine-dot { background: var(--green); }
+.day[aria-pressed="true"] .dot.none { background: none; }
+.card .few { color: #B54708; font-weight: 500; }
+.mine-link { display: inline-block; margin-bottom: 8px; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 14px; color: #2B8A27; }

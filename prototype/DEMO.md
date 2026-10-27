@@ -32,7 +32,7 @@ ako je prvi ponedjeljak više od 6 sati u budućnosti.
 ## 3. Zauzet bajk
 
 - **Stranica:** `schedule.html`
-- **Radnja:** klikni "rezerviraj" pri 17:45 ponovo.
+- **Radnja:** klikni "dodaj bajk" pri 17:45.
 - **Očekivano:** bajk 3 je siv i ne može se kliknuti.
 
 ## 4. Popunjen trening i lista čekanja

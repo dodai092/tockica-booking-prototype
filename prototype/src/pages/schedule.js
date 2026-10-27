@@ -96,6 +96,10 @@ function renderWeek() {
   nav.replaceChildren();
 
   const monday = studioTime.addDays(thisMonday, 7 * weekOffset);
+  const classDays = new Set(store.classes.map((c) => studioTime.localDate(c.startsAt)));
+  const myDays = new Set(
+    upcomingBookings(store, $('account').value, new Date()).map(({ session }) => studioTime.localDate(session.startsAt)),
+  );
   const prev = el('button', '‹', 'nav-week');
   prev.disabled = weekOffset === 0;
   prev.addEventListener('click', () => {
@@ -109,7 +113,9 @@ function renderWeek() {
     const day = studioTime.addDays(monday, i);
     const button = el('button', undefined, 'day');
     button.setAttribute('aria-pressed', String(day === selectedDay));
-    button.append(el('small', DAY_NAMES[i]), el('strong', day.slice(8)));
+    const dot = el('span', undefined, myDays.has(day) ? 'dot mine-dot' : classDays.has(day) ? 'dot' : 'dot none');
+    button.append(el('small', DAY_NAMES[i]), el('strong', day.slice(8)), dot);
+    if (myDays.has(day)) button.setAttribute('aria-label', `${DAY_NAMES[i]} ${day.slice(8)}, imaš rezervaciju`);
     button.addEventListener('click', () => {
       selectedDay = day;
       openClassId = null;
@@ -132,7 +138,7 @@ function instructorName(id) {
   return store.instructors.find((i) => i.id === id)?.name ?? '';
 }
 
-function statusButton(session, current) {
+function statusButton(session, current, hasBike) {
   const startsAt = Date.parse(session.startsAt);
   if (current.getTime() >= startsAt) return el('button', 'prošlo', 'btn');
   if (!isBookable(session, current)) return el('button', 'uskoro', 'btn');
@@ -142,7 +148,7 @@ function statusButton(session, current) {
     return waitlist;
   }
   const isOpen = openClassId === session.id;
-  const button = el('button', isOpen ? 'zatvori' : 'rezerviraj', isOpen ? 'btn secondary' : 'btn');
+  const button = el('button', isOpen ? 'zatvori' : hasBike ? 'dodaj bajk' : 'rezerviraj', isOpen ? 'btn secondary' : 'btn');
   button.addEventListener('click', () => {
     openClassId = isOpen ? null : session.id;
     pickedBike = null;
@@ -175,17 +181,22 @@ function renderClasses() {
       el('div', session.name, 'name'),
       el('div', [instructorName(session.instructorId), session.themeName].filter(Boolean).join(' · '), 'meta'),
     );
-    card.append(info, statusButton(session, current));
     const mine = store.bookings
       .filter((b) => b.classId === session.id && b.accountId === $('account').value && b.status === 'booked')
       .sort((a, b) => a.bikeNo - b.bikeNo);
+    if (current.getTime() < Date.parse(session.startsAt) && isBookable(session, current)) {
+      const free = BIKE_COUNT - takenBikes(store, session.id).length;
+      const text = free === 0 ? 'Popunjeno' : free <= 3 ? `Posljednja mjesta: ${free}` : `Slobodnih bajkova: ${free}`;
+      info.append(el('div', text, free <= 3 ? 'meta few' : 'meta'));
+    }
+    card.append(info, statusButton(session, current, mine.length > 0));
     if (mine.length && current.getTime() < Date.parse(session.startsAt)) {
       const bikes = mine.map((b) => (b.guestName ? `${b.bikeNo} (${b.guestName})` : b.bikeNo)).join(', ');
       info.append(el('div', `${mine.length > 1 ? 'Tvoji bajkovi' : 'Tvoj bajk'}: ${bikes}`, 'mine'));
       for (const booking of mine) {
         info.append(...cancelControl(booking, session, current, mine.length > 1 ? `otkaži bajk ${booking.bikeNo}` : 'otkaži'));
       }
-      info.append(el('div', cancelNote(session, current), 'meta'));
+      info.append(el('div', cancelNote(session, current, true), 'meta'));
     }
     if (openClassId) card.classList.toggle('dimmed', session.id !== openClassId);
     if (session.id === openClassId) card.append($('bikes'));
@@ -193,8 +204,13 @@ function renderClasses() {
   }
 }
 
-function cancelNote(session, current) {
+function cancelNote(session, current, short = false) {
   const deadline = cancelDeadline(session);
+  if (short) {
+    return current < deadline
+      ? `Besplatno otkazivanje do ${whenFormat.format(deadline)}`
+      : 'Manje od 6 sati: kredit propada';
+  }
   return current < deadline
     ? `Otkazivanje je besplatno do ${whenFormat.format(deadline)} (6 sati prije treninga). Nakon toga kredit propada.`
     : 'Manje od 6 sati do treninga: ako otkažeš, kredit propada.';
@@ -223,6 +239,9 @@ function cancelControl(booking, session, current, label) {
 
 function renderMine() {
   const section = $('mine');
+  const count = upcomingBookings(store, $('account').value, new Date()).length;
+  $('mine-link').hidden = count === 0;
+  $('mine-link').textContent = `Moje rezervacije (${count})`;
   section.replaceChildren(el('h2', 'Moje rezervacije'));
   const current = new Date();
   const rows = upcomingBookings(store, $('account').value, current);
