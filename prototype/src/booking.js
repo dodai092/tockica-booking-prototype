@@ -74,6 +74,18 @@ export function bookBike(store, { classId, bikeNo, accountId, guestName = null, 
   return booking;
 }
 
+export function cancelDeadline(session) {
+  return new Date(Date.parse(session.startsAt) - CANCEL_CUTOFF_MS);
+}
+
+export function upcomingBookings(store, accountId, now) {
+  return store.bookings
+    .filter((b) => b.accountId === accountId && b.status === 'booked')
+    .map((booking) => ({ booking, session: store.classes.find((c) => c.id === booking.classId) }))
+    .filter(({ session }) => Date.parse(session.startsAt) > now.getTime())
+    .sort((a, b) => a.session.startsAt.localeCompare(b.session.startsAt) || a.booking.bikeNo - b.booking.bikeNo);
+}
+
 function findBooking(store, bookingId) {
   return store.bookings.find((b) => b.id === bookingId);
 }

@@ -21,25 +21,25 @@ ako je prvi ponedjeljak više od 6 sati u budućnosti.
 
 - **Stranica:** `schedule.html`
 - **Radnja:** klikni prvi dan s treninzima u traci dana (ponedjeljak).
-- **Očekivano:** dva treninga: 10:00 "SOUL test" (Instruktorica 1) i 16:30 "Test tema" (Instruktor 2, tema "Tema"). Kredit: 5.
+- **Očekivano:** tri treninga: 17:45 "Funky Spin", 18:45 "Rhythm Spin" i 19:45 "Fresh Start Spin". Kredit: 5.
 
 ## 2. Rezervacija bajka
 
 - **Stranica:** `schedule.html`
-- **Radnja:** klikni "rezerviraj" pri 10:00, pa bajk 3 i "Rezerviraj bajk 3".
+- **Radnja:** klikni "rezerviraj" pri 17:45, pa bajk 3 i "Rezerviraj bajk 3".
 - **Očekivano:** poruka "Rezervirano: bajk 3. Kredit: 4.", kredit 4.
 
 ## 3. Zauzet bajk
 
 - **Stranica:** `schedule.html`
-- **Radnja:** klikni "rezerviraj" pri 10:00 ponovo.
+- **Radnja:** klikni "rezerviraj" pri 17:45 ponovo.
 - **Očekivano:** bajk 3 je siv i ne može se kliknuti.
 
 ## 4. Popunjen trening i lista čekanja
 
 - **Stranica:** `admin.html`, odjeljak "Demo alati"
-- **Radnja:** u padajućem izborniku odaberi ponedjeljak 10:00 "SOUL test", klikni "Napuni trening (sve bajkove)". Zatim se vrati na `schedule.html`.
-- **Očekivano:** pri 10:00 umjesto "rezerviraj" piše "lista čekanja". Klik na njega daje poruku "Na listi čekanja. Dobit ćeš mail kad se mjesto oslobodi." s brojem poslanih mailova.
+- **Radnja:** u padajućem izborniku odaberi ponedjeljak 17:45 "Funky Spin", klikni "Napuni trening (sve bajkove)". Zatim se vrati na `schedule.html`.
+- **Očekivano:** pri 17:45 umjesto "rezerviraj" piše "lista čekanja". Klik na njega daje poruku "Na listi čekanja. Dobit ćeš mail kad se mjesto oslobodi." s brojem poslanih mailova.
 - **Napomena:** sadržaj mailova nije prikazan u prototipu, samo broj.
 
 ## 5. Kasno otkazivanje (unutar 6 sati)
@@ -51,7 +51,7 @@ ako je prvi ponedjeljak više od 6 sati u budućnosti.
 ## 6. Otkazivanje više od 6 sati ranije
 
 - **Stranica:** `schedule.html`
-- **Radnja:** za prvi ponedjeljak, klikni "rezerviraj" pri 16:30, pa bajk 7 i "Rezerviraj bajk 7". Zatim klikni "otkaži" na kartici 16:30. Ne na kartici 10:00, gdje je tvoja rezervacija bajka 3 iz koraka 2.
+- **Radnja:** za prvi ponedjeljak, klikni "rezerviraj" pri 18:45, pa bajk 7 i "Rezerviraj bajk 7". Zatim klikni "otkaži" na kartici 18:45. Ne na kartici 17:45, gdje je tvoja rezervacija bajka 3 iz koraka 2.
 - **Očekivano:** poruka "Otkazano. Kredit je vraćen.". Kredit: 3, pa 2 pri rezervaciji, pa 3 nakon otkazivanja.
 
 ## 7. Dolazak na recepciji

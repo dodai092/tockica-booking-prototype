@@ -5,6 +5,8 @@ import {
   bookBike,
   takenBikes,
   cancelBooking,
+  cancelDeadline,
+  upcomingBookings,
   joinWaitlist,
   BikeTakenError,
   NotBookableError,
@@ -29,10 +31,20 @@ const timeFormat = new Intl.DateTimeFormat('hr-HR', {
   minute: '2-digit',
 });
 
+const whenFormat = new Intl.DateTimeFormat('hr-HR', {
+  timeZone: 'Europe/Zagreb',
+  weekday: 'short',
+  day: 'numeric',
+  month: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
 const now = new Date();
 const store = loadStore();
 saveStore(store);
 let pickedBike = null;
+let guestName = '';
 let openClassId = null;
 
 const thisMonday = mondayOf(now);
@@ -133,6 +145,7 @@ function statusButton(session, current) {
   button.addEventListener('click', () => {
     openClassId = isOpen ? null : session.id;
     pickedBike = null;
+    guestName = '';
     render();
   });
   return button;
@@ -166,17 +179,51 @@ function renderClasses() {
       .filter((b) => b.classId === session.id && b.accountId === $('account').value && b.status === 'booked')
       .sort((a, b) => a.bikeNo - b.bikeNo);
     if (mine.length && current.getTime() < Date.parse(session.startsAt)) {
-      const bikes = mine.map((b) => b.bikeNo).join(', ');
+      const bikes = mine.map((b) => (b.guestName ? `${b.bikeNo} (${b.guestName})` : b.bikeNo)).join(', ');
       info.append(el('div', `${mine.length > 1 ? 'Tvoji bajkovi' : 'Tvoj bajk'}: ${bikes}`, 'mine'));
       for (const booking of mine) {
         const cancel = el('button', mine.length > 1 ? `otkaži bajk ${booking.bikeNo}` : 'otkaži', 'btn secondary');
         cancel.addEventListener('click', () => cancelMine(booking.id));
         info.append(cancel);
       }
+      info.append(el('div', cancelNote(session, current), 'meta'));
     }
     if (openClassId) card.classList.toggle('dimmed', session.id !== openClassId);
     if (session.id === openClassId) card.append($('bikes'));
     list.append(card);
+  }
+}
+
+function cancelNote(session, current) {
+  const deadline = cancelDeadline(session);
+  return current < deadline
+    ? `Otkazivanje je besplatno do ${whenFormat.format(deadline)} (6 sati prije treninga). Nakon toga kredit propada.`
+    : 'Manje od 6 sati do treninga: ako otkažeš, kredit propada.';
+}
+
+function renderMine() {
+  const section = $('mine');
+  section.replaceChildren(el('h2', 'Moje rezervacije'));
+  const current = new Date();
+  const rows = upcomingBookings(store, $('account').value, current);
+  if (rows.length === 0) {
+    section.append(el('p', 'Nemaš nadolazećih rezervacija.', 'meta'));
+    return;
+  }
+  for (const { booking, session } of rows) {
+    const card = el('article', undefined, 'card');
+    const info = el('div');
+    const guest = booking.guestName ? ` (${booking.guestName})` : '';
+    info.append(
+      el('div', whenFormat.format(new Date(session.startsAt)), 'time'),
+      el('div', session.name, 'name'),
+      el('div', `Bajk ${booking.bikeNo}${guest} · ${instructorName(session.instructorId)}`, 'meta'),
+      el('div', cancelNote(session, current), 'meta'),
+    );
+    const cancel = el('button', 'otkaži', 'btn secondary');
+    cancel.addEventListener('click', () => cancelMine(booking.id));
+    card.append(info, cancel);
+    section.append(card);
   }
 }
 
@@ -207,6 +254,16 @@ function renderBikes() {
     grid.append(button);
   }
   panel.append(grid);
+
+  const guest = el('label', 'Ime gosta (ako rezerviraš za nekoga drugog)', 'meta guest');
+  const guestInput = el('input');
+  guestInput.type = 'text';
+  guestInput.value = guestName;
+  guestInput.addEventListener('input', () => {
+    guestName = guestInput.value;
+  });
+  guest.append(guestInput);
+  panel.append(guest);
 
   const confirm = el('div', undefined, 'confirm');
   if (pickedBike) {
@@ -261,11 +318,13 @@ function reserve(bikeNo) {
       classId: openClassId,
       bikeNo,
       accountId: $('account').value,
+      guestName: guestName.trim() || null,
       now: new Date(),
     });
     showMessage(`Rezervirano: bajk ${bikeNo}. Kredit: ${balance(store, $('account').value, new Date())}.`);
     openClassId = null;
     pickedBike = null;
+    guestName = '';
   } catch (err) {
     showMessage(ERROR_TEXT[err.name] ?? 'Nešto je pošlo krivo.', true);
     if (!(err instanceof BikeTakenError || err instanceof NoCreditError || err instanceof NotBookableError)) {
@@ -281,6 +340,7 @@ function render() {
   renderWeek();
   renderClasses();
   renderBikes();
+  renderMine();
 }
 
 render();

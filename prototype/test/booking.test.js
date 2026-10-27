@@ -8,6 +8,8 @@ import {
   bookBike,
   takenBikes,
   cancelBooking,
+  cancelDeadline,
+  upcomingBookings,
   markNoShow,
   joinWaitlist,
   onBikeFreed,
@@ -284,4 +286,24 @@ test('booking removes the account from that class waitlist', () => {
   bookBike(store, { classId, bikeNo: 5, accountId: 'acc_test1', now: NOW });
 
   assert.equal(store.waitlist.filter((w) => w.accountId === 'acc_test1').length, 0);
+});
+
+test('cancelDeadline is 6 hours before the class start', () => {
+  const { store, classId } = setup();
+  const deadline = cancelDeadline(store.classes.find((c) => c.id === classId));
+  assert.equal(deadline.getTime(), startOf(store, classId) - 6 * 60 * 60 * 1000);
+});
+
+test('upcomingBookings lists only the account\'s booked, future classes, soonest first', () => {
+  const { store, classId } = setup();
+  const mine = bookBike(store, { classId, bikeNo: 3, accountId: 'acc_test1', now: NOW });
+  const other = bookBike(store, { classId, bikeNo: 4, accountId: 'acc_test2', now: NOW });
+  const cancelled = bookBike(store, { classId, bikeNo: 5, accountId: 'acc_test1', now: NOW });
+  cancelBooking(store, cancelled.id, NOW);
+  const result = upcomingBookings(store, 'acc_test1', NOW);
+  assert.deepEqual(result.map((r) => r.booking.id), [mine.id]);
+  assert.equal(result[0].session.id, classId);
+  assert.ok(!result.some((r) => r.booking.id === other.id));
+  const afterStart = new Date(startOf(store, classId) + 1000);
+  assert.equal(upcomingBookings(store, 'acc_test1', afterStart).length, 0);
 });

@@ -77,6 +77,8 @@ function renderAccounts(now) {
         showMessage('Upiši razlog.', true);
         return;
       }
+      const sure = window.confirm(`Vratiti ${count.value} kredita za ${account.name}?\nRazlog: ${reason.value.trim()}`);
+      if (!sure) return;
       act(() => restoreCredit(store, {
         accountId: account.id,
         count: Number(count.value),
@@ -116,6 +118,10 @@ function renderBookings(now) {
     remove.addEventListener('click', () => {
       const reason = window.prompt('Razlog za micanje s treninga:');
       if (!reason || !reason.trim()) return;
+      const sure = window.confirm(
+        `Makni ${account?.name ?? 'klijenta'} (bajk ${booking.bikeNo}) s treninga ${session.name}?\nKredit se vraća, a klijent dobiva mail.`,
+      );
+      if (!sure) return;
       act(() => removeFromClass(store, { bookingId: booking.id, reason: reason.trim(), now: new Date() }));
     });
     card.append(info, remove);

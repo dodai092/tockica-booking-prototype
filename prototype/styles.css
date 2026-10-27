@@ -264,3 +264,9 @@ h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; text-transform: up
   .row { grid-template-columns: auto 1fr; }
   .row .actions { grid-column: 1 / -1; justify-content: flex-start; }
 }
+
+.guest { display: block; margin-top: 12px; }
+.guest input { display: block; width: 100%; margin-top: 4px; font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); box-sizing: border-box; }
+
+.demo-panel { margin-top: 32px; padding: 0 16px 8px; border: 2px dashed var(--border); border-radius: 12px; background: #fafafa; }
+.demo-panel h2 { margin-top: 16px; }
