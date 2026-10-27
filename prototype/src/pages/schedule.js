@@ -140,7 +140,11 @@ function instructorName(id) {
 
 function statusButton(session, current, hasBike) {
   const startsAt = Date.parse(session.startsAt);
-  if (current.getTime() >= startsAt) return el('button', 'prošlo', 'btn');
+  if (current.getTime() >= startsAt) {
+    const past = el('button', 'rezerviraj', 'btn');
+    past.disabled = true;
+    return past;
+  }
   if (!isBookable(session, current)) return el('button', 'uskoro', 'btn');
   if (takenBikes(store, session.id).length >= BIKE_COUNT) {
     const waitlist = el('button', 'lista čekanja', 'btn');

@@ -288,7 +288,7 @@ h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; text-transform: up
 }
 .tab-bar a {
   display: flex; align-items: center; justify-content: center;
-  min-width: 56px; min-height: 52px; border-radius: 99px; color: var(--muted);
+  min-width: 56px; min-height: 52px; border-radius: 99px; color: var(--muted); text-decoration: none;
 }
 .tab-bar svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .tab-bar a[aria-current="page"] { color: var(--dark); background: rgba(35,42,53,.1); }
@@ -296,3 +296,13 @@ h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; text-transform: up
 .tab-bar a:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 @media (prefers-reduced-transparency: reduce) { .tab-bar { background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; } }
+
+/* The current page's label shows for 3 seconds after load, then folds away. */
+.tab-bar a[aria-current="page"] { gap: 8px; padding: 0 16px; }
+.tab-bar a span {
+  max-width: 120px; overflow: hidden; white-space: nowrap;
+  font-family: Montserrat, sans-serif; font-weight: 600; font-size: 13px;
+  animation: tab-label-hide .3s ease 3s forwards;
+}
+@keyframes tab-label-hide { to { max-width: 0; opacity: 0; margin-left: -8px; } }
+@media (prefers-reduced-motion: reduce) { .tab-bar a span { animation-duration: .01s; } }
