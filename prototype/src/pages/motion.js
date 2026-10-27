@@ -22,6 +22,10 @@ export const slideIn = (node, direction) =>
 export const pop = (node, from = 0.9) =>
   run(node, [{ transform: `scale(${from})` }, { transform: 'none' }], { duration: 380, easing: SPRING });
 
+// Shrinks and fades out, and holds that state until the caller hides the node and releases it.
+export const popOut = (node) =>
+  run(node, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.6)' }], { duration: 180, fill: 'forwards' });
+
 // Height, spacing and opacity between "shut" and the node's natural size.
 function boxFrames(node) {
   const cs = getComputedStyle(node);

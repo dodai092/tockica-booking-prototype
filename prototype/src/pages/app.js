@@ -3,6 +3,7 @@ import { render as renderSchedule } from './schedule.js';
 import { render as renderReception } from './reception.js';
 import { render as renderAdmin } from './admin.js';
 import './info.js';
+import './theme.js';
 
 const TABS = ['raspored', 'recepcija', 'admin'];
 const RENDER = { raspored: renderSchedule, recepcija: renderReception, admin: renderAdmin };

@@ -12,7 +12,7 @@ import {
   NotBookableError,
 } from '../booking.js';
 import { loadStore, saveStore, mondayOf } from './session.js';
-import { fadeIn, slideIn, pop, expand, collapse } from './motion.js';
+import { fadeIn, slideIn, pop, popOut, expand, collapse, release } from './motion.js';
 import { openSheet, closeSheet, bindSheet } from './sheet.js';
 
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
@@ -262,15 +262,34 @@ function toggleConfirm(bookingId) {
   for (const node of document.querySelectorAll('#panel-raspored .cancel-ctl')) fadeIn(node, 4, 180);
 }
 
+// Shows or hides a node with motion. `enter` runs when it appears, `leave` before it is hidden.
+// A changed text on a node that stays visible pops.
+function reveal(node, show, text, enter, leave) {
+  if (show) {
+    delete node.dataset.leaving;
+    release(node);
+    const wasHidden = node.hidden;
+    const changed = node.textContent !== text;
+    node.hidden = false;
+    node.textContent = text;
+    if (wasHidden) enter(node);
+    else if (changed) pop(node, 0.9);
+  } else if (!node.hidden && !node.dataset.leaving) {
+    node.dataset.leaving = '1';
+    leave(node).then(() => {
+      if (!node.dataset.leaving) return;
+      delete node.dataset.leaving;
+      node.hidden = true;
+      release(node);
+    });
+  }
+}
+
 function renderMine() {
   const section = $('mine');
   const count = upcomingBookings(store, $('account').value, new Date()).length;
-  const badge = document.getElementById('badge-raspored');
-  if (badge.textContent !== String(count) && count > 0) pop(badge, 0.6);
-  badge.hidden = count === 0;
-  badge.textContent = String(count);
-  $('mine-link').hidden = count === 0;
-  $('mine-link').textContent = `Moje rezervacije (${count})`;
+  reveal(document.getElementById('badge-raspored'), count > 0, String(count), (n) => pop(n, 0.6), popOut);
+  reveal($('mine-link'), count > 0, `Moje rezervacije (${count})`, expand, collapse);
   section.replaceChildren(el('h2', 'Moje rezervacije'));
   const current = new Date();
   const rows = upcomingBookings(store, $('account').value, current);
