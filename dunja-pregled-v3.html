@@ -60,8 +60,8 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 
 <div class="page">
 
-<h1>Booking sustav za Točkicu: što predlažem i zašto</h1>
-<p class="lead">Napravio sam prototip s lažnim podacima, ali pravi sustav (plaćanje, hosting, tvoja stranica) još nije izrađen. Ovo su dogovori, pa ih je sad najjeftinije mijenjati.</p>
+<h1>Booking sustav za Točkicu</h1>
+<p class="lead">Napravio sam prototip s lažnim podacima, ali pravi sustav (plaćanje, hosting, tvoja stranica) još nije izrađen.</p>
 
 <ul class="legend">
   <li><span class="tag same">Kako si tražila</span> radi točno tako</li>
@@ -74,11 +74,12 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <h2>Prototip koji možeš isprobati</h2>
 <p>Ovo je napravljeno do sada. Podaci su lažni, cijene su placeholderi i plaćanja nema. Radi i na mobitelu.</p>
 <ul>
-  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#raspored">Raspored</a>: kako ga vide klijenti. Odaberi dan, rezerviraj bicikl, otkaži, uđi na listu čekanja.</li>
+  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#raspored">Raspored</a>: kako ga vide klijenti. Odaberi dan, pritisni rezerviraj, odaberi bicikl na planu sobe, otkaži, uđi na listu čekanja.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#recepcija">Recepcija</a>: check-in prije treninga i oznaka da klijent nije došao.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#admin">Admin</a>: računi, rezervacije, paketi i vraćanje kredita.</li>
 </ul>
 <p>Sve što klikneš ostaje samo u tvom pregledniku. Na adminu gumb "Resetiraj demo" vraća početno stanje. Napiši mi što ti se ne sviđa ili što fali.</p>
+<p>Gore desno su prekidač za tamni način i gumb (i) s adresom, telefonom i radnim vremenom. Te podatke sam preuzeo s tvoje stranice 26.10., provjeri jesu li točni.</p>
 <p>U prototipu nema paketa i kupnje, izvještaja o plaćama, Sculpt Rooma, statistike ni "dovedi prijatelja".</p>
 
 <h2>Prva verzija</h2>
@@ -124,7 +125,8 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">5. Izbor bicikla</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Plan sobe s 20 bicikala. Zauzeti su sivi. Instruktor je na sredini, s fotografijom ili bez nje. Nema limita koliko bicikala rezerviraš, samo trebaš kredite.</p>
+    <p>Plan sobe s 20 bicikala: dva reda po 10, s prolazom nakon petog i petnaestog bicikla. Plan se otvara u prozoru kad pritisneš rezerviraj. Zauzeti su sivi. Instruktor je označen na vrhu plana, s fotografijom ili bez nje. Nema limita koliko bicikala rezerviraš, samo trebaš kredite.</p>
+    <p><span class="tag open">Raspored bicikala</span> Kako su bicikli stvarno raspoređeni i numerirani, i gdje stoji instruktor? Plan u prototipu je moja pretpostavka.</p>
     <div class="ref">
       <img src="assets/referenca/izbor-bajka.png" alt="Referenca: izbor bicikla">
       <p>Referenca iz tvoje poruke. Preuzimamo način odabira, ne broj bicikala s ove slike.</p>
@@ -243,6 +245,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
   <li>Benefit Systems: što piše u ugovoru o cijenama i ulazima?</li>
   <li>Corvus: imaš li ugovor?</li>
   <li>Kako sad vodite rezervacije i unaprijed plaćene treninge? Koliko ljudi ima neiskorištene?</li>
+  <li>Raspored bicikala u sobi: redovi, brojevi i gdje stoji instruktor.</li>
   <li>Tablica iznad: da ili ne za svaki prijedlog.</li>
 </ol></div>
 <p>Fiskalizaciju provjeravam s računovođom. Račune (Stripe, domena, baza, hosting, mail) otvaramo na ime Točkice, a ja sam dodan kao admin.</p>
