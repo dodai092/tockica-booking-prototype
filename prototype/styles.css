@@ -230,12 +230,12 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
 /* Bottom nav: floating pill, icon over label. The chosen tab takes the brand green. */
 .tab-bar {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 20;
+  bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 20;
   display: flex; gap: 2px; padding: 5px; border-radius: 28px;
   background: rgba(255,255,255,.72);
   -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%);
   border: 1px solid rgba(255,255,255,.7);
-  box-shadow: 0 8px 28px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.08);
+  box-shadow: 0 4px 14px -2px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.08);
 }
 .tab-bar button {
   position: relative;
@@ -256,7 +256,7 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
   background: var(--green-ink); color: #fff; font-size: 0.625rem; line-height: 16px; text-align: center;
 }
 .tab-bar button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
-body { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+body { padding-bottom: calc(108px + env(safe-area-inset-bottom)); }
 @media (prefers-reduced-transparency: reduce) { .tab-bar { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 
 .tab-title { margin: 8px 0 16px; font-family: Montserrat, sans-serif; font-weight: 800; font-size: 1.75rem; line-height: 1.15; color: var(--ink); }
