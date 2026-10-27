@@ -26,9 +26,9 @@ h1, h2, h3, button, .balance {
 }
 
 .top {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   padding: 16px 20px;
   background: var(--surface);
@@ -37,7 +37,7 @@ h1, h2, h3, button, .balance {
 
 .logo { height: 36px; width: auto; }
 
-.account { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+.account { display: flex; align-items: center; justify-self: end; gap: 12px; font-size: 14px; }
 .account select { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
 .balance { font-weight: 700; color: var(--dark); }
 
@@ -136,6 +136,13 @@ main { max-width: 760px; margin: 0 auto; padding: 16px; }
 .pages { display: flex; gap: 14px; font-family: Montserrat, sans-serif; font-weight: 500; font-size: 14px; }
 .pages a { color: var(--dark); text-decoration: none; padding: 4px 0; border-bottom: 2px solid transparent; }
 .pages a[aria-current="page"] { border-bottom-color: var(--coral); }
+
+@media (max-width: 640px) {
+  .top { grid-template-columns: 1fr auto; padding: 12px 16px; gap: 10px 12px; }
+  .pages { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 24px; }
+  .account { gap: 8px; min-width: 0; }
+  .account select { max-width: 150px; }
+}
 
 h2 { font-size: 18px; color: var(--dark); margin: 24px 0 8px; }
 .field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; margin-bottom: 8px; }
