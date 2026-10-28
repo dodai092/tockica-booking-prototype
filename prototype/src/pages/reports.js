@@ -5,6 +5,7 @@ import { popularSlots, popularInstructors, clientRides, clientHistory } from '..
 import { loadStore, saveStore } from './session.js';
 import { showBanner, slideIn, fadeIn, pop } from './motion.js';
 import { openSheet, closeSheet, bindSheet } from './sheet.js';
+import { tabKeys } from './tabkeys.js';
 import { chevron, foldToggle } from './admin.js';
 import { openClass } from './reception.js';
 
@@ -346,6 +347,7 @@ export function render() {
 
 const SEGMENTS = ['isplata', 'klijenti', 'postavke'];
 const segments = $('segments');
+tabKeys([...segments.querySelectorAll('[data-seg]')]);
 segments.addEventListener('click', (event) => {
   const button = event.target.closest('[data-seg]');
   if (!button) return;

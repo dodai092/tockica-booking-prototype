@@ -317,7 +317,8 @@ function renderBikes() {
   const taken = takenBikes(store, openClassId);
   panel.replaceChildren();
 
-  panel.append(el('div', 'Instruktor', 'stage'));
+  const session = store.classes.find((c) => c.id === openClassId);
+  panel.append(el('div', instructorName(taughtBy(session)).split(' ')[0] || 'Instruktor', 'stage'));
   const grid = el('div', undefined, 'bike-grid');
   for (let bikeNo = 1; bikeNo <= BIKE_COUNT; bikeNo += 1) {
     const button = el('button', String(bikeNo), 'bike');
@@ -363,9 +364,9 @@ function renderBikes() {
       guestInput.focus({ preventScroll: true });
     } else {
       guestName = '';
-      guestInput.value = '';
       collapse(guest).then(() => {
         if (guestOpen) return;
+        guestInput.value = '';
         guest.hidden = true;
         release(guest);
       });

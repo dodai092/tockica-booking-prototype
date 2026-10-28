@@ -65,12 +65,12 @@
 
     <div class="segmented" id="i-segments" role="tablist" aria-label="Izvještaji">
       <span class="seg-thumb" aria-hidden="true"></span>
-      <button type="button" role="tab" data-seg="isplata" aria-selected="true">Isplata</button>
-      <button type="button" role="tab" data-seg="klijenti" aria-selected="false">Klijenti</button>
-      <button type="button" role="tab" data-seg="postavke" aria-selected="false">Postavke</button>
+      <button type="button" role="tab" data-seg="isplata" aria-controls="i-isplata" aria-selected="true">Isplata</button>
+      <button type="button" role="tab" data-seg="klijenti" aria-controls="i-klijenti" aria-selected="false">Klijenti</button>
+      <button type="button" role="tab" data-seg="postavke" aria-controls="i-postavke" aria-selected="false">Postavke</button>
     </div>
 
-    <div id="i-isplata" data-seg-panel="isplata">
+    <div id="i-isplata" role="tabpanel" data-seg-panel="isplata">
       <div class="month-nav">
         <button id="i-prev" type="button" class="nav-week" aria-label="Prethodni mjesec">‹</button>
         <strong id="i-month" aria-live="polite"></strong>
@@ -82,13 +82,13 @@
       <p class="g-footer">Plaća se samo održan trening, po honoraru onoga tko ga je vodio. Bonus broji bicikle s dolaskom, i goste. Otkazan trening i trening koji tek slijedi se ne plaćaju.</p>
     </div>
 
-    <div id="i-klijenti" data-seg-panel="klijenti" hidden>
+    <div id="i-klijenti" role="tabpanel" data-seg-panel="klijenti" hidden>
       <input id="i-client-search" class="r-search" type="search" placeholder="Traži klijenta" aria-label="Traži klijenta" autocomplete="off" enterkeyhint="search">
       <section id="i-analytics" aria-label="Analitika klijenata"></section>
       <p class="g-footer">Termin i trener broje rezervacije, i goste. Vožnje i 50. i 100. sat broje samo dolaske vlasnika računa.</p>
     </div>
 
-    <div id="i-postavke" data-seg-panel="postavke" hidden>
+    <div id="i-postavke" role="tabpanel" data-seg-panel="postavke" hidden>
       <section id="i-rates" aria-label="Honorar i bonus"></section>
       <p class="g-footer">Honorar vrijedi od dana promjene, prošli treninzi se ne mijenjaju. Iznosi su probni dok ih Dunia ne potvrdi.</p>
     </div>

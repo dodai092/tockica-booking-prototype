@@ -5,6 +5,7 @@ import { render as renderReports } from './reports.js';
 import { render as renderAdmin } from './admin.js';
 import './info.js';
 import './theme.js';
+import { tabKeys } from './tabkeys.js';
 
 const TABS = ['raspored', 'recepcija', 'izvjestaji', 'admin'];
 const RENDER = { raspored: renderSchedule, recepcija: renderReception, izvjestaji: renderReports, admin: renderAdmin };
@@ -49,6 +50,8 @@ for (const t of TABS) {
     else show(t);
   });
 }
+
+tabKeys(TABS.map((t) => buttons[t]));
 
 window.addEventListener('resize', () => moveIndicator(current, false));
 document.fonts?.ready.then(() => moveIndicator(current, false));

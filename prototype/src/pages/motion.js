@@ -66,7 +66,7 @@ export function expand(node) {
   if (!node || reduced()) return Promise.resolve();
   const [open, shut] = boxFrames(node);
   node.style.overflow = 'hidden';
-  return run(node, [shut, open], { duration: 300 }).finally(() => {
+  return run(node, [shut, open], { duration: 240 }).finally(() => {
     node.style.overflow = '';
   });
 }

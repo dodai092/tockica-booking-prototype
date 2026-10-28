@@ -17,8 +17,8 @@ export function mondayOf(now) {
 // The site does not say who teaches which class: the pairing below is a placeholder.
 const INSTRUCTORS = [
   // Rates are placeholders until Dunia confirms them.
-  { id: 'ins_1', name: 'Melita Mauer', rates: [{ from: '2026-01-01', eur: 20 }] },
-  { id: 'ins_2', name: 'Tanja Kenjereš', rates: [{ from: '2026-01-01', eur: 20 }] },
+  { id: 'ins_1', name: 'Dunia Mando', rates: [{ from: '2026-01-01', eur: 20 }] },
+  { id: 'ins_2', name: 'Mirna Zebec', rates: [{ from: '2026-01-01', eur: 20 }] },
 ];
 const TEMPLATE = [
   [1, '17:45', 'Funky Spin'], [1, '18:45', 'Rhythm Spin'], [1, '19:45', 'Fresh Start Spin'],

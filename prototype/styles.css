@@ -6,8 +6,10 @@
   --text: #2A2A2A;
   --dark: #232A35;
   --ink: #232A35;
-  --green-ink: #2B8A27;
-  --green-fill: #2B8A27;
+  --green-ink: #278024;
+  --green-fill: #278024;
+  --danger: #B3261E;
+  --danger-bg: #FBE9E7;
   --green: #3AAA35;
   --border: #EBEBEB;
   --muted: #636B76;
@@ -140,7 +142,7 @@ main { max-width: 760px; margin: 0 auto; padding: 16px; }
 .bike:disabled { background: var(--border); border-color: var(--border); color: var(--muted); cursor: default; }
 
 .message { min-height: 1.5em; font-weight: 500; color: var(--ink); }
-.message.error { color: #B3261E; }
+.message.error { color: var(--danger); }
 
 [hidden] { display: none !important; }
 
@@ -159,7 +161,7 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
 .bike[aria-pressed="true"] { background: var(--green-fill); border-color: var(--green-fill); color: #fff; }
 .message:empty { display: none; }
 .message { min-height: 0; padding: 10px 14px; border-radius: 8px; background: #E8F5E7; color: #1F6B1B; }
-.message.error { background: #FBE9E7; color: #B3261E; }
+.message.error { background: var(--danger-bg); color: var(--danger); }
 
 /* Reception */
 .summary {
@@ -197,7 +199,7 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
 .pill-wait { background: transparent; color: #fff; border: 1px solid #5A6475; }
 .pill-muted, .pill-cancelled, .pill-late_cancel { background: #3A4250; color: #B9C0CC; }
 .r-row .pill-cancelled, .r-row .pill-late_cancel { background: var(--border); color: var(--muted); }
-.pill-no_show { background: #FBE9E7; color: #B3261E; }
+.pill-no_show { background: var(--danger-bg); color: var(--danger); }
 
 .bike-badge {
   display: grid;
@@ -232,7 +234,7 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
 .day[aria-pressed="true"] .dot.mine-dot { background: var(--green); }
 .day[aria-pressed="true"] .dot.none { background: none; }
 .card .few { color: #B54708; font-weight: 500; }
-.mine-link { display: block; width: fit-content; margin-bottom: 8px; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: #2B8A27; }
+.mine-link { display: block; width: fit-content; margin-bottom: 8px; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--green-ink); }
 
 /* Bottom nav: floating pill, icon over label. The chosen tab takes the brand green. */
 .tab-bar {
@@ -333,7 +335,7 @@ body { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
 .g-action { cursor: pointer; transition: background .15s; }
 .g-action:active { background: rgba(127, 127, 127, .14); transition: none; }
 .g-action:focus-visible, .g-text:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
-.g-action.destructive, .g-text.destructive { color: #B3261E; }
+.g-action.destructive, .g-text.destructive { color: var(--danger); }
 .g-text { padding: 8px 4px; border: 0; background: none; font: inherit; font-weight: 500; cursor: pointer; }
 .g-enter { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .3s var(--ease-out), opacity .3s ease; }
 .g-enter.open { grid-template-rows: 1fr; opacity: 1; }
@@ -459,7 +461,8 @@ h2 { letter-spacing: .04em; }
 #s-bikes.sheet-body { padding-top: 14px; }
 #s-bikes .stage { margin-bottom: 18px; }
 .guest-switch { display: flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 20px; font-size: 0.9375rem; cursor: pointer; }
-#s-bikes .guest { margin-top: 8px; }
+/* 3px of padding (pulled back by the margins) keeps the input's focus ring inside the clip while the field expands. */
+#s-bikes .guest { margin: 5px -3px -3px; padding: 3px; }
 #s-book-bar { padding-top: 8px; border-top-color: transparent; }
 
 /* Reception: search, compact bar and undo snackbar. */
@@ -480,7 +483,7 @@ h2 { letter-spacing: .04em; }
 #s-classes .card .time { font-family: Montserrat, sans-serif; font-weight: 800; font-size: 1.5rem; line-height: 1.2; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ink); }
 .cancel-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 .cancel-actions .btn { width: 100%; margin: 0; }
-.btn.danger { background: #B3261E; }
+.btn.danger { background: var(--danger); }
 [data-theme="dark"] .btn.danger { background: #C9382E; }
 
 /* Admin analytics: a progress meter toward the next milestone. */
@@ -495,7 +498,7 @@ h2 { letter-spacing: .04em; }
 .month-nav strong { font-size: 1.0625rem; color: var(--ink); }
 .stat-total { font-family: Montserrat, sans-serif; font-weight: 800; font-size: 1.125rem; color: var(--ink); }
 .g-row.class-row { flex-wrap: wrap; }
-.who-button { display: flex; align-items: center; gap: 2px; padding: 4px 0 4px 12px; margin-left: auto; font-size: 0.875rem; }
+.who-button { min-height: var(--tap); display: flex; align-items: center; gap: 2px; padding: 4px 0 4px 12px; margin-left: auto; font-size: 0.875rem; }
 .who-check { color: var(--green-ink); font-weight: 700; }
 .class-list .g-row { padding-left: 24px; }
 
@@ -518,3 +521,16 @@ h2 { letter-spacing: .04em; }
 [data-theme="dark"] .group.notice { background: #3a2f12; box-shadow: 0 0 0 1px #5a4718; }
 [data-theme="dark"] .notice .g-title, [data-theme="dark"] .notice .g-sub, [data-theme="dark"] .notice .g-chevron { color: #f3d898; }
 .snack.celebrate { background: var(--green-fill); color: #fff; font-weight: 700; }
+
+/* Touch targets: 44px minimum on everything tapped. On phones the week arrows move under the days so each day is 44px wide. */
+:root { --tap: 44px; }
+.btn, .nav-week, .account select, .g-input, .g-select, .segmented button, .balance-wrap .g-text { min-height: var(--tap); }
+.nav-week { min-width: var(--tap); }
+@media (max-width: 640px) {
+  .week { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .week .nav-week { order: 1; grid-row: 2; }
+  .week .nav-week:first-child { grid-column: 1 / 4; }
+  .week .nav-week:last-child { grid-column: 5 / 8; }
+}
+[data-theme="dark"] .day[aria-pressed="true"] small { color: var(--green-ink); }
+.sheet-head .g-text { min-height: var(--tap); min-width: var(--tap); }
