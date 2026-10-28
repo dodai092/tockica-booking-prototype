@@ -55,6 +55,7 @@ export function monthReport(store, month, now) {
     cancelled: 0, upcoming: 0, riders: 0, fee: 0, bonus: 0, total: 0, classes: [],
   }));
   const byId = new Map(rows.map((r) => [r.instructorId, r]));
+  const needsCheckIn = [];
 
   const inMonth = store.classes
     .filter((c) => studioTime.localDate(c.startsAt).slice(0, 7) === month)
@@ -66,6 +67,8 @@ export function monthReport(store, month, now) {
     const attended = store.bookings.filter((b) => b.classId === session.id && b.status === 'attended').length;
     const ended = Date.parse(session.startsAt) + session.durationMin * MIN_MS <= now.getTime();
     const status = session.cancelled ? 'cancelled' : ended ? 'done' : 'upcoming';
+    const open = store.bookings.filter((b) => b.classId === session.id && b.status === 'booked').length;
+    if (status === 'done' && open) needsCheckIn.push({ classId: session.id, name: session.name, startsAt: session.startsAt, open });
     const base = { classId: session.id, startsAt: session.startsAt, name: session.name, scheduledId: session.instructorId, actualId, attended, bikeCount: session.bikeCount, status };
 
     const scheduled = byId.get(session.instructorId);
@@ -99,5 +102,40 @@ export function monthReport(store, month, now) {
     r.total = r.fee + r.bonus;
     r.classes.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   }
-  return { month, threshold, bonusEur, rows };
+  return { month, threshold, bonusEur, rows, needsCheckIn };
+}
+
+// A month's payout, marked paid with the amount at that moment, so a later change is noticed.
+export function setPaid(store, month, instructorId, { on, total, now }) {
+  store.payouts ??= {};
+  const key = `${month}:${instructorId}`;
+  if (on) store.payouts[key] = { at: now.toISOString(), total };
+  else delete store.payouts[key];
+}
+
+export const paidEntry = (store, month, instructorId) => store.payouts?.[`${month}:${instructorId}`] ?? null;
+
+const euro = new Intl.NumberFormat('hr-HR', { style: 'currency', currency: 'EUR' });
+const lineDate = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+// Plain text of one instructor's month, for sharing: the basis for their invoice.
+export function summaryText(report, row, monthLabel, nameOf) {
+  const lines = [
+    `${monthLabel}: ${row.name}`,
+    `Održano treninga: ${row.taught} (preuzeto: ${row.substitutedIn}, predano: ${row.substitutedOut})`,
+    `Honorar: ${euro.format(row.fee)}`,
+    `Bonus: ${euro.format(row.bonus)} (bicikli iznad ${report.threshold})`,
+    `Ukupno: ${euro.format(row.total)}`,
+    '',
+    'Treninzi:',
+  ];
+  const tags = { out: (c) => `zamjena: ${nameOf(c.actualId)}`, in: (c) => `zamjena za ${nameOf(c.scheduledId)}`, cancelled: () => 'otkazano' };
+  for (const c of row.classes) {
+    const parts = [`${lineDate.format(new Date(c.startsAt))} ${c.name}`];
+    if (c.role !== 'cancelled') parts.push(c.status === 'upcoming' ? 'predstoji' : `${c.attended}/${c.bikeCount} došlo`);
+    if (c.fee + c.bonus) parts.push(euro.format(c.fee + c.bonus));
+    if (tags[c.role]) parts.push(tags[c.role](c));
+    lines.push(`- ${parts.join(', ')}`);
+  }
+  return lines.join('\n');
 }

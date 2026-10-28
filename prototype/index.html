@@ -76,12 +76,14 @@
         <strong id="i-month" aria-live="polite"></strong>
         <button id="i-next" type="button" class="nav-week" aria-label="Sljedeći mjesec">›</button>
       </div>
+      <section id="i-notice" aria-label="Za provjeru"></section>
       <section id="i-hero" class="pay-hero" aria-label="Ukupno za isplatu"></section>
       <section id="i-payroll" aria-label="Isplata trenera"></section>
       <p class="g-footer">Plaća se samo održan trening, po honoraru onoga tko ga je vodio. Bonus broji bicikle s dolaskom, i goste. Otkazan trening i trening koji tek slijedi se ne plaćaju.</p>
     </div>
 
     <div id="i-klijenti" data-seg-panel="klijenti" hidden>
+      <input id="i-client-search" class="r-search" type="search" placeholder="Traži klijenta" aria-label="Traži klijenta" autocomplete="off" enterkeyhint="search">
       <section id="i-analytics" aria-label="Analitika klijenata"></section>
       <p class="g-footer">Termin i trener broje rezervacije, i goste. Vožnje i 50. i 100. sat broje samo dolaske vlasnika računa.</p>
     </div>
@@ -193,6 +195,17 @@
       <button type="button" class="btn secondary" id="s-cancel-no">Ne, zadrži</button>
     </div>
   </div>
+</dialog>
+
+<dialog id="i-client-sheet" class="sheet" aria-labelledby="i-client-title">
+  <div class="sheet-head">
+    <div>
+      <h2 id="i-client-title"></h2>
+      <div id="i-client-sub" class="meta"></div>
+    </div>
+    <button type="button" class="g-text accent" id="i-client-close">Zatvori</button>
+  </div>
+  <div class="sheet-body" id="i-client-body"></div>
 </dialog>
 
 <dialog id="i-sub-sheet" class="sheet" aria-labelledby="i-sub-title">

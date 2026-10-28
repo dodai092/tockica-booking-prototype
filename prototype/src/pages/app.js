@@ -39,6 +39,9 @@ function show(tab) {
   history.replaceState(null, '', `#${tab}`);
 }
 
+// Other pages can ask for a tab, for example a report linking to a class in Recepcija.
+window.addEventListener('tockica:tab', (event) => show(event.detail));
+
 // Tapping the tab you are on scrolls back to the top, like iOS.
 for (const t of TABS) {
   buttons[t].addEventListener('click', () => {

@@ -1,11 +1,12 @@
 // Owner reports: the monthly instructor payout, its rates, and client analytics.
 import { studioTime } from '../time.js';
-import { monthReport, setActualInstructor, setInstructorRate, setBonusSettings, rateOn } from '../payroll.js';
-import { popularSlots, popularInstructors, clientRides } from '../analytics.js';
+import { monthReport, setActualInstructor, setInstructorRate, setBonusSettings, setPaid, paidEntry, summaryText, rateOn } from '../payroll.js';
+import { popularSlots, popularInstructors, clientRides, clientHistory } from '../analytics.js';
 import { loadStore, saveStore } from './session.js';
 import { showBanner, slideIn, fadeIn, pop } from './motion.js';
 import { openSheet, closeSheet, bindSheet } from './sheet.js';
 import { chevron, foldToggle } from './admin.js';
+import { openClass } from './reception.js';
 
 const MONTH_NAMES = ['Siječanj', 'Veljača', 'Ožujak', 'Travanj', 'Svibanj', 'Lipanj', 'Srpanj', 'Kolovoz', 'Rujan', 'Listopad', 'Studeni', 'Prosinac'];
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
@@ -56,6 +57,9 @@ function act(action, text, rerender = true) {
   if (rerender) render();
 }
 
+// Lower case, no accents, so "stjepko" finds "Stjepko" and "zeljko" finds "Željko".
+const plain = (text) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+
 // Croatian plural: 1 vožnja, 2 vožnje, 5 vožnji (11 to 14 take the many form).
 function plural(n, one, few, many) {
   if (n % 10 === 1 && n % 100 !== 11) return `${n} ${one}`;
@@ -97,6 +101,27 @@ function classRow(item, instructorName) {
 
 let lastTotals = new Map();
 
+// Finished classes whose bookings are not all marked: the bonus and the rider counts would be off.
+function renderNotice(report) {
+  const section = $('notice');
+  section.replaceChildren();
+  if (!report.needsCheckIn.length) return;
+  const group = el('div', undefined, 'group notice');
+  group.append(row(main('Za provjeru', `${plural(report.needsCheckIn.length, 'održan trening ima', 'održana treninga imaju', 'održanih treninga ima')} rezervacije bez dolaska ili no-showa. Bonus se broji samo za označene dolaske.`)));
+  for (const item of report.needsCheckIn.slice(0, 3)) {
+    const date = new Date(item.startsAt);
+    const link = el('button', undefined, 'g-row g-action');
+    link.type = 'button';
+    link.append(main(`${DAY_NAMES[studioTime.dayOfWeek(item.startsAt) - 1]} ${dayMonthFormat.format(date)} ${timeFormat.format(date)} ${item.name}`, `Neoznačeno: ${item.open}`), chevron());
+    link.addEventListener('click', () => {
+      openClass(item.classId);
+      window.dispatchEvent(new CustomEvent('tockica:tab', { detail: 'recepcija' }));
+    });
+    group.append(link);
+  }
+  section.append(group);
+}
+
 function renderPayroll() {
   const [year, mon] = month.split('-').map(Number);
   $('month').textContent = `${MONTH_NAMES[mon - 1]} ${year}`;
@@ -106,13 +131,20 @@ function renderPayroll() {
   section.replaceChildren();
 
   const total = report.rows.reduce((sum, r) => sum + r.total, 0);
+  const paid = report.rows.reduce((sum, r) => sum + (paidEntry(store, month, r.instructorId) ? r.total : 0), 0);
   const taught = report.rows.reduce((sum, r) => sum + r.taught, 0);
   const riders = report.rows.reduce((sum, r) => sum + r.riders, 0);
+  const owed = total - paid;
   const hero = $('hero');
-  hero.replaceChildren(el('div', 'Za isplatu', 's-meta'), el('div', euro.format(total), 'hero-amount'), el('div', `${plural(taught, 'trening', 'treninga', 'treninga')} · ${riders} došlo`, 's-meta'));
-  const totals = new Map([['all', total], ...report.rows.map((r) => [r.instructorId, r.total])]);
-  if (lastTotals.get('month') === month && lastTotals.get('all') !== total) pop(hero.querySelector('.hero-amount'), 0.94);
-  lastTotals = new Map([...totals, ['month', month]]);
+  hero.replaceChildren(
+    el('div', 'Za isplatu', 's-meta'),
+    el('div', euro.format(owed), 'hero-amount'),
+    el('div', [paid ? `Već isplaćeno ${euro.format(paid)}` : '', `${plural(taught, 'trening', 'treninga', 'treninga')} · ${riders} došlo`].filter(Boolean).join(' · '), 's-meta'),
+  );
+  if (lastTotals.get('month') === month && lastTotals.get('owed') !== owed) pop(hero.querySelector('.hero-amount'), 0.94);
+  lastTotals = new Map([['month', month], ['owed', owed]]);
+
+  renderNotice(report);
 
   for (const r of report.rows) {
     const group = el('div', undefined, 'group');
@@ -126,6 +158,23 @@ function renderPayroll() {
     if (r.cancelled || r.upcoming) {
       group.append(row(main('Nije za isplatu', [r.cancelled && `Otkazano: ${r.cancelled}`, r.upcoming && `Predstoji: ${r.upcoming}`].filter(Boolean).join(' · '))));
     }
+    const paidNow = paidEntry(store, month, r.instructorId);
+    const paidRow = el('label', undefined, 'g-row');
+    const paidBox = el('input', undefined, 'switch');
+    paidBox.type = 'checkbox';
+    paidBox.setAttribute('role', 'switch');
+    paidBox.checked = Boolean(paidNow);
+    const paidSub = !paidNow ? '' : paidNow.total !== r.total
+      ? `Iznos se promijenio od isplate (bilo ${euro.format(paidNow.total)})`
+      : `Isplaćeno ${new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(paidNow.at))}`;
+    paidRow.append(main('Isplaćeno', paidSub), paidBox);
+    paidBox.addEventListener('change', () => act(() => setPaid(store, month, r.instructorId, { on: paidBox.checked, total: r.total, now: new Date() }), paidBox.checked ? 'Označeno kao isplaćeno.' : 'Oznaka maknuta.'));
+    group.append(paidRow);
+    const share = el('button', undefined, 'g-row g-action');
+    share.type = 'button';
+    share.append(el('span', 'Podijeli sažetak', 'g-main g-title'), chevron());
+    share.addEventListener('click', () => shareSummary(summaryText(report, r, $('month').textContent, instructorName), `${r.name}, ${$('month').textContent}`));
+    group.append(share);
     if (r.classes.length) {
       const toggle = el('button', undefined, 'g-row g-action');
       toggle.type = 'button';
@@ -143,6 +192,54 @@ function renderPayroll() {
       group.append(toggle, panel);
     }
     section.append(group);
+  }
+}
+
+const dateFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', day: 'numeric', month: 'numeric', year: 'numeric' });
+
+// One client's history, in a sheet: how often, what, with whom, first and last visit.
+function showClient(accountId) {
+  const h = clientHistory(store, accountId);
+  const next = [50, 100].find((m) => m > h.rides);
+  $('client-title').textContent = h.name;
+  $('client-sub').textContent = plural(h.rides, 'vožnja', 'vožnje', 'vožnji');
+  const body = $('client-body');
+  body.replaceChildren();
+  if (h.rides === 0) {
+    const empty = el('div', undefined, 'group');
+    empty.append(row(el('span', 'Još nije bio na treningu.', 'g-sub')));
+    body.append(empty);
+  } else {
+    const facts = el('div', undefined, 'group');
+    facts.append(
+      row(main('Prvi dolazak'), el('span', dateFormat.format(new Date(h.first)), 'g-trail')),
+      row(main('Zadnji dolazak'), el('span', dateFormat.format(new Date(h.last)), 'g-trail')),
+    );
+    if (next) facts.append(row(main(`${next}. sat`, `Još ${next - h.rides}`)));
+    body.append(facts);
+    body.append(el('h3', 'Najčešće', 'g-header'));
+    const often = el('div', undefined, 'group');
+    for (const c of h.byClass.slice(0, 5)) often.append(row(main(c.name), el('span', `${c.count}×`, 'g-trail')));
+    body.append(often);
+    body.append(el('h3', 'Trener', 'g-header'));
+    const who = el('div', undefined, 'group');
+    for (const i of h.byInstructor) who.append(row(main(i.name), el('span', `${i.count}×`, 'g-trail')));
+    body.append(who);
+  }
+  if (h.guestRides) body.append(el('p', `Kao gost je dovedeno još ${plural(h.guestRides, 'vožnja', 'vožnje', 'vožnji')}. One se ne broje u 50. i 100. sat.`, 'g-footer'));
+  openSheet($('client-sheet'));
+}
+
+// The phone's share sheet where there is one, else the clipboard.
+async function shareSummary(text, title) {
+  try {
+    if (navigator.share) await navigator.share({ title, text });
+    else {
+      await navigator.clipboard.writeText(text);
+      showMessage('Sažetak je kopiran.');
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') showMessage('Dijeljenje nije uspjelo.', true);
   }
 }
 
@@ -214,8 +311,9 @@ function renderAnalytics() {
   const instructors = popularInstructors(store).slice(0, TOP).map((instructor) =>
     row(main(instructor.name), el('span', plural(instructor.count, 'rezervacija', 'rezervacije', 'rezervacija'), 'g-trail')));
   // Whoever is closest to the 50th or 100th class comes first, so it is easy to see who to celebrate.
+  const query = plain($('client-search').value.trim());
   const closest = (c) => (c.milestone ? -1 : c.next ? c.toNext : Infinity);
-  const rides = clientRides(store).sort((a, b) => closest(a) - closest(b) || b.rides - a.rides).map((client) => {
+  const rides = clientRides(store).filter((c) => !query || plain(c.name).includes(query)).sort((a, b) => closest(a) - closest(b) || b.rides - a.rides).map((client) => {
     const target = client.next ?? client.rides;
     const meter = el('div', undefined, 'g-meter');
     const fill = el('span');
@@ -223,8 +321,10 @@ function renderAnalytics() {
     meter.append(fill);
     const sub = client.next ? `Do ${client.next}. sata još ${client.toNext}` : '100. sat je dosegnut';
     const celebrate = client.milestone ? `${client.milestone}. sat!` : client.next && client.toNext <= 3 ? `Još ${client.toNext} do ${client.next}. sata` : '';
-    const item = row(main(client.name, sub), el('span', plural(client.rides, 'vožnja', 'vožnje', 'vožnji'), 'g-trail'));
-    item.classList.add('stat-row');
+    const item = el('button', undefined, 'g-row stat-row g-action');
+    item.type = 'button';
+    item.append(main(client.name, sub), el('span', plural(client.rides, 'vožnja', 'vožnje', 'vožnji'), 'g-trail'));
+    item.addEventListener('click', () => showClient(client.accountId));
     if (celebrate) item.querySelector('.g-main').append(el('span', celebrate, 'milestone-badge'));
     meter.setAttribute('role', 'progressbar');
     meter.setAttribute('aria-valuemin', '0');
@@ -234,11 +334,8 @@ function renderAnalytics() {
     item.append(meter);
     return item;
   });
-  $('analytics').replaceChildren(
-    statGroup('Najpopularniji termin', slots),
-    statGroup('Najpopularniji trener', instructors),
-    statGroup('Vožnje po klijentu', rides),
-  );
+  // Searching narrows the page to the matching clients.
+  $('analytics').replaceChildren(...(query ? [] : [statGroup('Najpopularniji termin', slots), statGroup('Najpopularniji trener', instructors)]), statGroup('Vožnje po klijentu', rides));
 }
 
 export function render() {
@@ -262,6 +359,11 @@ segments.addEventListener('click', (event) => {
     panel.hidden = !on;
   }
 });
+
+const clientSheet = $('client-sheet');
+bindSheet(clientSheet);
+$('client-close').addEventListener('click', () => closeSheet(clientSheet));
+$('client-search').addEventListener('input', () => renderAnalytics());
 
 const subSheet = $('sub-sheet');
 bindSheet(subSheet);

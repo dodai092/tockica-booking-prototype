@@ -8,6 +8,9 @@ import {
   setActualInstructor,
   setInstructorRate,
   setBonusSettings,
+  setPaid,
+  paidEntry,
+  summaryText,
   PayrollError,
 } from '../src/payroll.js';
 
@@ -105,4 +108,44 @@ test('an instructor with no rate is paid nothing, and bad settings are refused',
   assert.equal(row(monthReport(store, '2026-12', NOW), 'ins_3').fee, 0);
   assert.throws(() => setInstructorRate(store, 'ins_1', -5, '2026-12-01'), PayrollError);
   assert.throws(() => setBonusSettings(store, { threshold: 25, eur: 2 }), PayrollError);
+});
+
+test('a finished class with bookings still marked booked needs a check-in review', () => {
+  const { store, addClass, fill } = setup();
+  const done = addClass('2026-12-02T17:00:00.000Z', 'ins_1');
+  fill(done.id, 3, 'attended');
+  fill(done.id, 2, 'booked');
+  const clean = addClass('2026-12-03T17:00:00.000Z', 'ins_1');
+  fill(clean.id, 2, 'no_show');
+  const future = addClass('2026-12-28T17:00:00.000Z', 'ins_1');
+  fill(future.id, 4, 'booked');
+  const { needsCheckIn } = monthReport(store, '2026-12', NOW);
+  assert.deepEqual(needsCheckIn.map((c) => [c.classId, c.open]), [[done.id, 2]]);
+});
+
+test('a payout is remembered with its amount, and can be undone', () => {
+  const { store } = setup();
+  setPaid(store, '2026-12', 'ins_1', { on: true, total: 66, now: NOW });
+  assert.deepEqual(paidEntry(store, '2026-12', 'ins_1'), { at: NOW.toISOString(), total: 66 });
+  assert.equal(paidEntry(store, '2026-12', 'ins_2'), null);
+  assert.equal(paidEntry(store, '2026-11', 'ins_1'), null);
+  setPaid(store, '2026-12', 'ins_1', { on: false });
+  assert.equal(paidEntry(store, '2026-12', 'ins_1'), null);
+});
+
+test('the summary text lists totals, substitutions and every class', () => {
+  const { store, addClass, fill } = setup();
+  const a = addClass('2026-12-02T17:00:00.000Z', 'ins_1');
+  fill(a.id, 17);
+  const b = addClass('2026-12-03T17:00:00.000Z', 'ins_2');
+  setActualInstructor(store, b.id, 'ins_1');
+  const report = monthReport(store, '2026-12', NOW);
+  const text = summaryText(report, row(report, 'ins_1'), 'Prosinac 2026', (id) => store.instructors.find((i) => i.id === id).name);
+  assert.match(text, /^Prosinac 2026: Mirna/);
+  assert.match(text, /Održano treninga: 2/);
+  assert.match(text, /preuzeto: 1/);
+  assert.match(text, /Bonus: 4,00/);
+  assert.match(text, /Ukupno: 44,00/);
+  assert.match(text, /17\/20 došlo/);
+  assert.match(text, /zamjena za Tanja/);
 });

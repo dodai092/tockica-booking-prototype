@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore } from '../src/model.js';
-import { popularSlots, popularInstructors, clientRides } from '../src/analytics.js';
+import { popularSlots, popularInstructors, clientRides, clientHistory } from '../src/analytics.js';
 
 const NOW = new Date('2026-11-20T12:00:00Z');
 
@@ -66,4 +66,35 @@ test('next milestone moves from 50 to 100 and ends after the 100th', () => {
   assert.equal(b.next, null);
   assert.equal(b.milestone, 100);
   assert.equal(b.toNext, 0);
+});
+
+test('client history counts own attended classes by class and instructor, with first and last visit', () => {
+  const { store, add } = setup();
+  add('c1', 'acc_test1', 'attended');
+  add('c2', 'acc_test1', 'attended');
+  add('c3', 'acc_test1', 'attended');
+  add('c3', 'acc_test1', 'attended', 'mile');
+  add('c1', 'acc_test1', 'booked');
+  add('c1', 'acc_test2', 'attended');
+  const h = clientHistory(store, 'acc_test1');
+  assert.equal(h.name, 'Test Klijent 1');
+  assert.equal(h.rides, 3);
+  assert.equal(h.guestRides, 1);
+  assert.deepEqual(h.byClass, [{ name: 'A', count: 2 }, { name: 'B', count: 1 }]);
+  assert.deepEqual(h.byInstructor.map((i) => [i.id, i.count]), [['ins_1', 2], ['ins_2', 1]]);
+  assert.equal(h.first, '2026-11-30T16:30:00.000Z');
+  assert.equal(h.last, '2026-12-07T16:30:00.000Z');
+});
+
+test('a client who has not ridden has an empty history', () => {
+  const { store } = setup();
+  const h = clientHistory(store, 'acc_test2');
+  assert.deepEqual([h.rides, h.guestRides, h.byClass, h.first, h.last], [0, 0, [], null, null]);
+});
+
+test('popular instructors credit the instructor who actually taught', () => {
+  const { store, add } = setup();
+  store.classes[0].actualInstructorId = 'ins_2';
+  add('c1', 'acc_test1', 'booked');
+  assert.deepEqual(popularInstructors(store).map((i) => i.id), ['ins_2']);
 });

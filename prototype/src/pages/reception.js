@@ -2,6 +2,7 @@ import { studioTime } from '../time.js';
 import { checkIn, checkInOpen, closeClass, correctStatus } from '../checkin.js';
 import { markNoShow } from '../booking.js';
 import { taughtBy } from '../payroll.js';
+import { clientRides } from '../analytics.js';
 import { loadStore, saveStore } from './session.js';
 import { fadeIn, fadeOut, pop, showBanner, reveal, resize, expand, collapse, release, haptic } from './motion.js';
 
@@ -44,6 +45,7 @@ function showMessage(text, isError = false) {
 
 // Runs an action, saves, and re-renders. Errors show as a message; a success shows in the
 // row itself and offers an undo for a few seconds.
+// `label` is the undo text, or a function run after the action that may return a celebration.
 function act(action, label) {
   const snapshot = structuredClone(store);
   const heights = new Map([...$('bookings').querySelectorAll('[data-booking]')].map((row) => [row.dataset.booking, row.getBoundingClientRect().height]));
@@ -51,8 +53,8 @@ function act(action, label) {
   try {
     action();
     showMessage('');
-    showUndo(label, snapshot);
-    haptic(10);
+    const result = typeof label === 'function' ? label() : label;
+    showUndo(typeof result === 'string' ? { text: result } : result, snapshot);
   } catch (err) {
     showMessage(err.message, true);
   }
@@ -94,15 +96,18 @@ function hideUndo(animate = true) {
   });
 }
 
-function showUndo(label, snapshot) {
+function showUndo({ text, celebrate = false }, snapshot) {
   const snack = $('undo');
   clearTimeout(undoTimer);
   undoToken += 1;
   undoState = snapshot;
-  $('undo-text').textContent = label;
+  $('undo-text').textContent = text;
+  snack.classList.toggle('celebrate', celebrate);
+  haptic(celebrate ? [10, 60, 10, 60, 20] : 10);
   release(snack);
   snack.hidden = false;
   fadeIn(snack, 8, 200);
+  if (celebrate) pop(snack, 0.94);
   undoTimer = setTimeout(hideUndo, 5000);
 }
 
@@ -181,6 +186,13 @@ function row(...children) {
 // Who is on the bike: the guest if there is one, else the account holder.
 const riderOf = (booking) => booking.guestName || store.accounts.find((a) => a.id === booking.accountId)?.name || '';
 
+// The account holder's 50th or 100th class: worth saying out loud at the door.
+function milestoneOf(booking) {
+  if (booking.guestName) return null;
+  const client = clientRides(store).find((c) => c.accountId === booking.accountId);
+  return client?.milestone ? { text: `${client.milestone}. sat! ${client.name}`, celebrate: true } : null;
+}
+
 // The main action (check in) goes at the right of the row; the rest sit in a line below.
 function actionButtons(booking, session, now) {
   const buttons = [];
@@ -190,7 +202,7 @@ function actionButtons(booking, session, now) {
   if (!ended && booking.status === 'booked') {
     if (checkInOpen(session, now)) {
       primary = el('button', 'Dolazak', 'btn');
-      primary.addEventListener('click', () => act(() => checkIn(store, booking.id, new Date()), `${riderOf(booking)}, bicikl ${booking.bikeNo}: došao`));
+      primary.addEventListener('click', () => act(() => checkIn(store, booking.id, new Date()), () => milestoneOf(booking) ?? `${riderOf(booking)}, bicikl ${booking.bikeNo}: došao`));
     }
     if (now.getTime() >= Date.parse(session.startsAt)) {
       const button = el('button', 'No-show', 'g-text destructive');
@@ -262,6 +274,13 @@ export function render() {
   const session = store.classes.find((c) => c.id === classId);
   renderSummary(session, now);
   renderBookings(now);
+}
+
+// Called by a report that links to a class; the tab renders it when shown.
+export function openClass(id) {
+  classId = id;
+  $('search').value = '';
+  hideUndo(false);
 }
 
 $('class').addEventListener('change', (event) => {

@@ -510,3 +510,11 @@ h2 { letter-spacing: .04em; }
 .hero-amount { font-family: Montserrat, sans-serif; font-weight: 800; font-size: 2.5rem; line-height: 1.1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .stat-total { font-variant-numeric: tabular-nums; }
 .milestone-badge { display: inline-block; margin-left: 8px; padding: 1px 10px; border-radius: 99px; background: var(--green-fill); color: #fff; font: 700 0.75rem Montserrat, sans-serif; vertical-align: 1px; }
+
+/* Review notice on Izvještaji, and the green snackbar for a milestone. */
+.group.notice { background: #FFF1D6; box-shadow: 0 0 0 1px #F1D9A5; margin-bottom: 12px; }
+.notice .g-title, .notice .g-sub { color: #6B4500; }
+.notice .g-chevron { color: #8A5A00; }
+[data-theme="dark"] .group.notice { background: #3a2f12; box-shadow: 0 0 0 1px #5a4718; }
+[data-theme="dark"] .notice .g-title, [data-theme="dark"] .notice .g-sub, [data-theme="dark"] .notice .g-chevron { color: #f3d898; }
+.snack.celebrate { background: var(--green-fill); color: #fff; font-weight: 700; }
