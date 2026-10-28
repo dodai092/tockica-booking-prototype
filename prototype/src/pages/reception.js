@@ -1,8 +1,9 @@
 import { studioTime } from '../time.js';
 import { checkIn, checkInOpen, closeClass, correctStatus } from '../checkin.js';
 import { markNoShow } from '../booking.js';
+import { taughtBy } from '../payroll.js';
 import { loadStore, saveStore } from './session.js';
-import { fadeIn, pop, showBanner, reveal, resize, expand, collapse } from './motion.js';
+import { fadeIn, fadeOut, pop, showBanner, reveal, resize, expand, collapse, release, haptic } from './motion.js';
 
 const STATUS_TEXT = {
   booked: 'Rezervirano',
@@ -41,13 +42,17 @@ function showMessage(text, isError = false) {
   showBanner($('message'), text, isError);
 }
 
-// Runs an action, saves, and re-renders. Errors show as a message.
-function act(action) {
-  const before = new Map(store.bookings.map((b) => [b.id, b.status]));
+// Runs an action, saves, and re-renders. Errors show as a message; a success shows in the
+// row itself and offers an undo for a few seconds.
+function act(action, label) {
+  const snapshot = structuredClone(store);
   const heights = new Map([...$('bookings').querySelectorAll('[data-booking]')].map((row) => [row.dataset.booking, row.getBoundingClientRect().height]));
+  const before = new Map(store.bookings.map((b) => [b.id, b.status]));
   try {
     action();
-    showMessage('Spremljeno.');
+    showMessage('');
+    showUndo(label, snapshot);
+    haptic(10);
   } catch (err) {
     showMessage(err.message, true);
   }
@@ -65,6 +70,50 @@ function act(action) {
   }
   if (changed) for (const count of $('summary').querySelectorAll('.s-counts strong')) pop(count, 0.85);
 }
+
+// The undo snackbar: the last action's before-state, kept for 5 seconds.
+let undoState = null;
+let undoTimer = 0;
+let undoToken = 0;
+
+function hideUndo(animate = true) {
+  clearTimeout(undoTimer);
+  undoState = null;
+  const snack = $('undo');
+  const token = ++undoToken;
+  if (snack.hidden) return;
+  if (!animate) {
+    snack.hidden = true;
+    release(snack);
+    return;
+  }
+  fadeOut(snack).then(() => {
+    if (token !== undoToken) return;
+    snack.hidden = true;
+    release(snack);
+  });
+}
+
+function showUndo(label, snapshot) {
+  const snack = $('undo');
+  clearTimeout(undoTimer);
+  undoToken += 1;
+  undoState = snapshot;
+  $('undo-text').textContent = label;
+  release(snack);
+  snack.hidden = false;
+  fadeIn(snack, 8, 200);
+  undoTimer = setTimeout(hideUndo, 5000);
+}
+
+$('undo-button').addEventListener('click', () => {
+  if (!undoState) return;
+  for (const key of Object.keys(store)) delete store[key];
+  Object.assign(store, undoState);
+  saveStore(store);
+  hideUndo();
+  render();
+});
 
 function renderClassPicker(now) {
   const select = $('class');
@@ -90,7 +139,7 @@ function renderClassPicker(now) {
 
 function renderSummary(session, now) {
   const start = Date.parse(session.startsAt);
-  const instructor = store.instructors.find((i) => i.id === session.instructorId)?.name ?? '';
+  const instructor = store.instructors.find((i) => i.id === taughtBy(session))?.name ?? '';
   const rows = store.bookings.filter((b) => b.classId === session.id);
   const reserved = rows.filter((b) => ['booked', 'attended', 'no_show'].includes(b.status)).length;
   const attended = rows.filter((b) => b.status === 'attended').length;
@@ -119,6 +168,8 @@ function renderSummary(session, now) {
   }
   side.append(el('span', state, `pill pill-${tone}`), counts);
   $('summary').replaceChildren(info, side);
+  $('compact-title').textContent = `${timeFormat.format(new Date(start))} ${session.name}`;
+  $('compact-counts').textContent = `${reserved}/${session.bikeCount} · ${attended} došlo`;
 }
 
 function row(...children) {
@@ -127,19 +178,23 @@ function row(...children) {
   return node;
 }
 
+// Who is on the bike: the guest if there is one, else the account holder.
+const riderOf = (booking) => booking.guestName || store.accounts.find((a) => a.id === booking.accountId)?.name || '';
+
+// The main action (check in) goes at the right of the row; the rest sit in a line below.
 function actionButtons(booking, session, now) {
   const buttons = [];
+  let primary = null;
   const ended = now.getTime() >= endOf(session);
 
   if (!ended && booking.status === 'booked') {
     if (checkInOpen(session, now)) {
-      const button = el('button', 'Dolazak', 'btn');
-      button.addEventListener('click', () => act(() => checkIn(store, booking.id, new Date())));
-      buttons.push(button);
+      primary = el('button', 'Dolazak', 'btn');
+      primary.addEventListener('click', () => act(() => checkIn(store, booking.id, new Date()), `${riderOf(booking)}, bicikl ${booking.bikeNo}: došao`));
     }
     if (now.getTime() >= Date.parse(session.startsAt)) {
       const button = el('button', 'No-show', 'g-text destructive');
-      button.addEventListener('click', () => act(() => markNoShow(store, booking.id)));
+      button.addEventListener('click', () => act(() => markNoShow(store, booking.id), `${riderOf(booking)}, bicikl ${booking.bikeNo}: no-show`));
       buttons.push(button);
     }
   }
@@ -148,11 +203,18 @@ function actionButtons(booking, session, now) {
     for (const [status, label] of [['attended', 'Označi dolazak'], ['no_show', 'Označi no-show']]) {
       if (booking.status === status) continue;
       const button = el('button', label, status === 'no_show' ? 'g-text destructive' : 'g-text accent');
-      button.addEventListener('click', () => act(() => correctStatus(store, booking.id, status, new Date())));
+      button.addEventListener('click', () => act(() => correctStatus(store, booking.id, status, new Date()), `${riderOf(booking)}, bicikl ${booking.bikeNo}: ${STATUS_TEXT[status].toLowerCase()}`));
       buttons.push(button);
     }
   }
-  return buttons;
+  return { primary, buttons };
+}
+
+// Lower case, no accents, so "zeljko" finds "Željko".
+const plain = (text) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+function matches(booking, query) {
+  const account = store.accounts.find((a) => a.id === booking.accountId);
+  return String(booking.bikeNo) === query || plain(`${account?.name ?? ''} ${booking.guestName ?? ''}`).includes(query);
 }
 
 function renderBookings(now) {
@@ -161,12 +223,14 @@ function renderBookings(now) {
   list.replaceChildren();
   reveal($('close-wrap'), now.getTime() >= endOf(session) && store.bookings.some((b) => b.classId === classId && b.status === 'booked'), undefined, expand, collapse);
 
-  const rows = store.bookings
-    .filter((b) => b.classId === classId)
+  const all = store.bookings.filter((b) => b.classId === classId);
+  const query = plain($('search').value.trim());
+  const rows = all
+    .filter((b) => !query || matches(b, query))
     .sort((a, b) => a.bikeNo - b.bikeNo);
 
   if (rows.length === 0) {
-    list.append(row(el('span', 'Još nema rezervacija za ovaj trening.', 'g-sub')));
+    list.append(row(el('span', all.length ? 'Nema rezultata.' : 'Još nema rezervacija za ovaj trening.', 'g-sub')));
     return;
   }
 
@@ -178,8 +242,11 @@ function renderBookings(now) {
     const who = el('div', undefined, 'g-main');
     who.append(el('div', account?.name ?? '', 'g-title'));
     if (booking.guestName) who.append(el('div', `Gost: ${booking.guestName}`, 'g-sub'));
-    item.append(el('div', String(booking.bikeNo), 'bike-badge'), who, el('span', STATUS_TEXT[booking.status], `pill pill-${booking.status}`));
-    const buttons = actionButtons(booking, session, now);
+    item.append(el('div', String(booking.bikeNo), 'bike-badge'), who);
+    const { primary, buttons } = actionButtons(booking, session, now);
+    // "Rezervirano" is the default, so it is not repeated on every row.
+    if (primary) item.append(primary);
+    else if (booking.status !== 'booked') item.append(el('span', STATUS_TEXT[booking.status], `pill pill-${booking.status}`));
     if (buttons.length) {
       const actions = el('div', undefined, 'r-actions');
       actions.append(...buttons);
@@ -199,6 +266,8 @@ export function render() {
 
 $('class').addEventListener('change', (event) => {
   classId = event.target.value;
+  $('search').value = '';
+  hideUndo(false);
   showMessage('');
   render();
   fadeIn($('summary'), 6);
@@ -207,7 +276,14 @@ $('class').addEventListener('change', (event) => {
 
 $('close').addEventListener('click', () => {
   if (!window.confirm('Zatvoriti trening? Svi koji nisu došli bit će označeni kao no-show.')) return;
-  act(() => closeClass(store, classId, new Date()));
+  act(() => closeClass(store, classId, new Date()), 'Trening zatvoren');
 });
+
+$('search').addEventListener('input', () => renderBookings(new Date()));
+
+// Once the summary card has scrolled away, a compact bar keeps the class and the counts in view.
+new IntersectionObserver(([entry]) => {
+  $('compact').classList.toggle('show', !entry.isIntersecting && entry.boundingClientRect.bottom < 0);
+}).observe($('summary'));
 
 render();

@@ -1,7 +1,13 @@
 // Small, quiet motion helpers. Each one does nothing (and resolves at once) when the
 // user asks for reduced motion, so callers can chain on the returned promise either way.
-const EASE = 'cubic-bezier(.2, .8, .2, 1)';
-const SPRING = 'cubic-bezier(.34, 1.56, .64, 1)';
+// JS mirrors of the --ease-* tokens in styles.css (WAAPI cannot read var()).
+export const EASE = 'cubic-bezier(.2, .8, .2, 1)'; // --ease-out
+export const EASE_OUT_STRONG = 'cubic-bezier(0.23, 1, 0.32, 1)'; // --ease-out-strong
+export const EASE_DRAWER = 'cubic-bezier(0.32, 0.72, 0, 1)'; // --ease-drawer
+export const SPRING = 'cubic-bezier(.34, 1.56, .64, 1)'; // --ease-spring
+
+// A short buzz for a meaningful moment (Android; iOS Safari ignores it, there the visual carries it).
+export const haptic = (pattern = 8) => navigator.vibrate?.(pattern);
 
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -13,6 +19,10 @@ function run(node, keyframes, options = {}) {
 // Fade in with a small rise. A negative offset drops in from above.
 export const fadeIn = (node, offset = 8, duration = 240) =>
   run(node, [{ opacity: 0, transform: `translateY(${offset}px)` }, { opacity: 1, transform: 'none' }], { duration });
+
+// Fades out and holds that state until the caller hides the node and releases it.
+export const fadeOut = (node, duration = 160) =>
+  run(node, [{ opacity: 1 }, { opacity: 0 }], { duration, fill: 'forwards' });
 
 // Slide in from the side the new content sits on (1 = right, -1 = left).
 export const slideIn = (node, direction) =>

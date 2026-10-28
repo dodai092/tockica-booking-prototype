@@ -57,20 +57,35 @@ function row(...children) {
   return node;
 }
 
+// Rows that were not on screen at the last render grow in. `seen` holds the keys already
+// shown; null means nothing has rendered yet, so the first paint stays still.
+const seen = { bookings: null, mails: null };
+
+function growIn(kind, key, item, shown) {
+  shown.add(key);
+  if (!seen[kind] || seen[kind].has(key)) return item;
+  const inner = el('div', undefined, 'g-enter-in');
+  inner.append(item);
+  const wrap = el('div', undefined, 'g-enter');
+  wrap.append(inner);
+  requestAnimationFrame(() => requestAnimationFrame(() => wrap.classList.add('open')));
+  return wrap;
+}
+
 function main(title, ...subs) {
   const node = el('div', undefined, 'g-main');
   node.append(el('div', title, 'g-title'), ...subs.filter(Boolean).map((text) => el('div', text, 'g-sub')));
   return node;
 }
 
-function chevron() {
+export function chevron() {
   const node = el('span', undefined, 'g-chevron');
   node.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
   return node;
 }
 
 // A row that folds a panel open and shut.
-function foldToggle(toggle, panel, focusNode) {
+export function foldToggle(toggle, panel, focusNode) {
   toggle.addEventListener('click', () => {
     const opening = panel.hidden;
     toggle.setAttribute('aria-expanded', String(opening));
@@ -163,9 +178,11 @@ function renderBookings(now) {
 
   if (upcoming.length === 0) {
     section.append(row(el('span', 'Nema nadolazećih rezervacija.', 'g-sub')));
+    seen.bookings = new Set();
     return;
   }
 
+  const shown = new Set();
   for (const { booking, session } of upcoming) {
     const account = store.accounts.find((a) => a.id === booking.accountId);
     const when = `${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))}`;
@@ -185,8 +202,9 @@ function renderBookings(now) {
       if (ok) collapse(item).then(render);
     });
     item.append(remove);
-    section.append(item);
+    section.append(growIn('bookings', booking.id, item, shown));
   }
+  seen.bookings = shown;
 }
 
 function priceRow(label, value, placeholder) {
@@ -348,13 +366,16 @@ function renderMails() {
   section.replaceChildren();
   if (store.outbox.length === 0) {
     section.append(row(el('span', 'Još nema poslanih mailova.', 'g-sub')));
+    seen.mails = new Set();
     return;
   }
+  const shown = new Set();
   for (const mail of [...store.outbox].reverse().slice(0, 8)) {
     const item = row(main(mail.subject, `Za: ${mail.to}`, mail.body));
     item.classList.add('g-mail');
-    section.append(item);
+    section.append(growIn('mails', `${mail.sentAt} ${mail.to} ${mail.subject}`, item, shown));
   }
+  seen.mails = shown;
 }
 
 function renderDemoClasses(now) {

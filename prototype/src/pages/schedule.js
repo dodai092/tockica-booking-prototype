@@ -1,5 +1,6 @@
 import { studioTime } from '../time.js';
 import { isBookable } from '../schedule.js';
+import { taughtBy } from '../payroll.js';
 import { balance, nextExpiry, NoCreditError } from '../ledger.js';
 import { purchasePack, canPurchase } from '../purchase.js';
 import { priceFor } from '../admin.js';
@@ -14,7 +15,7 @@ import {
   NotBookableError,
 } from '../booking.js';
 import { loadStore, saveStore, mondayOf } from './session.js';
-import { fadeIn, slideIn, pop, popOut, expand, collapse, reveal, showBanner } from './motion.js';
+import { fadeIn, slideIn, pop, popOut, expand, collapse, release, reveal, showBanner, haptic } from './motion.js';
 import { openSheet, closeSheet, bindSheet } from './sheet.js';
 
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
@@ -51,7 +52,7 @@ const store = loadStore();
 saveStore(store);
 let pickedBike = null;
 let guestName = '';
-let confirmingId = null;
+let guestOpen = false;
 let openClassId = null;
 
 const thisMonday = mondayOf(now);
@@ -189,8 +190,9 @@ function openBooking(session) {
   openClassId = session.id;
   pickedBike = null;
   guestName = '';
+  guestOpen = false;
   $('book-title').textContent = session.name;
-  $('book-sub').textContent = [whenFormat.format(new Date(session.startsAt)), instructorName(session.instructorId)].filter(Boolean).join(' · ');
+  $('book-sub').textContent = [whenFormat.format(new Date(session.startsAt)), instructorName(taughtBy(session))].filter(Boolean).join(' · ');
   showMessage('', false, $('book-message'));
   renderBikes();
   openSheet($('book-sheet'));
@@ -216,7 +218,7 @@ function renderClasses() {
     info.append(
       el('div', timeFormat.format(new Date(session.startsAt)), 'time'),
       el('div', session.name, 'name'),
-      el('div', [instructorName(session.instructorId), session.themeName].filter(Boolean).join(' · '), 'meta'),
+      el('div', [instructorName(taughtBy(session)), session.themeName].filter(Boolean).join(' · '), 'meta'),
     );
     const mine = store.bookings
       .filter((b) => b.classId === session.id && b.accountId === $('account').value && b.status === 'booked')
@@ -227,8 +229,8 @@ function renderClasses() {
       info.append(el('div', `Otvara se ${whenFormat.format(new Date(session.releaseOpensAt))}`, 'meta'));
     } else if (current.getTime() < Date.parse(session.startsAt) && isBookable(session, current)) {
       const free = BIKE_COUNT - takenBikes(store, session.id).length;
-      const text = free === 0 ? 'Popunjeno' : free <= 3 ? `Posljednja mjesta: ${free}` : `Slobodnih bicikala: ${free}`;
-      info.append(el('div', text, free <= 3 ? 'meta few' : 'meta'));
+      // Plenty of room needs no line; only a nearly full class says so.
+      if (free <= 3) info.append(el('div', free === 0 ? 'Popunjeno' : `Posljednja mjesta: ${free}`, 'meta few'));
     }
     card.append(info, statusButton(session, current, mine.length > 0));
     if (mine.length && current.getTime() < Date.parse(session.startsAt)) {
@@ -236,47 +238,34 @@ function renderClasses() {
       const block = el('div', undefined, 'mine-block');
       block.dataset.bookings = mine.map((b) => b.id).join(' ');
       block.append(el('div', `${mine.length > 1 ? 'Tvoji bicikli' : 'Tvoj bicikl'}: ${bikes}`, 'mine'));
-      for (const booking of mine) {
-        block.append(...cancelControl(booking, session, current, mine.length > 1 ? `otkaži bicikl ${booking.bikeNo}` : 'otkaži'));
-      }
-      block.append(el('div', cancelNote(session, current, true), 'meta'));
       info.append(block);
     }
     list.append(card);
   }
 }
 
-function cancelNote(session, current, short = false) {
+function cancelNote(session, current) {
   const deadline = cancelDeadline(session);
-  if (short) {
-    return current < deadline
-      ? `Besplatno otkazivanje do ${whenFormat.format(deadline)}`
-      : 'Manje od 6 sati: kredit propada';
-  }
   return current < deadline
-    ? `Otkazivanje je besplatno do ${whenFormat.format(deadline)} (6 sati prije treninga). Nakon toga kredit propada.`
-    : 'Manje od 6 sati do treninga: ako otkažeš, kredit propada.';
+    ? `Besplatno otkazivanje do ${whenFormat.format(deadline)}`
+    : 'Manje od 6 sati: kredit propada';
 }
 
-// One extra step so a stray tap does not cancel. The question says what happens to the credit.
-function cancelControl(booking, session, current, label) {
-  if (confirmingId !== booking.id) {
-    const cancel = el('button', label, 'btn secondary cancel cancel-ctl');
-    cancel.addEventListener('click', () => toggleConfirm(booking.id));
-    return [cancel];
-  }
-  const refund = current < cancelDeadline(session) ? 'Kredit se vraća.' : 'Kredit se ne vraća.';
-  const yes = el('button', 'Da, otkaži', 'btn secondary cancel cancel-ctl');
-  yes.addEventListener('click', () => cancelMine(booking.id));
-  const no = el('button', 'Ne', 'btn secondary cancel cancel-ctl');
-  no.addEventListener('click', () => toggleConfirm(null));
-  return [el('div', `Otkazati bicikl ${booking.bikeNo}? ${refund}`, 'mine cancel-ctl'), yes, no];
+// Cancelling asks first, in a small sheet that says what happens to the credit.
+function cancelButton(booking, session, label) {
+  const cancel = el('button', label, 'btn secondary cancel');
+  cancel.addEventListener('click', () => askCancel(booking, session));
+  return cancel;
 }
 
-function toggleConfirm(bookingId) {
-  confirmingId = bookingId;
-  render();
-  for (const node of document.querySelectorAll('#panel-raspored .cancel-ctl')) fadeIn(node, 4, 180);
+let cancelling = null;
+function askCancel(booking, session) {
+  const refund = new Date() < cancelDeadline(session) ? 'Kredit se vraća.' : 'Kredit se ne vraća.';
+  cancelling = booking.id;
+  $('cancel-title').textContent = `Otkazati bicikl ${booking.bikeNo}?`;
+  $('cancel-text').textContent = `${session.name}, ${whenFormat.format(new Date(session.startsAt))}. ${refund}`;
+  $('cancel-yes').textContent = `Otkaži bicikl ${booking.bikeNo}`;
+  openSheet($('cancel-sheet'));
 }
 
 function renderMineCount() {
@@ -299,6 +288,7 @@ function renderMine() {
     if (hadCards) expand(empty);
     return;
   }
+  section.append(el('p', 'Besplatno otkazivanje do 6 sati prije treninga. Nakon toga kredit propada.', 'meta'));
   // The "no bookings" line folds away as the first booking opens in.
   if (ghost) {
     section.append(ghost);
@@ -312,10 +302,10 @@ function renderMine() {
     info.append(
       el('div', whenFormat.format(new Date(session.startsAt)), 'time'),
       el('div', session.name, 'name'),
-      el('div', `Bicikl ${booking.bikeNo}${guest} · ${instructorName(session.instructorId)}`, 'meta'),
+      el('div', `Bicikl ${booking.bikeNo}${guest} · ${instructorName(taughtBy(session))}`, 'meta'),
       el('div', cancelNote(session, current), 'meta'),
     );
-    info.append(...cancelControl(booking, session, current, 'otkaži'));
+    info.append(cancelButton(booking, session, 'otkaži'));
     card.append(info);
     section.append(card);
   }
@@ -346,21 +336,48 @@ function renderBikes() {
   }
   panel.append(grid);
 
-  const guest = el('label', 'Ime gosta (ako rezerviraš za nekoga drugog)', 'meta guest');
+  // Booking for someone else is the rare case, so the name field sits behind a switch.
+  const toggle = el('label', undefined, 'guest-switch');
+  const sw = el('input', undefined, 'switch');
+  sw.type = 'checkbox';
+  sw.setAttribute('role', 'switch');
+  sw.checked = guestOpen;
+  toggle.append(sw, el('span', 'Rezerviram za nekoga drugog'));
+  const guest = el('div', undefined, 'guest');
+  guest.hidden = !guestOpen;
   const guestInput = el('input');
   guestInput.type = 'text';
+  guestInput.placeholder = 'Ime gosta';
+  guestInput.setAttribute('aria-label', 'Ime gosta');
   guestInput.value = guestName;
   guestInput.addEventListener('input', () => {
     guestName = guestInput.value;
   });
   guest.append(guestInput);
-  panel.append(guest);
+  sw.addEventListener('change', () => {
+    guestOpen = sw.checked;
+    if (guestOpen) {
+      release(guest);
+      guest.hidden = false;
+      expand(guest);
+      guestInput.focus({ preventScroll: true });
+    } else {
+      guestName = '';
+      guestInput.value = '';
+      collapse(guest).then(() => {
+        if (guestOpen) return;
+        guest.hidden = true;
+        release(guest);
+      });
+    }
+  });
+  panel.append(toggle, guest);
 
   const bar = $('book-bar');
-  const book = el('button', pickedBike ? `Rezerviraj bicikl ${pickedBike}` : 'Rezerviraj bicikl', 'btn');
+  const book = el('button', pickedBike ? `Rezerviraj bicikl ${pickedBike} · 1 kredit` : 'Odaberi bicikl', 'btn');
   book.disabled = !pickedBike;
   book.addEventListener('click', () => reserve(pickedBike));
-  bar.replaceChildren(el('span', pickedBike ? 'Rezervacija košta 1 kredit.' : 'Odaberi slobodan bicikl. Rezervacija košta 1 kredit.', 'meta'), book);
+  bar.replaceChildren(book);
 }
 
 function mailCount() {
@@ -396,7 +413,6 @@ function cancelMine(bookingId) {
   renderAccount();
   renderMineCount();
   Promise.all(leaving.map((node) => collapse(node))).then(() => {
-    confirmingId = null;
     render();
   });
 }
@@ -410,6 +426,7 @@ function reserve(bikeNo) {
       guestName: guestName.trim() || null,
       now: new Date(),
     });
+    haptic(12);
     // Slide the sheet away, then banner, credit and the new booking all arrive together.
     closeSheet($('book-sheet')).then(() => {
       showMessage(`Rezervirano: bicikl ${bikeNo}. Kredit: ${balance(store, $('account').value, new Date())}.`);
@@ -418,6 +435,7 @@ function reserve(bikeNo) {
       expand(document.querySelector(`#s-classes .mine-block[data-bookings~="${booking.id}"]`));
     });
   } catch (err) {
+    haptic([8, 40, 8]);
     showMessage(ERROR_TEXT[err.name] ?? 'Nešto je pošlo krivo.', true, $('book-message'));
     if (!(err instanceof BikeTakenError || err instanceof NoCreditError || err instanceof NotBookableError)) {
       throw err;
@@ -465,6 +483,14 @@ function buyPack(pack) {
   });
 }
 
+const cancelSheet = $('cancel-sheet');
+bindSheet(cancelSheet);
+$('cancel-no').addEventListener('click', () => closeSheet(cancelSheet));
+$('cancel-yes').addEventListener('click', () => {
+  const id = cancelling;
+  closeSheet(cancelSheet).then(() => cancelMine(id));
+});
+
 const buySheet = $('buy-sheet');
 bindSheet(buySheet);
 $('buy-close').addEventListener('click', () => closeSheet(buySheet));
@@ -480,6 +506,7 @@ bookSheet.addEventListener('close', () => {
   openClassId = null;
   pickedBike = null;
   guestName = '';
+  guestOpen = false;
 });
 
 $('mine-link').addEventListener('click', (event) => {

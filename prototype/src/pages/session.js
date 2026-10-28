@@ -16,8 +16,9 @@ export function mondayOf(now) {
 // Riders Room classes and times from the original site (raspored-tekuci-tjedan).
 // The site does not say who teaches which class: the pairing below is a placeholder.
 const INSTRUCTORS = [
-  { id: 'ins_1', name: 'Melita Mauer' },
-  { id: 'ins_2', name: 'Tanja Kenjereš' },
+  // Rates are placeholders until Dunia confirms them.
+  { id: 'ins_1', name: 'Melita Mauer', rates: [{ from: '2026-01-01', eur: 20 }] },
+  { id: 'ins_2', name: 'Tanja Kenjereš', rates: [{ from: '2026-01-01', eur: 20 }] },
 ];
 const TEMPLATE = [
   [1, '17:45', 'Funky Spin'], [1, '18:45', 'Rhythm Spin'], [1, '19:45', 'Fresh Start Spin'],
