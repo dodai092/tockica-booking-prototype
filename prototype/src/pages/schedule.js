@@ -1,6 +1,7 @@
 import { studioTime } from '../time.js';
 import { isBookable } from '../schedule.js';
 import { taughtBy } from '../payroll.js';
+import { bikePosition } from '../layout.js';
 import { balance, nextExpiry, NoCreditError } from '../ledger.js';
 import { purchasePack, canPurchase } from '../purchase.js';
 import { priceFor } from '../admin.js';
@@ -181,7 +182,8 @@ function statusButton(session, current, hasBike) {
     waitlist.addEventListener('click', () => joinList(session.id));
     return waitlist;
   }
-  const button = el('button', hasBike ? 'dodaj bicikl' : 'rezerviraj', 'btn');
+  // Adding a bike is rare, so it is a quiet link inside the "your bike" block, not a second main button.
+  const button = hasBike ? el('button', '+ dodaj bicikl', 'add-bike') : el('button', 'rezerviraj', 'btn');
   button.addEventListener('click', () => openBooking(session));
   return button;
 }
@@ -232,12 +234,15 @@ function renderClasses() {
       // Plenty of room needs no line; only a nearly full class says so.
       if (free <= 3) info.append(el('div', free === 0 ? 'Popunjeno' : `Posljednja mjesta: ${free}`, 'meta few'));
     }
-    card.append(info, statusButton(session, current, mine.length > 0));
+    const action = statusButton(session, current, mine.length > 0);
+    if (!action.classList.contains('add-bike')) card.append(info, action);
+    else card.append(info);
     if (mine.length && current.getTime() < Date.parse(session.startsAt)) {
       const bikes = mine.map((b) => (b.guestName ? `${b.bikeNo} (${b.guestName})` : b.bikeNo)).join(', ');
       const block = el('div', undefined, 'mine-block');
       block.dataset.bookings = mine.map((b) => b.id).join(' ');
       block.append(el('div', `${mine.length > 1 ? 'Tvoji bicikli' : 'Tvoj bicikl'}: ${bikes}`, 'mine'));
+      if (action.classList.contains('add-bike')) block.append(action);
       info.append(block);
     }
     list.append(card);
@@ -288,7 +293,7 @@ function renderMine() {
     if (hadCards) expand(empty);
     return;
   }
-  section.append(el('p', 'Besplatno otkazivanje do 6 sati prije treninga. Nakon toga kredit propada.', 'meta'));
+  section.append(el('p', 'Besplatno otkazivanje do 6 sati prije treninga.', 'meta'));
   // The "no bookings" line folds away as the first booking opens in.
   if (ghost) {
     section.append(ghost);
@@ -318,12 +323,23 @@ function renderBikes() {
   panel.replaceChildren();
 
   const session = store.classes.find((c) => c.id === openClassId);
-  panel.append(el('div', instructorName(taughtBy(session)).split(' ')[0] || 'Instruktor', 'stage'));
+  const legend = el('div', undefined, 'bike-legend');
+  for (const [name, label] of [['free', 'slobodan'], ['taken', 'zauzet'], ['picked', 'odabran']]) {
+    legend.append(el('span', undefined, name));
+    legend.lastChild.append(el('i'), label);
+  }
   const grid = el('div', undefined, 'bike-grid');
+  grid.append(legend);
+  // The block marks the front of the room, so the caption says who stands there.
+  const stage = el('div', undefined, 'stage');
+  stage.append(el('small', 'instruktor'), instructorName(taughtBy(session)).split(' ')[0] || '');
+  grid.append(stage);
   for (let bikeNo = 1; bikeNo <= BIKE_COUNT; bikeNo += 1) {
     const button = el('button', String(bikeNo), 'bike');
     button.disabled = taken.includes(bikeNo);
     button.setAttribute('aria-pressed', String(bikeNo === pickedBike));
+    const { column, row } = bikePosition(bikeNo);
+    button.style.gridArea = `${row} / ${column}`;
     button.addEventListener('click', () => {
       const first = pickedBike === null;
       pickedBike = bikeNo;
@@ -332,8 +348,6 @@ function renderBikes() {
       if (first) fadeIn($('book-bar'), 6, 200);
     });
     grid.append(button);
-    // Two rows of 10 with a gap after bike 5 and bike 15.
-    if (bikeNo % 10 === 5) grid.append(el('span', undefined, 'aisle'));
   }
   panel.append(grid);
 
@@ -343,7 +357,8 @@ function renderBikes() {
   sw.type = 'checkbox';
   sw.setAttribute('role', 'switch');
   sw.checked = guestOpen;
-  toggle.append(sw, el('span', 'Rezerviram za nekoga drugog'));
+  toggle.append(sw, el('span', 'Za gosta'));
+  sw.setAttribute('aria-label', 'Rezerviram za nekoga drugog');
   const guest = el('div', undefined, 'guest');
   guest.hidden = !guestOpen;
   const guestInput = el('input');
@@ -372,13 +387,11 @@ function renderBikes() {
       });
     }
   });
-  panel.append(toggle, guest);
-
   const bar = $('book-bar');
-  const book = el('button', pickedBike ? `Rezerviraj bicikl ${pickedBike} · 1 kredit` : 'Odaberi bicikl', 'btn');
+  const book = el('button', pickedBike ? `Rezerviraj ${pickedBike} · 1 kredit` : 'Odaberi bicikl', 'btn');
   book.disabled = !pickedBike;
   book.addEventListener('click', () => reserve(pickedBike));
-  bar.replaceChildren(book);
+  bar.replaceChildren(guest, toggle, book);
 }
 
 function mailCount() {

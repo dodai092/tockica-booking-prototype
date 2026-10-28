@@ -26,7 +26,7 @@ ako je prvi ponedjeljak više od 6 sati u budućnosti.
 ## 2. Rezervacija bicikla
 
 - **Kartica:** Raspored
-- **Radnja:** klikni "rezerviraj" pri 17:45, pa bicikl 3 i "Rezerviraj bicikl 3".
+- **Radnja:** klikni "rezerviraj" pri 17:45, pa bicikl 3 i "Rezerviraj 3".
 - **Očekivano:** poruka "Rezervirano: bicikl 3. Kredit: 4.", kredit 4.
 
 ## 3. Zauzet bicikl
@@ -51,7 +51,7 @@ ako je prvi ponedjeljak više od 6 sati u budućnosti.
 ## 6. Otkazivanje više od 6 sati ranije
 
 - **Kartica:** Raspored
-- **Radnja:** za prvi ponedjeljak, klikni "rezerviraj" pri 18:45, pa bicikl 7 i "Rezerviraj bicikl 7". Zatim klikni "otkaži" na kartici 18:45. Ne na kartici 17:45, gdje je tvoja rezervacija bicikla 3 iz koraka 2.
+- **Radnja:** za prvi ponedjeljak, klikni "rezerviraj" pri 18:45, pa bicikl 7 i "Rezerviraj 7". Zatim klikni "otkaži" na kartici 18:45. Ne na kartici 17:45, gdje je tvoja rezervacija bicikla 3 iz koraka 2.
 - **Očekivano:** poruka "Otkazano. Kredit je vraćen.". Kredit: 3, pa 2 pri rezervaciji, pa 3 nakon otkazivanja.
 
 ## 7. Dolazak na recepciji

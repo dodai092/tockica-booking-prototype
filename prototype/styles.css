@@ -124,11 +124,20 @@ main { max-width: 760px; margin: 0 auto; padding: 16px; }
 }
 .bike-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr) 14px repeat(5, 1fr);
-  gap: 6px 4px;
-  max-width: 520px;
+  grid-template-columns: 1fr 1fr 84px;
+  grid-template-rows: repeat(5, auto) 14px repeat(5, auto);
+  gap: 6px 8px;
+  max-width: 360px;
   margin: 0 auto;
 }
+.bike-legend { grid-column: 3; grid-row: 1 / 4; align-self: start; display: flex; flex-direction: column; gap: 8px; padding-left: 6px; font-size: 0.75rem; color: var(--muted); }
+.bike-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.bike-legend i { width: 14px; height: 14px; border: 1px solid var(--ink); border-radius: 4px; }
+.bike-legend .taken i { background: var(--border); border-color: var(--border); }
+.bike-legend .picked i { background: var(--green-fill); border-color: var(--green-fill); }
+.bike-grid .stage small { display: block; margin-bottom: 2px; font-size: 0.5625rem; opacity: .7; letter-spacing: .06em; }
+[data-theme="dark"] .bike-grid .stage { background: transparent; border: 1px dashed var(--muted); color: var(--text); }
+.bike-grid .stage { grid-column: 3; grid-row: 4 / 9; align-self: center; margin: 0; padding: 18px 4px; font-size: 0.6875rem; }
 .bike {
   font-family: Montserrat, sans-serif;
   font-weight: 700;
@@ -156,7 +165,9 @@ main { max-width: 760px; margin: 0 auto; padding: 16px; }
 h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform: uppercase; }
 
 /* Schedule: own bookings, bike confirmation, message banner, demo links */
-.card .mine { font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--green); margin-top: 4px; }
+.card .mine-block { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; margin-top: 12px; padding: 6px 6px 6px 14px; border-radius: 10px; background: color-mix(in srgb, var(--green) 14%, transparent); }
+.card .mine { margin: 0; padding: 6px 0; font-family: Montserrat, sans-serif; font-weight: 800; font-size: 1.125rem; color: var(--green-ink); }
+.add-bike { min-height: 44px; padding: 0 16px; border: 1.5px solid var(--green-ink); border-radius: 999px; background: transparent; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--green-ink); cursor: pointer; }
 .card .mine ~ .btn.secondary { margin: 8px 8px 0 0; }
 .bike[aria-pressed="true"] { background: var(--green-fill); border-color: var(--green-fill); color: #fff; }
 .message:empty { display: none; }
@@ -292,7 +303,12 @@ body { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
 /* Bike buttons: as wide as 10 across allows on a phone, and 48px tall. */
 .bike { min-height: 48px; }
 @media (max-width: 640px) {
-  .bike-grid { gap: 12px 5px; grid-template-columns: repeat(5, 1fr) 8px repeat(5, 1fr); }
+  .bike-grid { gap: 8px; grid-template-rows: repeat(5, minmax(40px, 1fr)) 8px repeat(5, minmax(40px, 1fr)); height: 100%; max-height: 600px; }
+  .bike-grid .bike { min-height: 0; padding: 0; }
+  /* Near full height, the map takes the space between header and bar, so it does not scroll. */
+  #s-book-sheet[open] { display: flex; flex-direction: column; height: calc(100dvh - env(safe-area-inset-top) - 12px); max-height: none; }
+  #s-book-sheet #s-bikes { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: 12px; }
+  #s-book-sheet .sheet-head, #s-book-sheet .sheet-bar { flex: none; }
 }
 
 /* Dark mode: set by the toggle in the top bar (first visit follows the system). */
@@ -459,10 +475,11 @@ h2 { letter-spacing: .04em; }
 /* Booking sheet: more room under the title, and the guest name behind a switch. */
 #s-book-sheet .sheet-head { padding-bottom: 14px; }
 #s-bikes.sheet-body { padding-top: 14px; }
-#s-bikes .stage { margin-bottom: 18px; }
-.guest-switch { display: flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 20px; font-size: 0.9375rem; cursor: pointer; }
+.guest-switch { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 0.9375rem; cursor: pointer; }
 /* 3px of padding (pulled back by the margins) keeps the input's focus ring inside the clip while the field expands. */
-#s-bikes .guest { margin: 5px -3px -3px; padding: 3px; }
+#s-book-bar .guest { flex: 1 1 100%; order: -1; margin: -3px; padding: 3px; }
+#s-book-bar .guest input { width: 100%; }
+#s-book-bar .btn { flex: 1 1 0; }
 #s-book-bar { padding-top: 8px; border-top-color: transparent; }
 
 /* Reception: search, compact bar and undo snackbar. */
