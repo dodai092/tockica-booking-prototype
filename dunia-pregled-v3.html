@@ -77,6 +77,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <ul>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#raspored">Raspored</a>: kako ga vide klijenti. Odaberi dan, pritisni rezerviraj, odaberi bicikl na planu sobe, otkaži, kupi paket, uđi na listu čekanja.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#recepcija">Recepcija</a>: check-in prije treninga i oznaka da klijent nije došao.</li>
+  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#izvjestaji">Izvještaji</a>: isplata trenera po mjesecu, zamjene, bonus, i analitika klijenata.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#admin">Admin</a>: računi, rezervacije, cijene paketa, raspored (otvaranje, termini, otkazivanje treninga), vraćanje kredita i poslani mailovi.</li>
 </ul>
 <p>Isprobaj redom:</p>
@@ -86,17 +87,19 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
   <li>Admin, Demo alati: "Napuni trening (sve bicikle)". Na Rasporedu taj trening sada ima listu čekanja.</li>
   <li>Admin, Demo alati: "Dodaj trening za 20 min". Rezerviraj ga na Rasporedu, pa u Recepciji označi dolazak.</li>
   <li>Admin, Raspored: dodaj termin ili otkaži trening. U "Poslani mailovi" vidiš što su klijenti dobili.</li>
+  <li>Izvještaji, Isplata: vidiš treninge i iznos po treneru za mjesec. Pritisni "Treninzi" pa "Tko je vodio" da upišeš zamjenu. "Podijeli sažetak" šalje tekst treneru, a prekidač "Isplaćeno" bilježi isplatu.</li>
+  <li>Izvještaji, Klijenti: najpopularniji termin i trener, vožnje po klijentu i pretraga po imenu. Kad u Recepciji označiš dolazak nekome na 50. ili 100. sat, pojavi se zelena poruka.</li>
 </ol>
 <p>Račun mijenjaš izbornikom "Demo račun". Prijave i uloga nema, sve tri stranice vidi svatko. Sve što klikneš ostaje samo u tvom pregledniku. Na adminu gumb "Resetiraj demo" vraća početno stanje. Napiši mi što ti se ne sviđa ili što fali.</p>
 <p>Gore desno su prekidač za tamni način i gumb (i) s adresom, telefonom i radnim vremenom. Te podatke sam preuzeo s tvoje stranice 26.10., provjeri jesu li točni.</p>
-<p>U prototipu nema pravog plaćanja (kupnja je simulacija), izvještaja o plaćama, Sculpt Rooma, statistike ni "dovedi prijatelja".</p>
+<p>U prototipu nema pravog plaćanja (kupnja je simulacija), Sculpt Rooma ni "dovedi prijatelja". Honorar od 20 € po treningu i bonus u Izvještajima su probni iznosi, ne dogovoreni.</p>
 
 <h2>Što mi treba od tebe</h2>
 <div class="note"><ol>
   <li>Vlastiti sustav ili gotov (Momence, bsport)? Predlažem vlastiti, u fazama, jer sama vraćaš kredite i određuješ cijene. Gotov sustav traži zakrpe za Multisport, Sculpt Room i plaćanje. Više u dodatku na dnu.</li>
   <li>Neograničeni paket: da ili ne, i koliko dana?</li>
   <li>Sculpt Room: što trener dobiva za 100 €?</li>
-  <li>Instruktori: ista cijena po treningu? Prag 15 za sve?</li>
+  <li>Instruktori: honorar po treningu za svakog (sada probnih 20 €), jesu li prag 15 i 2 € po biciklu točni, plaćaš li samo održane treninge, i treba li treneru uz broj i popis treninga?</li>
   <li>Benefit Systems: što piše u ugovoru o cijenama i ulazima?</li>
   <li>Corvus: imaš li ugovor?</li>
   <li>Kako sad vodite rezervacije i unaprijed plaćene treninge? Koliko ljudi ima neiskorištene?</li>
@@ -160,7 +163,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">6. Više bicikala na jednom računu</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Jedan račun, više bicikala. Svaki bicikl je zasebna rezervacija. Ime gosta je opcionalno.</p>
+    <p>Jedan račun, više bicikala. Svaki bicikl je zasebna rezervacija. Ime gosta upisuješ tek kad uključiš "Rezerviram za nekoga drugog".</p>
   </div>
 </details>
 
@@ -181,7 +184,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">9. Check-in i statusi</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Recepcija označava Rezervirano, Došao, No-show, Otkazano (kredit se vraća) i Kasno otkazano (ne vraća se). Kredite vraćaš samo ti, u adminu.</p>
+    <p>Recepcija označava Rezervirano, Došao, No-show, Otkazano (kredit se vraća) i Kasno otkazano (ne vraća se). Kredite vraćaš samo ti, u adminu. Recepcija može poništiti zadnju oznaku u prvih 5 sekundi.</p>
   </div>
 </details>
 
@@ -214,8 +217,10 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">13. Instruktori: izvještaj i plaća</span><span class="tag diff">Malo drukčije</span></summary>
   <div class="body">
-    <p>Izvještaj od 1. do zadnjeg dana u mjesecu: tko je koliko držao, tko je koga mijenjao, dolaznost. Plaća po održanom treningu. Bonus: nakon 15 od 20 bicikala, 2 € po dodatnom.</p>
-    <p><span class="tag open">Cijene</span> Ista cijena po treningu za sve ili po instruktoru? Prag 15 za sve?</p>
+    <p>U prototipu: kartica Izvještaji, Isplata. Odabereš mjesec (od 1. do zadnjeg dana) i vidiš po treneru koliko je treninga držao, koliko je ljudi došlo na svaki, koga je mijenjao i tko je njega mijenjao. Zamjenu upisuješ na treningu, a plaća ide onome tko ga je vodio, po njegovoj cijeni. Bonus: 2 € za svaki bicikl s dolaskom iznad 15 od 20, gosti se broje.</p>
+    <p>Plaća se samo održan trening. Otkazani i oni koji tek slijede se ne plaćaju. Honorar vrijedi od dana kad ga promijeniš, pa se prošli treninzi ne mijenjaju. Za svakog trenera možeš poslati sažetak i označiti isplaćeno. Ako se iznos promijeni nakon isplate, vidiš upozorenje.</p>
+    <p>Izvještaj je točan samo ako recepcija označi dolaske. Neoznačeni treninzi se prikažu na vrhu.</p>
+    <p><span class="tag open">Cijene</span> Honorar po treningu za svakog trenera (sada probnih 20 €). Jesu li prag 15 i 2 € po biciklu točni? Treba li treneru uz broj i popis treninga?</p>
   </div>
 </details>
 
@@ -230,13 +235,13 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">15. Analitika klijenata (interno)</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Najpopularniji termin i trener. Broj dolazaka za 50. i 100. sat, računa se samo po vožnjama vlasnika računa.</p>
+    <p>U prototipu: Izvještaji, Klijenti. Najpopularniji termin i trener (broje se rezervacije, i gosti). Vožnje po klijentu s trakom do 50. i 100. sata, a tko je najbliže, vidi se prvi. Klijenta pretražiš po imenu i vidiš prvi i zadnji dolazak, najčešće treninge i trenere. Vožnje se računaju samo za vlasnika računa, gosti se ne broje. Kad recepcija označi dolazak na 50. ili 100. sat, pojavi se zelena poruka.</p>
   </div>
 </details>
 
 <h2>Uloge u adminu</h2>
 <div class="note"><ul>
-  <li>Vlasnica: sve.</li>
+  <li>Vlasnica: sve, uključujući Izvještaje.</li>
   <li>Recepcija: check-in i no-show.</li>
   <li>Instruktor: svoji treninzi.</li>
 </ul></div>
@@ -263,7 +268,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <h2>Dodatak: gotov sustav</h2>
 <p>Provjerio sam Glofox, bsport, Momence, Eversports, Mindbody, Wellness Living, Hapana i Anolla. Nijedna ne navodi Corvus Pay, trošenje paketa po isteku ni Multisport popust.</p>
 
-<footer>Ovaj dokument ažuriram kako se odluke mijenjaju. Zadnje ažuriranje: 27.10.2026.</footer>
+<footer>Ovaj dokument ažuriram kako se odluke mijenjaju. Zadnje ažuriranje: 28.10.2026.</footer>
 
 </div>
 
