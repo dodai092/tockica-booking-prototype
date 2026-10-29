@@ -1,6 +1,6 @@
 // Monthly instructor report: classes taught, substitutions, pay and the attendance bonus.
 // Pay is for classes that have ended and were not cancelled, at the rate of whoever actually taught.
-import { studioTime } from './time.js';
+import { studioTime, hrDate } from './time.js';
 
 const MIN_MS = 60 * 1000;
 
@@ -116,7 +116,7 @@ export function setPaid(store, month, instructorId, { on, total, now }) {
 export const paidEntry = (store, month, instructorId) => store.payouts?.[`${month}:${instructorId}`] ?? null;
 
 const euro = new Intl.NumberFormat('hr-HR', { style: 'currency', currency: 'EUR' });
-const lineDate = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+const lineDate = hrDate({ weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 // Plain text of one instructor's month, for sharing: the basis for their invoice.
 export function summaryText(report, row, monthLabel, nameOf) {

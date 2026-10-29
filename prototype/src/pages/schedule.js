@@ -1,4 +1,4 @@
-import { studioTime } from '../time.js';
+import { studioTime, hrDate } from '../time.js';
 import { isBookable } from '../schedule.js';
 import { taughtBy } from '../payroll.js';
 import { bikePosition } from '../layout.js';
@@ -37,10 +37,9 @@ const timeFormat = new Intl.DateTimeFormat('hr-HR', {
   minute: '2-digit',
 });
 
-const dayMonthFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', day: 'numeric', month: 'numeric' });
+const dayMonthFormat = hrDate({ day: 'numeric', month: 'numeric' });
 
-const whenFormat = new Intl.DateTimeFormat('hr-HR', {
-  timeZone: 'Europe/Zagreb',
+const whenFormat = hrDate({
   weekday: 'short',
   day: 'numeric',
   month: 'numeric',

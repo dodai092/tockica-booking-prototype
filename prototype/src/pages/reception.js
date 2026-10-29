@@ -1,10 +1,10 @@
-import { studioTime } from '../time.js';
+import { studioTime, hrDate } from '../time.js';
 import { checkIn, checkInOpen, closeClass, correctStatus } from '../checkin.js';
 import { markNoShow } from '../booking.js';
 import { taughtBy } from '../payroll.js';
 import { clientRides } from '../analytics.js';
 import { loadStore, saveStore } from './session.js';
-import { fadeIn, fadeOut, pop, showBanner, reveal, resize, expand, collapse, release, haptic } from './motion.js';
+import { fadeIn, fadeOut, pop, showBanner, resize, release, haptic } from './motion.js';
 
 const STATUS_TEXT = {
   booked: 'Rezervirano',
@@ -16,8 +16,7 @@ const STATUS_TEXT = {
 const CLASS_MIN_MS = 60 * 1000;
 
 const timeFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', hour: '2-digit', minute: '2-digit' });
-const dayFormat = new Intl.DateTimeFormat('hr-HR', {
-  timeZone: 'Europe/Zagreb',
+const dayFormat = hrDate({
   weekday: 'short',
   day: '2-digit',
   month: '2-digit',
@@ -26,7 +25,7 @@ const dayFormat = new Intl.DateTimeFormat('hr-HR', {
 const $ = (id) => document.getElementById('r-' + id);
 const store = loadStore();
 saveStore(store);
-let classId = null;
+let day = null;
 
 function el(tag, text, className) {
   const node = document.createElement(tag);
@@ -48,7 +47,7 @@ function showMessage(text, isError = false) {
 // `label` is the undo text, or a function run after the action that may return a celebration.
 function act(action, label) {
   const snapshot = structuredClone(store);
-  const heights = new Map([...$('bookings').querySelectorAll('[data-booking]')].map((row) => [row.dataset.booking, row.getBoundingClientRect().height]));
+  const heights = new Map([...$('classes').querySelectorAll('[data-booking]')].map((row) => [row.dataset.booking, row.getBoundingClientRect().height]));
   const before = new Map(store.bookings.map((b) => [b.id, b.status]));
   try {
     action();
@@ -62,7 +61,7 @@ function act(action, label) {
   render();
   // Whatever changed status pops, and so do the counts.
   let changed = false;
-  for (const row of $('bookings').querySelectorAll('[data-booking]')) {
+  for (const row of $('classes').querySelectorAll('[data-booking]')) {
     // A row that gained or lost action buttons glides to its new height.
     if (heights.has(row.dataset.booking)) resize(row, heights.get(row.dataset.booking));
     if (before.get(row.dataset.booking) !== row.dataset.status) {
@@ -70,7 +69,7 @@ function act(action, label) {
       changed = true;
     }
   }
-  if (changed) for (const count of $('summary').querySelectorAll('.s-counts strong')) pop(count, 0.85);
+  if (changed) for (const count of $('classes').querySelectorAll('.s-counts strong')) pop(count, 0.85);
 }
 
 // The undo snackbar: the last action's before-state, kept for 5 seconds.
@@ -120,25 +119,23 @@ $('undo-button').addEventListener('click', () => {
   render();
 });
 
-function renderClassPicker(now) {
-  const select = $('class');
-  const sorted = [...store.classes].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-  const upcoming = sorted.filter((c) => endOf(c) > now.getTime());
-  const past = sorted.filter((c) => endOf(c) <= now.getTime()).reverse();
-  if (!classId) classId = (upcoming[0] ?? sorted[0]).id;
+// The day to open on: today if it has trainings, else the next day that does, else the last.
+function defaultDay(days, today) {
+  return days.includes(today) ? today : days.find((d) => d > today) ?? days[days.length - 1];
+}
+
+function renderDayPicker(now) {
+  const select = $('day');
+  const days = [...new Set(store.classes.map((c) => studioTime.localDate(c.startsAt)))].sort();
+  const today = studioTime.localDate(now.toISOString());
+  if (!day || !days.includes(day)) day = defaultDay(days, today);
 
   select.replaceChildren();
-  for (const [label, group] of [['Nadolazeći treninzi', upcoming], ['Prošli treninzi', past]]) {
-    if (group.length === 0) continue;
-    const optgroup = el('optgroup');
-    optgroup.label = label;
-    for (const session of group) {
-      const option = el('option', `${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))} · ${session.name}${session.cancelled ? ' (otkazano)' : ''}`);
-      option.value = session.id;
-      option.selected = session.id === classId;
-      optgroup.append(option);
-    }
-    select.append(optgroup);
+  for (const d of days) {
+    const option = el('option', dayFormat.format(new Date(Date.parse(studioTime.toUtc(`${d}T12:00`)))) + (d === today ? ' · danas' : ''));
+    option.value = d;
+    option.selected = d === day;
+    select.append(option);
   }
 }
 
@@ -172,9 +169,11 @@ function renderSummary(session, now) {
     counts.append(box);
   }
   side.append(el('span', state, `pill pill-${tone}`), counts);
-  $('summary').replaceChildren(info, side);
-  $('compact-title').textContent = `${timeFormat.format(new Date(start))} ${session.name}`;
-  $('compact-counts').textContent = `${reserved}/${session.bikeCount} · ${attended} došlo`;
+  const card = el('div', undefined, 'summary');
+  card.dataset.title = `${timeFormat.format(new Date(start))} ${session.name}`;
+  card.dataset.counts = `${reserved}/${session.bikeCount} · ${attended} došlo`;
+  card.append(info, side);
+  return card;
 }
 
 function row(...children) {
@@ -229,11 +228,10 @@ function matches(booking, query) {
   return String(booking.bikeNo) === query || plain(`${account?.name ?? ''} ${booking.guestName ?? ''}`).includes(query);
 }
 
-function renderBookings(now) {
-  const session = store.classes.find((c) => c.id === classId);
-  const list = $('bookings');
-  list.replaceChildren();
-  reveal($('close-wrap'), now.getTime() >= endOf(session) && store.bookings.some((b) => b.classId === classId && b.status === 'booked'), undefined, expand, collapse);
+function renderBookings(session, now) {
+  const list = el('section', undefined, 'group');
+  list.setAttribute('aria-label', 'Rezervacije');
+  const classId = session.id;
 
   const all = store.bookings.filter((b) => b.classId === classId);
   const query = plain($('search').value.trim());
@@ -243,7 +241,7 @@ function renderBookings(now) {
 
   if (rows.length === 0) {
     list.append(row(el('span', all.length ? 'Nema rezultata.' : 'Još nema rezervacija za ovaj trening.', 'g-sub')));
-    return;
+    return list;
   }
 
   for (const booking of rows) {
@@ -266,43 +264,74 @@ function renderBookings(now) {
     }
     list.append(item);
   }
+  return list;
 }
+
+// Ended class with people still marked "booked": offer to close it.
+function closeButton(session, now) {
+  if (now.getTime() < endOf(session) || !store.bookings.some((b) => b.classId === session.id && b.status === 'booked')) return null;
+  const button = el('button', 'Zatvori trening', 'g-row g-action destructive');
+  button.type = 'button';
+  button.addEventListener('click', () => {
+    if (!window.confirm('Zatvoriti trening? Svi koji nisu došli bit će označeni kao no-show.')) return;
+    act(() => closeClass(store, session.id, new Date()), 'Trening zatvoren');
+  });
+  const wrap = el('div', undefined, 'group');
+  wrap.append(button);
+  return wrap;
+}
+
+let summaryObserver = null;
+const scrolledPast = new Map();
 
 export function render() {
   const now = new Date();
-  renderClassPicker(now);
-  const session = store.classes.find((c) => c.id === classId);
-  renderSummary(session, now);
-  renderBookings(now);
+  renderDayPicker(now);
+  summaryObserver?.disconnect();
+  scrolledPast.clear();
+  const sessions = store.classes
+    .filter((c) => studioTime.localDate(c.startsAt) === day)
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const sections = sessions.map((session) => {
+    const card = renderSummary(session, now);
+    summaryObserver.observe(card);
+    const section = el('section', undefined, 'r-class');
+    section.append(card, ...[closeButton(session, now), renderBookings(session, now)].filter(Boolean));
+    return section;
+  });
+  $('classes').replaceChildren(...sections);
 }
 
 // Called by a report that links to a class; the tab renders it when shown.
 export function openClass(id) {
-  classId = id;
+  day = studioTime.localDate(store.classes.find((c) => c.id === id).startsAt);
   $('search').value = '';
   hideUndo(false);
 }
 
-$('class').addEventListener('change', (event) => {
-  classId = event.target.value;
+$('day').addEventListener('change', (event) => {
+  day = event.target.value;
   $('search').value = '';
   hideUndo(false);
   showMessage('');
   render();
-  fadeIn($('summary'), 6);
-  fadeIn($('bookings'), 6);
+  fadeIn($('classes'), 6);
 });
 
-$('close').addEventListener('click', () => {
-  if (!window.confirm('Zatvoriti trening? Svi koji nisu došli bit će označeni kao no-show.')) return;
-  act(() => closeClass(store, classId, new Date()), 'Trening zatvoren');
+$('search').addEventListener('input', render);
+
+// Once a class card has scrolled away, a compact bar keeps the latest such class and its counts in view.
+function updateCompact() {
+  const past = [...scrolledPast.keys()].filter((card) => scrolledPast.get(card)).pop();
+  $('compact').classList.toggle('show', Boolean(past));
+  if (past) {
+    $('compact-title').textContent = past.dataset.title;
+    $('compact-counts').textContent = past.dataset.counts;
+  }
+}
+summaryObserver = new IntersectionObserver((entries) => {
+  for (const entry of entries) scrolledPast.set(entry.target, !entry.isIntersecting && entry.boundingClientRect.bottom < 0);
+  updateCompact();
 });
-
-$('search').addEventListener('input', () => renderBookings(new Date()));
-
-// Once the summary card has scrolled away, a compact bar keeps the class and the counts in view.
-new IntersectionObserver(([entry]) => {
-  $('compact').classList.toggle('show', !entry.isIntersecting && entry.boundingClientRect.bottom < 0);
-}).observe($('summary'));
 
 render();

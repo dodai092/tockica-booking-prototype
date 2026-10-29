@@ -1,5 +1,5 @@
 // Owner reports: the monthly instructor payout, its rates, and client analytics.
-import { studioTime } from '../time.js';
+import { studioTime, hrDate } from '../time.js';
 import { monthReport, setActualInstructor, setInstructorRate, setBonusSettings, setPaid, paidEntry, summaryText, rateOn } from '../payroll.js';
 import { popularSlots, popularInstructors, clientRides, clientHistory } from '../analytics.js';
 import { loadStore, saveStore } from './session.js';
@@ -15,7 +15,7 @@ const TOP = 3;
 
 const euro = new Intl.NumberFormat('hr-HR', { style: 'currency', currency: 'EUR' });
 const timeFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', hour: '2-digit', minute: '2-digit' });
-const dayMonthFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', day: '2-digit', month: '2-digit' });
+const dayMonthFormat = hrDate({ day: '2-digit', month: '2-digit' });
 
 const $ = (id) => document.getElementById('i-' + id);
 const store = loadStore();
@@ -167,7 +167,7 @@ function renderPayroll() {
     paidBox.checked = Boolean(paidNow);
     const paidSub = !paidNow ? '' : paidNow.total !== r.total
       ? `Iznos se promijenio od isplate (bilo ${euro.format(paidNow.total)})`
-      : `Isplaćeno ${new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(paidNow.at))}`;
+      : `Isplaćeno ${hrDate({ day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(paidNow.at))}`;
     paidRow.append(main('Isplaćeno', paidSub), paidBox);
     paidBox.addEventListener('change', () => act(() => setPaid(store, month, r.instructorId, { on: paidBox.checked, total: r.total, now: new Date() }), paidBox.checked ? 'Označeno kao isplaćeno.' : 'Oznaka maknuta.'));
     group.append(paidRow);
@@ -196,7 +196,7 @@ function renderPayroll() {
   }
 }
 
-const dateFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', day: 'numeric', month: 'numeric', year: 'numeric' });
+const dateFormat = hrDate({ day: 'numeric', month: 'numeric', year: 'numeric' });
 
 // One client's history, in a sheet: how often, what, with whom, first and last visit.
 function showClient(accountId) {

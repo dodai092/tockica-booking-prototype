@@ -63,3 +63,9 @@ export const studioTime = {
     return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
   },
 };
+
+// Croatian date formatter without the space after the dot: "29.10." instead of "29. 10.".
+export function hrDate(options) {
+  const formatter = new Intl.DateTimeFormat('hr-HR', { timeZone: STUDIO_TZ, ...options });
+  return { format: (date) => formatter.format(date).replace(/\.\s(?=\d{1,4}\.)/g, '.') };
+}

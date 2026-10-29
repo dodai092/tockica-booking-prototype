@@ -1,4 +1,4 @@
-import { studioTime } from '../time.js';
+import { studioTime, hrDate } from '../time.js';
 import { balance } from '../ledger.js';
 import {
   restoreCredit,
@@ -15,7 +15,7 @@ import { loadStore, saveStore, resetStore, generateUpcoming } from './session.js
 import { showBanner, expand, collapse, release, pop } from './motion.js';
 
 const timeFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', hour: '2-digit', minute: '2-digit' });
-const dayFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', weekday: 'short', day: '2-digit', month: '2-digit' });
+const dayFormat = hrDate({ weekday: 'short', day: '2-digit', month: '2-digit' });
 
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
 
