@@ -236,7 +236,11 @@ function renderClasses() {
     }
     const action = statusButton(session, current, mine.length > 0);
     if (!action.classList.contains('add-bike')) card.append(info, action);
-    else card.append(info);
+    else {
+      // No button column, so the card is one column and the block reaches the right padding.
+      card.classList.add('solo');
+      card.append(info);
+    }
     if (mine.length && current.getTime() < Date.parse(session.startsAt)) {
       const bikes = mine.map((b) => (b.guestName ? `${b.bikeNo} (${b.guestName})` : b.bikeNo)).join(', ');
       const block = el('div', undefined, 'mine-block');
