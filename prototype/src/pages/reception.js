@@ -3,6 +3,7 @@ import { checkIn, checkInOpen, closeClass, correctStatus } from '../checkin.js';
 import { markNoShow } from '../booking.js';
 import { taughtBy } from '../payroll.js';
 import { clientRides } from '../analytics.js';
+import { bikePosition } from '../layout.js';
 import { loadStore, saveStore } from './session.js';
 import { fadeIn, fadeOut, pop, showBanner, resize, release, haptic } from './motion.js';
 
@@ -26,6 +27,8 @@ const $ = (id) => document.getElementById('r-' + id);
 const store = loadStore();
 saveStore(store);
 let day = null;
+let view = sessionStorage.getItem('tockica-reception-view') === 'map' ? 'map' : 'list';
+let selectedId = null;
 
 function el(tag, text, className) {
   const node = document.createElement(tag);
@@ -221,26 +224,57 @@ function actionButtons(booking, session, now) {
   return { primary, buttons };
 }
 
-// Lower case, no accents, so "zeljko" finds "Željko".
-const plain = (text) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
-function matches(booking, query) {
-  const account = store.accounts.find((a) => a.id === booking.accountId);
-  return String(booking.bikeNo) === query || plain(`${account?.name ?? ''} ${booking.guestName ?? ''}`).includes(query);
+// Active bookings only: a cancelled bike is free again on the map.
+const ON_MAP = ['booked', 'attended', 'no_show'];
+
+// The room as in the booking sheet, with the rider's first name on each bike. Tap a bike for its actions.
+function renderMap(session, now) {
+  const wrap = el('section', undefined, 'group');
+  wrap.setAttribute('aria-label', 'Karta bicikala');
+  const bookings = store.bookings.filter((b) => b.classId === session.id && ON_MAP.includes(b.status));
+  const grid = el('div', undefined, 'bike-grid r-map');
+  for (let bikeNo = 1; bikeNo <= session.bikeCount; bikeNo += 1) {
+    const booking = bookings.find((b) => b.bikeNo === bikeNo);
+    const button = el('button', undefined, `bike${booking ? ` map-${booking.status}` : ''}${booking && booking.id === selectedId ? ' sel' : ''}`);
+    button.type = 'button';
+    button.append(el('b', String(bikeNo)), el('span', booking ? riderOf(booking).split(' ')[0] : ''));
+    const { column, row } = bikePosition(bikeNo);
+    button.style.gridArea = `${row} / ${column}`;
+    if (booking) {
+      button.setAttribute('aria-label', `Bicikl ${bikeNo}, ${riderOf(booking)}, ${STATUS_TEXT[booking.status].toLowerCase()}`);
+      button.addEventListener('click', () => {
+        selectedId = booking.id === selectedId ? null : booking.id;
+        render();
+      });
+    } else button.disabled = true;
+    grid.append(button);
+  }
+  const picked = bookings.find((b) => b.id === selectedId);
+  const bar = el('div', undefined, 'g-row r-pick');
+  if (!picked) bar.append(el('span', 'Dodirni bicikl za dolazak ili no-show.', 'g-sub'));
+  else {
+    const { primary, buttons } = actionButtons(picked, session, now);
+    const who = el('div', undefined, 'g-main');
+    who.append(el('div', riderOf(picked), 'g-title'), el('div', `Bicikl ${picked.bikeNo} · ${STATUS_TEXT[picked.status]}`, 'g-sub'));
+    bar.append(who);
+    if (primary) bar.append(primary);
+    for (const button of buttons) bar.append(button);
+  }
+  wrap.append(grid, bar);
+  return wrap;
 }
 
 function renderBookings(session, now) {
+  if (view === 'map') return renderMap(session, now);
   const list = el('section', undefined, 'group');
   list.setAttribute('aria-label', 'Rezervacije');
   const classId = session.id;
 
   const all = store.bookings.filter((b) => b.classId === classId);
-  const query = plain($('search').value.trim());
-  const rows = all
-    .filter((b) => !query || matches(b, query))
-    .sort((a, b) => a.bikeNo - b.bikeNo);
+  const rows = all.sort((a, b) => a.bikeNo - b.bikeNo);
 
   if (rows.length === 0) {
-    list.append(row(el('span', all.length ? 'Nema rezultata.' : 'Još nema rezervacija za ovaj trening.', 'g-sub')));
+    list.append(row(el('span', 'Još nema rezervacija za ovaj trening.', 'g-sub')));
     return list;
   }
 
@@ -258,9 +292,19 @@ function renderBookings(session, now) {
     if (primary) item.append(primary);
     else if (booking.status !== 'booked') item.append(el('span', STATUS_TEXT[booking.status], `pill pill-${booking.status}`));
     if (buttons.length) {
+      // The secondary actions (No-show, corrections) stay folded behind a menu button.
       const actions = el('div', undefined, 'r-actions');
+      actions.hidden = true;
       actions.append(...buttons);
-      item.append(actions);
+      const more = el('button', '⋯', 'r-more');
+      more.type = 'button';
+      more.setAttribute('aria-label', `Više za bicikl ${booking.bikeNo}`);
+      more.setAttribute('aria-expanded', 'false');
+      more.addEventListener('click', () => {
+        actions.hidden = !actions.hidden;
+        more.setAttribute('aria-expanded', String(!actions.hidden));
+      });
+      item.append(more, actions);
     }
     list.append(item);
   }
@@ -300,25 +344,34 @@ export function render() {
     return section;
   });
   $('classes').replaceChildren(...sections);
+  for (const [id, mode] of [['view-list', 'list'], ['view-map', 'map']]) $(id).setAttribute('aria-pressed', String(view === mode));
 }
 
 // Called by a report that links to a class; the tab renders it when shown.
 export function openClass(id) {
   day = studioTime.localDate(store.classes.find((c) => c.id === id).startsAt);
-  $('search').value = '';
   hideUndo(false);
 }
 
 $('day').addEventListener('change', (event) => {
   day = event.target.value;
-  $('search').value = '';
+  selectedId = null;
   hideUndo(false);
   showMessage('');
   render();
   fadeIn($('classes'), 6);
 });
 
-$('search').addEventListener('input', render);
+for (const [id, mode] of [['view-list', 'list'], ['view-map', 'map']]) {
+  $(id).addEventListener('click', () => {
+    if (view === mode) return;
+    view = mode;
+    sessionStorage.setItem('tockica-reception-view', mode);
+    selectedId = null;
+    render();
+    fadeIn($('classes'), 6);
+  });
+}
 
 // Once a class card has scrolled away, a compact bar keeps the latest such class and its counts in view.
 function updateCompact() {
