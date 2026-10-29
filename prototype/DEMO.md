@@ -57,8 +57,9 @@ ako je prvi ponedjeljak više od 6 sati u budućnosti.
 ## 7. Dolazak na recepciji
 
 - **Kartica:** Raspored, pa Recepcija
-- **Radnja:** na rasporedu rezerviraj bicikl 6 (odaberi, pa potvrdi) na "Demo: za 20 min". Na recepciji je trening već odabran. Klikni "Dolazak" pri biciklu 6.
-- **Očekivano:** status "Došao". Ako check-in nije otvoren, piše kad se otvara.
+- **Radnja:** na rasporedu rezerviraj bicikl 6 (odaberi, pa potvrdi) na "Demo: za 20 min". Na recepciji je trening već odabran. Klikni "Dolazak" pri biciklu 6. Zatim u retku "Prikaz" odaberi "Karta" i dodirni bicikl 6.
+- **Očekivano:** status "Došao" (zeleni obrub, ne pun zeleni gumb). Ako check-in nije otvoren, piše kad se otvara. Na karti je bicikl 6 zelen, a ispod karte su ime, "Dolazak" i, kad trening krene, "No-show". Karta prati raspored u prostoriji (bicikli 1 do 10 desno, 11 do 20 lijevo, razmak nakon petog reda) i na svakom biciklu piše ime. Odabir Popis/Karta pamti se dok je tab otvoren.
+- **Napomena:** u popisu je No-show (i ispravak nakon treninga) iza gumba ⋯ uz redak. Pretrage nema. Za puni trening: Admin, "Demo alati", "Napuni trening (sve bicikle)".
 
 ## 8. Vraćanje kredita (vlasnica)
 
