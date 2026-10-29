@@ -76,7 +76,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <p>Ovo je napravljeno do sada. Podaci su lažni, cijene su placeholderi i plaćanja nema. Radi i na mobitelu.</p>
 <ul>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#raspored">Raspored</a>: kako ga vide klijenti. Odaberi dan, pritisni rezerviraj, odaberi bicikl na planu sobe, otkaži, kupi paket, uđi na listu čekanja.</li>
-  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#recepcija">Recepcija</a>: check-in prije treninga i oznaka da klijent nije došao.</li>
+  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#recepcija">Recepcija</a>: odaberi dan i vidiš sve treninge tog dana. Check-in prije treninga i oznaka da klijent nije došao.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#izvjestaji">Izvještaji</a>: isplata trenera po mjesecu, zamjene, bonus, i analitika klijenata.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#admin">Admin</a>: računi, rezervacije, cijene paketa, raspored (otvaranje, termini, otkazivanje treninga), vraćanje kredita i poslani mailovi.</li>
 </ul>
@@ -99,14 +99,15 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
   <li>Vlastiti sustav ili gotov (Momence, bsport)? Predlažem vlastiti, u fazama, jer sama vraćaš kredite i određuješ cijene. Gotov sustav traži zakrpe za Multisport, Sculpt Room i plaćanje. Više u dodatku na dnu.</li>
   <li>Neograničeni paket: da ili ne, i koliko dana?</li>
   <li>Sculpt Room: što trener dobiva za 100 €?</li>
-  <li>Instruktori: honorar po treningu za svakog (sada probnih 20 €), jesu li prag 15 i 2 € po biciklu točni, plaćaš li samo održane treninge, i treba li treneru uz broj i popis treninga?</li>
-  <li>Benefit Systems: što piše u ugovoru o cijenama i ulazima?</li>
-  <li>Corvus: imaš li ugovor?</li>
+  <li>Instruktori: honorar po treningu za svakog (sada probnih 20 €), plaćaš li samo održane treninge, i treba li treneru uz broj i popis treninga? Prag 15 i 2 € po biciklu si potvrdila.</li>
+  <li>Benefit Systems: javi što su odgovorili o cijenama i ulazima.</li>
+  <li>Stripe: pravni oblik studija (d.o.o. ili obrt) i tko je ovlaštena osoba za otvaranje računa.</li>
   <li>Kako sad vodite rezervacije i unaprijed plaćene treninge? Koliko ljudi ima neiskorištene?</li>
-  <li>Raspored bicikala u sobi: redovi, brojevi i gdje stoji instruktor.</li>
+  <li>Numeracija bicikala na planu: slika ti stiže posebno, potvrdi brojeve.</li>
+  <li>Uvjeti korištenja: pošalji svoj nacrt.</li>
   <li>Tablica "Predlažem, nisi tražila" niže: da ili ne za svaki prijedlog.</li>
 </ol></div>
-<p>Fiskalizaciju provjeravam s računovođom. Račune (Stripe, domena, baza, hosting, mail) otvaramo na ime Točkice, a ja sam dodan kao admin. </p>
+<p>Fiskalizaciju provjeravam s računovođom. Plaćanje karticom ne ide u pogon dok to nije riješeno. Račune (Stripe, domena, baza, hosting, mail) otvaramo na ime Točkice, a ja sam dodan kao admin. </p>
 
 <h2>Prva verzija</h2>
 
@@ -134,25 +135,25 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 </details>
 
 <details>
-  <summary><span class="name">3. Multisport popust</span><span class="tag diff">Malo drukčije</span></summary>
+  <summary><span class="name">3. Multisport popust</span><span class="tag open">Čekamo Benefit Systems</span></summary>
   <div class="body">
     <p>Oznaku postavljaš ti ili recepcija, ne korisnik. Nema koda, pa se ne može prenijeti. Svaki proizvod ima standardnu i Multisport cijenu, fiksne iznose.</p>
-    <p><span class="tag open">Ugovor</span> Plaća li Benefit Systems po ulazu? Smije li se online naplaćivati popust?</p>
+    <p><span class="tag open">Ugovor</span> Čekamo odgovor Benefit Systemsa: plaća li po ulazu i smije li se naplaćivati popust unaprijed. Ako dodatna naplata nije dopuštena, Multisport otpada. Prva verzija izlazi samo sa standardnim cijenama, a Multisport cijena i oznaka ostaju osmišljeni, ali neizrađeni.</p>
   </div>
 </details>
 
 <details>
   <summary><span class="name">4. Početnički paketi (nice to have)</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Svaki račun kupi jednom: 1 trening za 5 €, 3 treninga za 20 €.</p>
+    <p>Dva zasebna paketa: 1 trening za 10 € i 3 treninga za 30 €. Svaki se kupuje jednom po računu, a mogu se kupiti oba. Vide ih samo računi koji još nisu kupili običan paket.</p>
   </div>
 </details>
 
 <details>
-  <summary><span class="name">5. Izbor bicikla</span><span class="tag open">Treba tvoj odgovor</span></summary>
+  <summary><span class="name">5. Izbor bicikla</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Plan sobe s 20 bicikala: dva reda po 10, s prolazom nakon petog i petnaestog bicikla. Plan se otvara u prozoru kad pritisneš rezerviraj. Zauzeti su sivi. Instruktor je označen na vrhu plana, s fotografijom ili bez nje. Nema limita koliko bicikala rezerviraš, samo trebaš kredite.</p>
-    <p><span class="tag open">Raspored bicikala</span> Kako su bicikli stvarno raspoređeni i numerirani, i gdje stoji instruktor? Plan u prototipu je moja pretpostavka.</p>
+    <p>Plan sobe po tvojoj skici: 20 bicikala u dva stupca po 10, s prolazom nakon petog reda. Instruktor je desno u sredini. Desni stupac je 1 do 10, lijevi 11 do 20, oba odozdo prema gore. Plan se otvara u prozoru kad pritisneš rezerviraj. Zauzeti su sivi. Instruktor je označen markerom, fotografija nije potrebna. Nema limita koliko bicikala rezerviraš, samo trebaš kredite.</p>
+    <p><span class="tag open">Numeracija</span> Potvrdi brojeve na slici koju ti šaljem.</p>
     <div class="ref">
       <img src="assets/referenca/izbor-bajka.png" alt="Referenca: izbor bicikla">
       <p>Referenca iz tvoje poruke. Preuzimamo način odabira, ne broj bicikala s ove slike.</p>
@@ -199,9 +200,8 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">11. Plaćanje</span><span class="tag open">Treba tvoj odgovor</span></summary>
   <div class="body">
-    <p>Corvus: 0,5 % po transakciji, minimum 0,02 € po transakciji i 30 € mjesečno (plus PDV). Bez naknade za postavljanje na njihovoj stranici.</p>
-    <p>Stripe: 1,5 % + 0,25 € za kartice iz EEA. Za hrvatski račun nismo potvrdili da je dostupan.</p>
-    <p>Gotovina na recepciji radi odmah. Imaš li ugovor s Corvusom? Ako nemaš, prvo provjeravam Stripe za Hrvatsku.</p>
+    <p>Odlučeno: Stripe, jer nemaš ugovor ni s kim. Naknada je 1,5 % + 0,25 € za kartice iz EEA. Corvus (0,5 % po transakciji, minimum 30 € mjesečno plus PDV) otpada.</p>
+    <p>Za otvaranje računa treba pravni oblik studija (d.o.o. ili obrt) i ovlaštena osoba. Kartice ne idu u pogon dok se ne razjasni fiskalizacija, a to provjeravam s računovođom. Gotovina na recepciji radi odmah.</p>
   </div>
 </details>
 
@@ -220,7 +220,8 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
     <p>U prototipu: kartica Izvještaji, Isplata. Odabereš mjesec (od 1. do zadnjeg dana) i vidiš po treneru koliko je treninga držao, koliko je ljudi došlo na svaki, koga je mijenjao i tko je njega mijenjao. Zamjenu upisuješ na treningu, a plaća ide onome tko ga je vodio, po njegovoj cijeni. Bonus: 2 € za svaki bicikl s dolaskom iznad 15 od 20, gosti se broje.</p>
     <p>Plaća se samo održan trening. Otkazani i oni koji tek slijede se ne plaćaju. Honorar vrijedi od dana kad ga promijeniš, pa se prošli treninzi ne mijenjaju. Za svakog trenera možeš poslati sažetak i označiti isplaćeno. Ako se iznos promijeni nakon isplate, vidiš upozorenje.</p>
     <p>Izvještaj je točan samo ako recepcija označi dolaske. Neoznačeni treninzi se prikažu na vrhu.</p>
-    <p><span class="tag open">Cijene</span> Honorar po treningu za svakog trenera (sada probnih 20 €). Jesu li prag 15 i 2 € po biciklu točni? Treba li treneru uz broj i popis treninga?</p>
+    <p>Bonus je potvrđen: prag 15 i 2 € po biciklu iznad praga (16 bicikala je 2 €, 18 je 6 €).</p>
+    <p><span class="tag open">Cijene</span> Honorar po treningu za svakog trenera (sada probnih 20 €). Treba li treneru uz broj i popis treninga?</p>
   </div>
 </details>
 
@@ -253,7 +254,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
   <tr><td>Prijava bez lozinke</td><td>Kod na mail. Ime, mail i telefon pri registraciji.</td><td></td></tr>
   <tr><td>Tjedni predložak rasporeda</td><td>Jedan tjedan iz kojeg nastaje svaki sljedeći.</td><td></td></tr>
   <tr><td>Početni klijenti (točka 12)</td><td>Unos preostalih treninga prije pokretanja.</td><td></td></tr>
-  <tr><td>Uvjeti i privatnost</td><td>Obavezno prije pokretanja. Nacrt pripremamo mi, ti ili pravnik odobri.</td><td>Obavezno</td></tr>
+  <tr><td>Uvjeti i privatnost</td><td>Obavezno prije pokretanja. Tvoj nacrt je osnova, mi dodajemo pravila platforme (6 sati, rok, vraćeni kredit, povrat novca, privatnost), ti ili pravnik odobrite.</td><td>Obavezno</td></tr>
 </table>
 
 <h2>Kasnije</h2>
@@ -268,7 +269,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <h2>Dodatak: gotov sustav</h2>
 <p>Provjerio sam Glofox, bsport, Momence, Eversports, Mindbody, Wellness Living, Hapana i Anolla. Nijedna ne navodi Corvus Pay, trošenje paketa po isteku ni Multisport popust.</p>
 
-<footer>Ovaj dokument ažuriram kako se odluke mijenjaju. Zadnje ažuriranje: 28.10.2026.</footer>
+<footer>Ovaj dokument ažuriram kako se odluke mijenjaju. Zadnje ažuriranje: 29.10.2026.</footer>
 
 </div>
 
