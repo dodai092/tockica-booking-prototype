@@ -115,8 +115,8 @@ ako je prvi ponedjeljak više od 6 sati u budućnosti.
 ## 16. Uredi trening
 
 - **Kartica:** Admin, "Raspored"
-- **Radnja:** u "Uredi trening" odaberi trening, promijeni ime, vrijeme, instruktora ili temu i klikni "Spremi".
-- **Očekivano:** "Trening je uređen." Tko je imao rezervaciju dobiva jedan mail "Promjena treninga". Raspored se ne vraća na stari termin.
+- **Radnja:** u "Uredi trening" odaberi trening, promijeni ime, vrijeme, instruktora, temu ili broj bicikala (zadano 20, od 1 do 20) i klikni "Spremi".
+- **Očekivano:** "Trening je uređen." Tko je imao rezervaciju dobiva jedan mail "Promjena treninga" (ne kad mijenjaš samo broj bicikala). Broj bicikala ne može pasti ispod najvišeg rezerviranog bicikla. Raspored se ne vraća na stari termin.
 
 ## 17. Zatvoreni dani i raspored
 

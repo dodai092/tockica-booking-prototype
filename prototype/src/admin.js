@@ -72,15 +72,21 @@ export function removeFromClass(store, { bookingId, reason, now }) {
 }
 
 // The owner changes one class in one week. Riders who booked it are told once. The template is not touched.
-export function editClass(store, { classId, name, time, instructorId, themeName, now }) {
+// Capacity is 1 to 20 (the room map has 20 bikes) and cannot drop below a bike that is already booked.
+export function editClass(store, { classId, name, time, instructorId, themeName, bikeCount, now }) {
   if (!name.trim() || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new RangeError('Class edit out of range');
   const session = store.classes.find((c) => c.id === classId);
   if (session.cancelled) throw new Error(`Class ${classId} is cancelled`);
+  const capacity = bikeCount ?? session.bikeCount;
+  const highestBooked = Math.max(0, ...takenBikes(store, classId));
+  if (!isInt(capacity, 1, 20) || capacity < highestBooked) throw new RangeError(`Broj bicikala mora biti od ${Math.max(1, highestBooked)} do 20.`);
 
   const day = studioTime.localDate(session.startsAt);
   const startsAt = studioTime.toUtc(`${day}T${time}`);
   const changed = session.name !== name.trim() || session.startsAt !== startsAt || session.instructorId !== instructorId;
-  Object.assign(session, { name: name.trim(), startsAt, instructorId, themeName: themeName || null });
+  const raised = capacity > session.bikeCount;
+  Object.assign(session, { name: name.trim(), startsAt, instructorId, themeName: themeName || null, bikeCount: capacity });
+  if (raised) onBikeFreed(store, classId, now);
   if (!changed) return session;
 
   const riders = new Set(store.bookings.filter((b) => b.classId === classId && b.status === 'booked').map((b) => b.accountId));

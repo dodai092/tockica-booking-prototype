@@ -4,7 +4,7 @@ import { createStore } from '../src/model.js';
 import { studioTime } from '../src/time.js';
 import { generateWeek } from '../src/schedule.js';
 import { grantPack } from '../src/ledger.js';
-import { bookBike, cancelBooking, markNoShow } from '../src/booking.js';
+import { bookBike, cancelBooking, markNoShow, joinWaitlist } from '../src/booking.js';
 import { canPurchase, purchasePack } from '../src/purchase.js';
 import { introOffer } from '../src/dashboard.js';
 import { owedClasses, markCharged } from '../src/owed.js';
@@ -95,6 +95,42 @@ test('editing a class nobody booked sends no mail, and bad input is rejected', (
   assert.equal(store.outbox.length, 0);
   assert.throws(() => editClass(store, { classId: session.id, name: ' ', time: '10:00', instructorId: 'ins_1', themeName: null, now: NOW }), RangeError);
   assert.throws(() => editClass(store, { classId: session.id, name: 'X', time: '25:00', instructorId: 'ins_1', themeName: null, now: NOW }), RangeError);
+});
+
+test('a class has 20 bikes unless the owner changes it, and editing capacity sends no rider mail', () => {
+  const { store, session } = setup();
+  assert.equal(session.bikeCount, 20);
+  bookBike(store, { classId: session.id, bikeNo: 1, accountId: 'acc_test1', now: NOW });
+  store.outbox = [];
+
+  const sameCapacity = editClass(store, { classId: session.id, name: session.name, time: '10:00', instructorId: session.instructorId, themeName: null, now: NOW });
+  assert.equal(sameCapacity.bikeCount, 20);
+
+  editClass(store, { classId: session.id, name: session.name, time: '10:00', instructorId: session.instructorId, themeName: null, bikeCount: 12, now: NOW });
+  assert.equal(session.bikeCount, 12);
+  assert.equal(store.outbox.length, 0);
+  assert.throws(() => bookBike(store, { classId: session.id, bikeNo: 13, accountId: 'acc_test2', now: NOW }));
+});
+
+test('capacity stays between the highest booked bike and 20, and raising it on a full class mails the waitlist', () => {
+  const { store, session } = setup();
+  const edit = (bikeCount) => editClass(store, { classId: session.id, name: session.name, time: '10:00', instructorId: session.instructorId, themeName: null, bikeCount, now: NOW });
+  bookBike(store, { classId: session.id, bikeNo: 8, accountId: 'acc_test1', now: NOW });
+
+  assert.throws(() => edit(7), RangeError);
+  assert.throws(() => edit(0), RangeError);
+  assert.throws(() => edit(21), RangeError);
+  assert.throws(() => edit(8.5), RangeError);
+
+  edit(8);
+  for (let bikeNo = 1; bikeNo <= 7; bikeNo += 1) bookBike(store, { classId: session.id, bikeNo, accountId: 'acc_test2', now: NOW });
+  store.accounts.push({ id: 'acc_late', name: 'Late', email: 'late@example.com', phone: '', multisportTag: false, marketingOptIn: false });
+  joinWaitlist(store, { classId: session.id, accountId: 'acc_late', now: NOW });
+  store.outbox = [];
+
+  edit(10);
+  assert.equal(store.outbox.length, 1);
+  assert.match(store.outbox[0].subject, /Oslobodilo se mjesto/);
 });
 
 function riderWithAttended(store, count) {

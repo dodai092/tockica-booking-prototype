@@ -23,7 +23,6 @@ import { fadeIn, slideIn, pop, popOut, expand, collapse, release, reveal, showBa
 import { openSheet, closeSheet, bindSheet } from './sheet.js';
 
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
-const BIKE_COUNT = 20;
 const WEEKS_SHOWN = 3;
 const LOW_CREDITS = 2;
 
@@ -211,7 +210,7 @@ function statusButton(session, current, hasBike) {
     soon.disabled = true;
     return soon;
   }
-  if (takenBikes(store, session.id).length >= BIKE_COUNT) {
+  if (takenBikes(store, session.id).length >= session.bikeCount) {
     if (store.waitlist.some((w) => w.classId === session.id && w.accountId === $('account').value)) {
       const waiting = el('button', 'na listi', 'btn secondary');
       waiting.disabled = true;
@@ -270,13 +269,13 @@ function renderClasses() {
     } else if (current.getTime() < Date.parse(session.releaseOpensAt)) {
       info.append(el('div', `Otvara se ${whenFormat.format(new Date(session.releaseOpensAt))}`, 'meta'));
     } else if (current.getTime() < Date.parse(session.startsAt) && isBookable(session, current)) {
-      const free = BIKE_COUNT - takenBikes(store, session.id).length;
+      const free = session.bikeCount - takenBikes(store, session.id).length;
       // The bar is the share of free bikes, so a long bar and a big number say the same thing.
       const capacity = el('div', undefined, free <= 3 ? 'cap few' : 'cap');
       const bar = el('span', undefined, 'bar');
       bar.setAttribute('aria-hidden', 'true');
       const fill = el('i');
-      fill.style.width = `${(free / BIKE_COUNT) * 100}%`;
+      fill.style.width = `${(free / session.bikeCount) * 100}%`;
       bar.append(fill);
       capacity.append(bar, el('span', free === 0 ? 'Popunjeno' : `${free} slobodno`));
       info.append(capacity);
@@ -463,7 +462,7 @@ function renderBikes() {
   const stage = el('div', undefined, 'stage');
   stage.append(el('small', 'instruktor'), instructorName(taughtBy(session)).split(' ')[0] || '');
   grid.append(stage);
-  for (let bikeNo = 1; bikeNo <= BIKE_COUNT; bikeNo += 1) {
+  for (let bikeNo = 1; bikeNo <= session.bikeCount; bikeNo += 1) {
     const button = el('button', String(bikeNo), 'bike');
     button.disabled = taken.includes(bikeNo);
     button.setAttribute('aria-pressed', String(bikeNo === pickedBike));

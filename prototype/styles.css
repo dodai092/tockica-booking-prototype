@@ -467,6 +467,10 @@ a.g-row .sheet-line { color: var(--green-ink); }
 .g-form.wrap { flex-wrap: wrap; }
 .g-form.wrap .g-select { width: auto; }
 .g-form.wrap .g-name { flex: 1 1 100%; }
+.g-form.wrap .g-input[type="time"] { width: 7rem; }
+.g-form.wrap .g-input[type="number"] { width: 5rem; }
+.g-field { display: flex; align-items: center; gap: 6px; font-size: .9rem; }
+.g-field span { color: var(--muted); }
 .g-list { display: block; }
 .g-mail .g-sub { white-space: pre-line; }
 .g-mail .g-link { display: inline-block; margin-top: 0.5rem; color: var(--accent, inherit); font-weight: 700; }

@@ -61,8 +61,8 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <div class="page">
 
 <h1>Booking sustav za Točkicu</h1>
-<p class="lead">Napravio sam prototip (samo mock data), ali pravi sustav (plaćanje, hosting, tvoja stranica) još nije napravljen.</p>
-<p>Tri koraka: isprobaj prototip, odgovori na pitanja ispod i označi da ili ne u tablici.</p>
+<p class="lead">Napravio sam prototip (samo lažni podaci), ali pravi sustav (prijava, slanje mailova, plaćanje, hosting) još nije napravljen.</p>
+<p>Tri koraka: isprobaj prototip, odgovori na pitanja ispod i označi da ili ne u tablici. Korake za testiranje s očekivanim rezultatima šaljem u zasebnom dokumentu.</p>
 
 <ul class="legend">
   <li><span class="tag same">Kako si tražila</span> radi točno tako</li>
@@ -72,50 +72,63 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
   <li><span class="tag later">Kasnije</span> nije u prvoj verziji</li>
 </ul>
 
+<h2>Rokovi</h2>
+<p>Ciljni rokovi, ne obećanje.</p>
+<table>
+  <tr><th>Kada</th><th>Što</th></tr>
+  <tr><td>Sredina prosinca</td><td>Raspored i tjedno otvaranje, upravljanje rasporedom i rezervacijama, odabir bicikla, više bicikala, lista čekanja, check-in, mailovi, mobilna verzija, cjenik, digitalna izjava, računi s prijavom kodom na mail, osnovni profil, hosting, baza i sigurnosne kopije.</td></tr>
+  <tr><td>Q1 (siječanj)</td><td>Paketi i krediti, automatske kazne, analitika, upravljanje trenerima, dio profila s kreditima.</td></tr>
+  <tr><td>Q2 (travanj) i kasnije</td><td>Bonusi trenera, Sculpt Room (do tada ručno), online plaćanje, ograničenje uvodne ponude (do tada ručno), preporuka prijatelja, SMS, Multisport.</td></tr>
+</table>
+<p>U prosincu nema kredita. Plaćaš u studiju kao sad, a sustav zapiše je li otkazivanje bilo prije ili poslije 6 sati.</p>
+
 <h2>Prototip koji možeš isprobati</h2>
 <p>Ovo je napravljeno do sada. Podaci su lažni, cijene su placeholderi i plaćanja nema. Radi i na mobitelu.</p>
 <ul>
-  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#raspored">Raspored</a>: kako ga vide klijenti. Odaberi dan, pritisni rezerviraj, odaberi bicikl na planu sobe, otkaži, kupi paket, uđi na listu čekanja.</li>
+  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#raspored">Raspored</a>: kako ga vide klijenti. Odaberi dan, pritisni rezerviraj, odaberi bicikl na planu sobe, otkaži, pogledaj cjenik, uđi na listu čekanja.</li>
+  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#racun">Profil</a>: sljedeći trening s rokom besplatnog otkazivanja, povijest i podaci.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#recepcija">Recepcija</a>: odaberi dan i vidiš sve treninge tog dana. Check-in prije treninga i oznaka da klijent nije došao. Prikaz Popis ili Karta: karta prati raspored bicikala u prostoriji, s imenom na svakom biciklu.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#izvjestaji">Izvještaji</a>: isplata trenera po mjesecu, zamjene, bonus, i analitika klijenata.</li>
-  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#admin">Admin</a>: računi, rezervacije, cijene paketa, raspored (otvaranje, termini, otkazivanje treninga), vraćanje kredita, najam Sculpt Rooma i poslani mailovi.</li>
+  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#admin">Admin</a>: računi, rezervacije, cijene paketa, raspored (otvaranje, termini, uređivanje i otkazivanje treninga, broj bicikala), popis "Za naplatu", vraćanje kredita (Q1), najam Sculpt Rooma i poslani mailovi.</li>
   <li>Sculpt Room: gore u izborniku "Demo prijava" odaberi "Trener Marko". Trener sam rezervira cijele sate, najviše 2 dnevno, do 30 dana unaprijed, i otkazuje kad hoće. Sat koji drži drugi trener je zauzet.</li>
 </ul>
 <p>Isprobaj redom:</p>
 <ol>
-  <li>Raspored: rezerviraj bicikl. Kredit se smanji.</li>
-  <li>Otkaži rezervaciju (do 6 sati prije kredit se vraća, poslije propada), pa pritisni "Kupi paket" pored broja kredita.</li>
+  <li>Raspored: rezerviraj bicikl. U prosincu nema kredita, pa se ništa ne troši.</li>
+  <li>Otkaži rezervaciju. Do 6 sati prije je bez naplate, poslije toga piše da se naplaćuje trening. U Adminu, "Za naplatu", vidiš tko duguje trening. Klikneš "Naplaćeno" kad naplatiš u studiju.</li>
+  <li>Admin, Demo alati, "Način": vraćaju se krediti (Q1). Rezervacija troši kredit, a otkazivanje na vrijeme ga vraća.</li>
   <li>Admin, Demo alati: "Napuni trening (sve bicikle)". Na Rasporedu taj trening sada ima listu čekanja.</li>
   <li>Admin, Demo alati: "Dodaj trening za 20 min". Rezerviraj ga na Rasporedu, pa u Recepciji označi dolazak.</li>
-  <li>Admin, Raspored: dodaj termin ili otkaži trening. U "Poslani mailovi" vidiš što su klijenti dobili.</li>
+  <li>Admin, Raspored: dodaj termin, uredi ili otkaži trening. U "Poslani mailovi" vidiš što su klijenti dobili.</li>
   <li>Izvještaji, Isplata: vidiš treninge i iznos po treneru za mjesec. Pritisni "Treninzi" pa "Tko je vodio" da upišeš zamjenu. "Podijeli sažetak" šalje tekst treneru, a prekidač "Isplaćeno" bilježi isplatu.</li>
   <li>Izvještaji, Klijenti: najpopularniji termin i trener, vožnje po klijentu i pretraga po imenu. Kad u Recepciji označiš dolazak nekome na 50. ili 100. sat, pojavi se zelena poruka.</li>
   <li>Prijavi se kao "Trener Marko" i u Sculpt Roomu rezerviraj dva sata sutra. Treći ne ide. Odaberi dan u sljedećem mjesecu: piše da mjesec nije plaćen. Zatim se prijavi kao Vlasnica, Admin, Sculpt Room: označi mjesec plaćenim i makni jedan sat. Trener dobiva mail s razlogom.</li>
 </ol>
-<p>Račun mijenjaš izbornikom "Demo račun". Prave prijave još nema. Gore je izbornik "Demo prijava": Klijent 1 i Klijent 2 vide samo Raspored i Profil, Recepcija vidi Raspored i Recepciju, trener (Marko ili Iva) vidi samo Sculpt Room, a Vlasnica vidi sve. Recepciju, Izvještaje i Admin otvaraš kao Vlasnica. Sve što klikneš ostaje samo u tvom pregledniku. Na adminu gumb "Resetiraj demo" vraća početno stanje. Napiši mi što ti se ne sviđa ili što fali.</p>
+<p>Prave prijave još nema. Gore je izbornik "Demo prijava": Klijent 1 i Klijent 2 vide samo Raspored i Profil, Recepcija vidi Raspored i Recepciju, trener (Marko ili Iva) vidi samo Sculpt Room, a Vlasnica vidi sve. Recepciju, Izvještaje i Admin otvaraš kao Vlasnica. Sve što klikneš ostaje samo u tvom pregledniku. Na adminu gumb "Resetiraj demo" vraća početno stanje. Napiši mi što ti se ne sviđa ili što fali.</p>
 <p>Gore desno su prekidač za tamni način i gumb (i) s adresom, telefonom i radnim vremenom. Te podatke sam preuzeo s tvoje stranice 26.10., provjeri jesu li točni.</p>
-<p>U prototipu nema pravog plaćanja (kupnja je simulacija, a najam Sculpt Rooma samo označiš kao plaćen) ni "dovedi prijatelja". Honorar od 20 € po treningu i bonus u Izvještajima su probni iznosi, ne dogovoreni.</p>
+<p>U prototipu nema pravog plaćanja (kupnja paketa je simulacija u načinu Q1, a najam Sculpt Rooma samo označiš kao plaćen). Preporuka prijatelja je polje s imenom u profilu, a besplatan trening dodjeljuješ ručno. Cijene redovnih paketa, tekst izjave i honorar od 20 € po treningu su probni iznosi, ne dogovoreni. Dogovorene su samo uvodne cijene: 1 trening 10 €, 3 treninga 30 €.</p>
 
 <h2>Što mi treba od tebe</h2>
 <div class="note"><ol>
-  <li>Vlastiti sustav ili gotov (Momence, bsport)? Predlažem vlastiti, u fazama, jer sama vraćaš kredite i određuješ cijene. Gotov sustav traži zakrpe za Multisport, Sculpt Room i plaćanje. Više u dodatku na dnu.</li>
-  <li>Neograničeni paket: da ili ne, i koliko dana?</li>
+  <li>Tekst izjave o odgovornosti i uvjeta korištenja. Tvoj nacrt je osnova, mi dodajemo pravila platforme.</li>
+  <li>Popis postojećih budućih rezervacija, dan prije prelaska. Koliko ljudi ima neiskorištene treninge i koliko im ostaje?</li>
+  <li>Cjenik svih paketa s rokom valjanosti. Imamo samo uvodne cijene: 1 trening 10 €, 3 treninga 30 €.</li>
   <li>Sculpt Room: što trener dobiva za 100 € i do kada radi soba?</li>
-  <li>Instruktori: honorar po treningu za svakog (sada probnih 20 €), plaćaš li samo održane treninge, i treba li treneru uz broj i popis treninga? Prag 15 i 2 € po biciklu si potvrdila.</li>
-  <li>Benefit Systems: javi što su odgovorili o cijenama i ulazima.</li>
+  <li>Instruktori: osnovna cijena treninga (ista za sve ili po treneru), plaćaš li samo održane treninge, i vrijedi li bonus (prag 15, 2 € po biciklu) za sve trenere i sve treninge.</li>
   <li>Stripe: pravni oblik studija (d.o.o. ili obrt) i tko je ovlaštena osoba za otvaranje računa.</li>
-  <li>Kako sad vodite rezervacije i unaprijed plaćene treninge? Koliko ljudi ima neiskorištene?</li>
-  <li>Uvjeti korištenja: pošalji svoj nacrt.</li>
+  <li>Odgovor računovođe: tko izdaje fiskalni račun za kartice i gotovinu.</li>
+  <li>Benefit Systems: što su odgovorili o cijenama i ulazima.</li>
+  <li>Neograničeni paket: da ili ne, i koliko dana?</li>
   <li>Tablica "Predlažem, nisi tražila" niže: da ili ne za svaki prijedlog.</li>
 </ol></div>
-<p>Fiskalizaciju provjeravam s računovođom. Plaćanje karticom ne ide u pogon dok to nije riješeno. Račune (Stripe, domena, baza, hosting, mail) otvaramo na ime Točkice, a ja sam dodan kao admin. </p>
+<p>Fiskalizaciju provjeravam s računovođom. Plaćanje karticom ne ide u pogon dok to nije riješeno, a u prosincu ga ionako nema. Račune (Stripe, domena, baza, hosting, mail) otvaramo na ime Točkice, a ja sam dodan kao admin. </p>
 
-<h2>Prva verzija</h2>
+<h2>Detalji po temama</h2>
 
 <details>
   <summary><span class="name">1. Raspored treninga</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Ponedjeljkom u 10:00 otvara se novih 14 dana. Dan, sat i broj tjedana postavljaš ti u adminu. Kartica: trener, vrijeme, ime treninga, tema.</p>
+    <p>Ponedjeljkom u 10:00 otvara se novih 14 dana. Dan, sat i broj tjedana postavljaš ti u adminu. Kartica: trener, vrijeme, ime treninga, tema. Zatvoreni dani (praznici) ne dobivaju treninge. Jedan trening možeš urediti: ime, vrijeme, trener, tema i broj bicikala (zadano 20). Tko ima rezervaciju dobiva mail kad promijeniš ime, vrijeme ili trenera.</p>
     <div class="ref">
       <img src="assets/referenca/raspored.png" alt="Referenca: raspored treninga">
       <p>Referenca iz tvoje poruke. Preuzimamo raspored, ne boje ni brand.</p>
@@ -126,7 +139,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">2. Paketi</span><span class="tag diff">Malo drukčije</span></summary>
   <div class="body">
-    <p>Paketi s rokom, jednokratni (npr. 5 treninga, 45 dana). Jedan kredit je jedan bicikl. Bez automatske mjesečne naplate.</p>
+    <p>Paketi s rokom, jednokratni (npr. 5 treninga, 45 dana). Jedan kredit je jedan bicikl. Bez automatske mjesečne naplate. Paketi i krediti dolaze u Q1. U prosincu je samo cjenik s rokom valjanosti, bez kupnje.</p>
     <p><span class="tag open">Neograničeni paket</span> Na screenshotu postoji (14 ili 30 dana). Želiš li ga u prvoj verziji?</p>
     <div class="ref">
       <img src="assets/referenca/paketi.png" alt="Referenca: članarine i paketi">
@@ -146,14 +159,14 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">4. Početnički paketi (nice to have)</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Dva zasebna paketa: 1 trening za 10 € i 3 treninga za 30 €. Svaki se kupuje jednom po računu, a mogu se kupiti oba. Vide ih samo računi koji još nisu kupili običan paket.</p>
+    <p>Dva zasebna paketa: 1 trening za 10 € i 3 treninga za 30 €. Svaki se kupuje jednom po računu, a mogu se kupiti oba. Vide ih samo računi koji još nisu kupili običan paket. Automatska provjera (jednom po računu) dolazi u Q2, do tada je radiš ručno.</p>
   </div>
 </details>
 
 <details>
   <summary><span class="name">5. Izbor bicikla</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Plan sobe po tvojoj skici: 20 bicikala u dva stupca po 10, s prolazom nakon petog reda. Instruktor je desno u sredini. Desni stupac je 1 do 10, lijevi 11 do 20, oba odozdo prema gore. Plan se otvara u prozoru kad pritisneš rezerviraj. Zauzeti su sivi. Instruktor je označen markerom, fotografija nije potrebna. Nema limita koliko bicikala rezerviraš, samo trebaš kredite.</p>
+    <p>Plan sobe po tvojoj skici: 20 bicikala u dva stupca po 10, s prolazom nakon petog reda. Instruktor je desno u sredini. Desni stupac je 1 do 10, lijevi 11 do 20, oba odozdo prema gore. Plan se otvara u prozoru kad pritisneš rezerviraj. Zauzeti su sivi. Instruktor je označen markerom, fotografija nije potrebna. Nema limita koliko bicikala rezerviraš. Broj bicikala na treningu je zadano 20, a po treningu ga možeš smanjiti.</p>
     <div class="ref">
       <img src="assets/referenca/izbor-bajka.png" alt="Referenca: izbor bicikla">
       <p>Referenca iz tvoje poruke. Preuzimamo način odabira, ne broj bicikala s ove slike.</p>
@@ -171,7 +184,8 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">7. Otkazivanje i no-show</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Otkazivanje do 6 sati prije vraća kredit. Kasnije ili no-show oduzima kredit, čak i ako lista čekanja popuni bicikl. Kredit možeš ručno vratiti.</p>
+    <p>U prosincu: otkazivanje do 6 sati prije je bez naplate. Kasnije ili no-show sustav zapiše kao "Kasno otkazano" ili "No-show" i stavi na popis "Za naplatu". Naplaćuješ u studiju, a kad naplatiš, klikneš "Naplaćeno".</p>
+    <p>Od Q1: kasno otkazivanje i no-show oduzimaju kredit, čak i ako lista čekanja popuni bicikl. Kredit možeš ručno vratiti.</p>
   </div>
 </details>
 
@@ -185,14 +199,14 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">9. Check-in i statusi</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Recepcija označava Rezervirano, Došao, No-show, Otkazano (kredit se vraća) i Kasno otkazano (ne vraća se). Kredite vraćaš samo ti, u adminu. Recepcija može poništiti zadnju oznaku u prvih 5 sekundi.</p>
+    <p>Recepcija označava Rezervirano, Došao, No-show, Otkazano i Kasno otkazano. Od Q1 Otkazano vraća kredit, a Kasno otkazano ne. Kredite vraćaš samo ti, u adminu. Recepcija može poništiti zadnju oznaku u prvih 5 sekundi i premjestiti klijenta na drugi bicikl (klijent dobiva mail).</p>
   </div>
 </details>
 
 <details>
   <summary><span class="name">10. Rok trajanja i vraćeni kredit</span><span class="tag same">Kako si tražila</span></summary>
   <div class="body">
-    <p>Troši se paket koji najranije ističe. Vraćeni kredit vrijedi do kasnijeg od dva datuma: isteka paketa ili 7 dana od vraćanja.</p>
+    <p>Od Q1. Troši se paket koji najranije ističe. Vraćeni kredit vrijedi do kasnijeg od dva datuma: isteka paketa ili 7 dana od vraćanja.</p>
     <p><span class="tag">Predlažem</span> 7 dana. Može se promijeniti.</p>
   </div>
 </details>
@@ -201,23 +215,24 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
   <summary><span class="name">11. Plaćanje</span><span class="tag open">Treba tvoj odgovor</span></summary>
   <div class="body">
     <p>Odlučeno: Stripe, jer nemaš ugovor ni s kim. Naknada je 1,5 % + 0,25 € za kartice iz EEA. Corvus (0,5 % po transakciji, minimum 30 € mjesečno plus PDV) otpada.</p>
-    <p>Za otvaranje računa treba pravni oblik studija (d.o.o. ili obrt) i ovlaštena osoba. Kartice ne idu u pogon dok se ne razjasni fiskalizacija, a to provjeravam s računovođom. Gotovina na recepciji radi odmah.</p>
+    <p>Za otvaranje računa treba pravni oblik studija (d.o.o. ili obrt) i ovlaštena osoba. Kartice ne idu u pogon dok se ne razjasni fiskalizacija, a to provjeravam s računovođom. Gotovina na recepciji radi odmah. Online plaćanje nije u prosincu.</p>
   </div>
 </details>
 
 <details>
   <summary><span class="name">12. Početni klijenti</span><span class="tag">Predlažem</span></summary>
   <div class="body">
-    <p>Računi iz starog sustava se ne prenose. Klijenti se registriraju iznova. Prije pokretanja unosiš preostale treninge i rok. Za manje od 50 ljudi ručni unos je brži.</p>
+    <p>Računi iz starog sustava se ne prenose. Klijenti se registriraju iznova, kodom na mail. Dan prije prelaska trebam popis postojećih budućih rezervacija, a unosimo ih mi. Preostale treninge i rok unosiš ručno od Q1. Za manje od 50 ljudi ručni unos je brži.</p>
+    <p>Prelazak radimo u ponedjeljak prije otvaranja u 10:00. Stara stranica ostaje kao rezerva dok novi sustav ne prođe jedan čist tjedan.</p>
   </div>
 </details>
 
-<h2>Faza 2</h2>
+<h2>Treneri, Sculpt Room i analitika</h2>
 
 <details>
   <summary><span class="name">13. Instruktori: izvještaj i plaća</span><span class="tag diff">Malo drukčije</span></summary>
   <div class="body">
-    <p>U prototipu: kartica Izvještaji, Isplata. Odabereš mjesec (od 1. do zadnjeg dana) i vidiš po treneru koliko je treninga držao, koliko je ljudi došlo na svaki, koga je mijenjao i tko je njega mijenjao. Zamjenu upisuješ na treningu, a plaća ide onome tko ga je vodio, po njegovoj cijeni. Bonus: 2 € za svaki bicikl s dolaskom iznad 15 od 20, gosti se broje.</p>
+    <p>Izvještaj i honorari dolaze u Q1, bonus u Q2. U prototipu: kartica Izvještaji, Isplata. Odabereš mjesec (od 1. do zadnjeg dana) i vidiš po treneru koliko je treninga držao, koliko je ljudi došlo na svaki, koga je mijenjao i tko je njega mijenjao. Zamjenu upisuješ na treningu, a plaća ide onome tko ga je vodio, po njegovoj cijeni. Bonus: 2 € za svaki bicikl s dolaskom iznad 15 od 20, gosti se broje.</p>
     <p>Plaća se samo održan trening. Otkazani i oni koji tek slijede se ne plaćaju. Honorar vrijedi od dana kad ga promijeniš, pa se prošli treninzi ne mijenjaju. Za svakog trenera možeš poslati sažetak i označiti isplaćeno. Ako se iznos promijeni nakon isplate, vidiš upozorenje.</p>
     <p>Izvještaj je točan samo ako recepcija označi dolaske. Neoznačeni treninzi se prikažu na vrhu.</p>
     <p>Bonus je potvrđen: prag 15 i 2 € po biciklu iznad praga (16 bicikala je 2 €, 18 je 6 €).</p>
@@ -228,7 +243,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">14. Sculpt Room</span><span class="tag open">Treba tvoj odgovor</span></summary>
   <div class="body">
-    <p>U prototipu: trener sam rezervira u kalendaru, a ti u Adminu označiš da je platio. Spremaju se datum, iznos i napomena. Najam od 100 € vrijedi za kalendarski mjesec. Rezervira se cijeli sat, najviše 2 sata dnevno (ne moraju biti uzastopna), do 30 dana unaprijed, a dva trenera ne mogu imati isti sat. Mjesec koji nije plaćen ne može se rezervirati. Otkazivanje je besplatno u svakom trenutku. Ti možeš maknuti bilo čiji termin, a trener dobiva mail s razlogom. Zatvorene dane postaviš u Adminu, na njih se ne rezervira.</p>
+    <p>Q2 i kasnije, do tada ručno. U prototipu: trener sam rezervira u kalendaru, a ti u Adminu označiš da je platio. Spremaju se datum, iznos i napomena. Najam od 100 € vrijedi za kalendarski mjesec. Rezervira se cijeli sat, najviše 2 sata dnevno (ne moraju biti uzastopna), do 30 dana unaprijed, a dva trenera ne mogu imati isti sat. Mjesec koji nije plaćen ne može se rezervirati. Otkazivanje je besplatno u svakom trenutku. Ti možeš maknuti bilo čiji termin, a trener dobiva mail s razlogom. Zatvorene dane postaviš u Adminu, na njih se ne rezervira.</p>
     <p><span class="tag">Predlažem</span> Ako najam istekne, već rezervirani sati ostaju. Samo se novi ne mogu rezervirati. Pri kraju mjeseca Admin te podsjeti da označiš sljedeći.</p>
     <p><span class="tag open">Što dobiva</span> Što trener dobiva za 100 €: do 2 sata dnevno, kvotu sati ili fiksni termin? Do kada je soba otvorena (sada probnih 07:00 do 21:00)?</p>
   </div>
@@ -252,17 +267,19 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <h2>Predlažem, nisi tražila</h2>
 <table>
   <tr><th>Prijedlog</th><th>Što znači</th><th>Da ili ne</th></tr>
-  <tr><td>Studio otkazuje trening</td><td>Kredit se vraća svima, jedan mail. U prototipu u Adminu.</td><td></td></tr>
-  <tr><td>Prijava bez lozinke</td><td>Kod na mail. Ime, mail i telefon pri registraciji.</td><td></td></tr>
+  <tr><td>Studio otkazuje trening</td><td>Svi s rezervacijom dobivaju jedan mail (od Q1 i kredit natrag). U prototipu u Adminu.</td><td></td></tr>
+  <tr><td>Prijava bez lozinke</td><td>Kod na mail. Ime, mail i telefon pri registraciji. Ulazi u prosinac.</td><td></td></tr>
   <tr><td>Tjedni predložak rasporeda</td><td>Jedan tjedan iz kojeg nastaje svaki sljedeći.</td><td></td></tr>
+  <tr><td>Popis "Za naplatu"</td><td>U prosincu: kasna otkazivanja i no-showovi koje naplaćuješ u studiju, s oznakom "Naplaćeno".</td><td></td></tr>
+  <tr><td>Mail tebi prije 50. i 100. treninga</td><td>Dan prije dobiješ mail da klijent stiže do prekretnice.</td><td></td></tr>
+  <tr><td>Polje preporuke u profilu</td><td>Klijent upiše tko ga je preporučio. Besplatan trening dodjeljuješ ručno.</td><td></td></tr>
   <tr><td>Početni klijenti (točka 12)</td><td>Unos preostalih treninga prije pokretanja.</td><td></td></tr>
   <tr><td>Uvjeti i privatnost</td><td>Obavezno prije pokretanja. Tvoj nacrt je osnova, mi dodajemo pravila platforme (6 sati, rok, vraćeni kredit, povrat novca, privatnost), ti ili pravnik odobrite.</td><td>Obavezno</td></tr>
 </table>
 
 <h2>Kasnije</h2>
 <ul>
-  <li>Dashboard za korisnike</li>
-  <li>Refer a friend: besplatan trening dobiva onaj tko preporučuje</li>
+  <li>Preporuka prijatelja s automatskim besplatnim treningom (sad samo polje s imenom u profilu)</li>
   <li>Tematski eventi i nagrade</li>
   <li>Push i SMS obavijesti</li>
   <li>Mobilna aplikacija: web stranica za mobitel, bez prave aplikacije</li>
@@ -271,7 +288,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <h2>Dodatak: gotov sustav</h2>
 <p>Provjerio sam Glofox, bsport, Momence, Eversports, Mindbody, Wellness Living, Hapana i Anolla. Nijedna ne navodi Corvus Pay, trošenje paketa po isteku ni Multisport popust.</p>
 
-<footer>Ovaj dokument ažuriram kako se odluke mijenjaju. Zadnje ažuriranje: 29.10.2026.</footer>
+<footer>Ovaj dokument ažuriram kako se odluke mijenjaju. Zadnje ažuriranje: 30.10.2026.</footer>
 
 </div>
 

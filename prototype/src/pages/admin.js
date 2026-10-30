@@ -382,7 +382,7 @@ function renderSchedule(now) {
 
   // The owner edits one class in one week. Riders who booked it get a mail.
   const edit = el('div', undefined, 'group');
-  const editForm = el('form', undefined, 'g-form');
+  const editForm = el('form', undefined, 'g-form wrap');
   const editName = el('input', undefined, 'g-input g-name');
   editName.setAttribute('aria-label', 'Ime treninga za uređivanje');
   const editTime = el('input', undefined, 'g-input');
@@ -398,9 +398,16 @@ function renderSchedule(now) {
   const editTheme = el('input', undefined, 'g-input');
   editTheme.placeholder = 'Tema (nije obavezno)';
   editTheme.setAttribute('aria-label', 'Tema treninga za uređivanje');
+  const editBikes = el('input', undefined, 'g-input');
+  editBikes.type = 'number';
+  editBikes.min = '1';
+  editBikes.max = '20';
+  editBikes.setAttribute('aria-label', 'Broj bicikala na treningu');
   const save = el('button', 'Spremi', 'btn');
   save.type = 'submit';
-  editForm.append(editName, editTime, editInstructor, editTheme, save);
+  const bikesField = el('label', undefined, 'g-field');
+  bikesField.append(editBikes, el('span', 'bicikala'));
+  editForm.append(editName, editTime, bikesField, editInstructor, editTheme, save);
   const fill = (id) => {
     const picked = classes.find((c) => c.id === id);
     if (!picked) return;
@@ -408,6 +415,7 @@ function renderSchedule(now) {
     editTime.value = timeFormat.format(new Date(picked.startsAt));
     editInstructor.value = picked.instructorId;
     editTheme.value = picked.themeName ?? '';
+    editBikes.value = picked.bikeCount;
   };
   const editPicker = selectRow('Uredi trening', classes.map((c) => [c.id, classLabel(c)]), classes[0]?.id ?? '', (select) => fill(select.value));
   fill(classes[0]?.id);
@@ -415,7 +423,7 @@ function renderSchedule(now) {
     event.preventDefault();
     const id = editPicker.querySelector('select').value;
     if (!id) return;
-    act(() => editClass(store, { classId: id, name: editName.value, time: editTime.value, instructorId: editInstructor.value, themeName: editTheme.value.trim(), now: new Date() }), true, 'Trening je uređen.');
+    act(() => editClass(store, { classId: id, name: editName.value, time: editTime.value, instructorId: editInstructor.value, themeName: editTheme.value.trim(), bikeCount: Number(editBikes.value), now: new Date() }), true, 'Trening je uređen.');
   });
   edit.append(editPicker, editForm);
   section.append(edit);
