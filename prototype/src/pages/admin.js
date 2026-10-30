@@ -9,8 +9,23 @@ import {
   addTemplateEntry,
   removeTemplateEntry,
   cancelClass,
+  editClass,
 } from '../admin.js';
+import {
+  markMonthPaid,
+  unmarkMonthPaid,
+  removeSlot,
+  addClosedDay,
+  removeClosedDay,
+  rentalStatus,
+  monthLabel,
+  monthOf,
+  nextMonth,
+} from '../sculpt.js';
 import { addSoonClass, fillClass } from '../demo.js';
+import { sendReminders, sendMilestoneNotes } from '../reminders.js';
+import { owedClasses, markCharged } from '../owed.js';
+import { creditsEnabled } from '../ledger.js';
 import { loadStore, saveStore, resetStore, generateUpcoming } from './session.js';
 import { showBanner, expand, collapse, release, pop } from './motion.js';
 
@@ -145,7 +160,8 @@ function renderAccounts(now) {
   for (const account of store.accounts) {
     const group = el('div', undefined, 'group');
     const trail = el('span', `Kredit ${balance(store, account.id, now)}`, 'g-trail');
-    group.append(row(main(account.name, account.email), trail));
+    const who = main(account.name, account.email, account.referredBy ? `Preporuka: ${account.referredBy}` : null);
+    group.append(row(...(creditsEnabled(store) ? [who, trail] : [who])));
 
     const switchRow = el('label', undefined, 'g-row');
     const box = el('input', undefined, 'switch');
@@ -156,6 +172,10 @@ function renderAccounts(now) {
     switchRow.append(el('span', 'Multisport', 'g-main g-title'), box);
     group.append(switchRow);
 
+    if (!creditsEnabled(store)) {
+      section.append(group);
+      continue;
+    }
     const { form, reason } = restoreForm(account, trail);
     const toggle = el('button', undefined, 'g-row g-action');
     toggle.type = 'button';
@@ -194,7 +214,7 @@ function renderBookings(now) {
       const reason = window.prompt('Razlog za micanje s treninga:');
       if (!reason || !reason.trim()) return;
       const sure = window.confirm(
-        `Makni ${account?.name ?? 'klijenta'} (bicikl ${booking.bikeNo}) s treninga ${session.name}?\nKredit se vraća, a klijent dobiva mail.`,
+        `Makni ${account?.name ?? 'klijenta'} (bicikl ${booking.bikeNo}) s treninga ${session.name}?\n${creditsEnabled(store) ? 'Kredit se vraća, a klijent' : 'Klijent'} dobiva mail.`,
       );
       if (!sure) return;
       // The banner shows at once while the row folds away.
@@ -351,14 +371,187 @@ function renderSchedule(now) {
   go.addEventListener('click', () => {
     const picked = classes.find((c) => c.id === picker.querySelector('select').value);
     const booked = store.bookings.filter((b) => b.classId === picked.id && b.status === 'booked').length;
-    if (!window.confirm(`Otkazati trening ${picked.name}?\nRezervacija: ${booked}. Svi dobivaju kredit natrag i mail.`)) return;
+    if (!window.confirm(`Otkazati trening ${picked.name}?\nRezervacija: ${booked}. Svi dobivaju ${creditsEnabled(store) ? 'kredit natrag i ' : ''}mail.`)) return;
     let result;
     act(() => {
       result = cancelClass(store, picked.id, new Date());
-    }, true, () => `Trening otkazan. Kredit vraćen: ${result.cancelledBookings}.`);
+    }, true, () => (creditsEnabled(store) ? `Trening otkazan. Kredit vraćen: ${result.cancelledBookings}.` : `Trening otkazan. Obaviješteno: ${result.cancelledBookings}.`));
   });
   cancel.append(picker, go);
   section.append(cancel);
+
+  // The owner edits one class in one week. Riders who booked it get a mail.
+  const edit = el('div', undefined, 'group');
+  const editForm = el('form', undefined, 'g-form');
+  const editName = el('input', undefined, 'g-input g-name');
+  editName.setAttribute('aria-label', 'Ime treninga za uređivanje');
+  const editTime = el('input', undefined, 'g-input');
+  editTime.type = 'time';
+  editTime.setAttribute('aria-label', 'Vrijeme treninga za uređivanje');
+  const editInstructor = el('select', undefined, 'g-select');
+  editInstructor.setAttribute('aria-label', 'Instruktor treninga za uređivanje');
+  for (const instructor of store.instructors) {
+    const option = el('option', instructor.name);
+    option.value = instructor.id;
+    editInstructor.append(option);
+  }
+  const editTheme = el('input', undefined, 'g-input');
+  editTheme.placeholder = 'Tema (nije obavezno)';
+  editTheme.setAttribute('aria-label', 'Tema treninga za uređivanje');
+  const save = el('button', 'Spremi', 'btn');
+  save.type = 'submit';
+  editForm.append(editName, editTime, editInstructor, editTheme, save);
+  const fill = (id) => {
+    const picked = classes.find((c) => c.id === id);
+    if (!picked) return;
+    editName.value = picked.name;
+    editTime.value = timeFormat.format(new Date(picked.startsAt));
+    editInstructor.value = picked.instructorId;
+    editTheme.value = picked.themeName ?? '';
+  };
+  const editPicker = selectRow('Uredi trening', classes.map((c) => [c.id, classLabel(c)]), classes[0]?.id ?? '', (select) => fill(select.value));
+  fill(classes[0]?.id);
+  editForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const id = editPicker.querySelector('select').value;
+    if (!id) return;
+    act(() => editClass(store, { classId: id, name: editName.value, time: editTime.value, instructorId: editInstructor.value, themeName: editTheme.value.trim(), now: new Date() }), true, 'Trening je uređen.');
+  });
+  edit.append(editPicker, editForm);
+  section.append(edit);
+}
+
+// What is owed for late cancels and no-shows. Only while there are no credits, since a credit already covers it.
+function renderOwed() {
+  const section = $('owed');
+  const on = !creditsEnabled(store);
+  for (const node of [$('owed-title'), section, $('owed-note')]) node.hidden = !on;
+  section.replaceChildren();
+  if (!on) return;
+  const owed = owedClasses(store);
+  if (owed.length === 0) {
+    section.append(row(el('span', 'Ništa za naplatiti.', 'g-sub')));
+    return;
+  }
+  for (const { booking, session, account } of owed) {
+    const what = booking.status === 'late_cancel' ? 'Kasno otkazano' : 'No-show';
+    const charged = el('button', 'Naplaćeno', 'g-text accent');
+    charged.addEventListener('click', () => act(() => markCharged(store, booking.id, new Date()), true, 'Označeno kao naplaćeno.'));
+    section.append(row(main(account.name, `${what} · ${classLabel(session)}`), charged));
+  }
+}
+
+const slotDate = (date) => dayFormat.format(new Date(studioTime.toUtc(`${date}T12:00`)));
+const slotHour = (hour) => `${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00`;
+// "2026-11-20" as "20.11." (no space after the dot).
+const shortDate = (date) => `${Number(date.slice(8))}.${Number(date.slice(5, 7))}.`;
+
+function sculptWarning(status) {
+  if (status.status === 'lapsed') return `${monthLabel(status.month)} nije plaćen.`;
+  if (status.status === 'ending') return `Plaćeno do kraja mjeseca, još ${status.daysLeft + 1} dana. Označi sljedeći mjesec.`;
+  return null;
+}
+
+function renderTrainer(trainer, now) {
+  const group = el('div', undefined, 'group');
+  const warning = sculptWarning(rentalStatus(store, trainer.id, now));
+  const head = row(main(trainer.name, trainer.email, warning));
+  if (warning) head.classList.add('credit-warning');
+  group.append(head);
+
+  const paid = store.sculpt.paidMonths.filter((p) => p.trainerId === trainer.id).sort((a, b) => a.month.localeCompare(b.month));
+  for (const entry of paid) {
+    const detail = `Plaćeno ${shortDate(entry.paidOn)} · ${entry.amountEur} €${entry.note ? ` · ${entry.note}` : ''}`;
+    const item = row(main(`${monthLabel(entry.month)} ${entry.month.slice(0, 4)}`, detail));
+    const undo = el('button', 'Poništi', 'g-text destructive');
+    undo.setAttribute('aria-label', `Poništi plaćanje: ${trainer.name}, ${monthLabel(entry.month)}`);
+    undo.addEventListener('click', () => {
+      if (!window.confirm(`Poništiti plaćanje za ${monthLabel(entry.month)} (${trainer.name})?\nVeć rezervirani sati ostaju, novi se ne mogu rezervirati.`)) return;
+      act(() => unmarkMonthPaid(store, { trainerId: trainer.id, month: entry.month }));
+    });
+    item.append(undo);
+    group.append(item);
+  }
+
+  const thisMonth = monthOf(studioTime.localDate(now.toISOString()));
+  const options = [thisMonth, nextMonth(thisMonth), nextMonth(nextMonth(thisMonth))]
+    .filter((m) => !paid.some((p) => p.month === m))
+    .map((m) => [m, `${monthLabel(m)} ${m.slice(0, 4)}`]);
+  if (options.length > 0) {
+    const form = el('form', undefined, 'g-form wrap');
+    const month = el('select', undefined, 'g-select');
+    month.setAttribute('aria-label', 'Mjesec');
+    for (const [value, text] of options) month.append(Object.assign(el('option', text), { value }));
+    const note = el('input', undefined, 'g-input g-name');
+    note.placeholder = 'Napomena (npr. gotovina)';
+    note.setAttribute('aria-label', 'Napomena');
+    const submit = el('button', 'Označi plaćeno', 'btn');
+    submit.type = 'submit';
+    form.append(month, note, submit);
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      act(() => markMonthPaid(store, { trainerId: trainer.id, month: month.value, note: note.value.trim(), now: new Date() }));
+    });
+    group.append(form);
+  }
+  return group;
+}
+
+function renderSculpt(now) {
+  const section = $('sculpt');
+  section.replaceChildren();
+  for (const trainer of store.sculpt.trainers) section.append(renderTrainer(trainer, now));
+
+  // Booked hours, with the owner's remove.
+  section.append(el('h3', 'Rezervirani sati', 'g-header'));
+  const booked = el('div', undefined, 'group');
+  const today = studioTime.localDate(now.toISOString());
+  const upcoming = store.sculpt.slots
+    .filter((slot) => slot.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date) || a.hour - b.hour);
+  if (upcoming.length === 0) booked.append(row(el('span', 'Nema rezerviranih sati.', 'g-sub')));
+  for (const slot of upcoming) {
+    const trainer = store.sculpt.trainers.find((t) => t.id === slot.trainerId);
+    const item = row(main(trainer.name, `${slotDate(slot.date)} ${slotHour(slot.hour)}`));
+    const remove = el('button', 'Makni', 'g-text destructive');
+    remove.setAttribute('aria-label', `Makni termin: ${trainer.name}, ${slotDate(slot.date)} ${slotHour(slot.hour)}`);
+    remove.addEventListener('click', () => {
+      const reason = window.prompt('Razlog za micanje termina:');
+      if (!reason || !reason.trim()) return;
+      if (!window.confirm(`Maknuti termin ${slotDate(slot.date)} ${slotHour(slot.hour)} (${trainer.name})?\nTrener dobiva mail.`)) return;
+      act(() => removeSlot(store, { slotId: slot.id, reason: reason.trim(), now: new Date() }));
+    });
+    item.append(remove);
+    booked.append(item);
+  }
+  section.append(booked);
+
+  // Closed days: the room cannot be booked on them.
+  section.append(el('h3', 'Zatvoreni dani', 'g-header'));
+  const closed = el('div', undefined, 'group');
+  for (const date of store.sculpt.closedDays) {
+    const item = row(el('span', slotDate(date), 'g-main g-title'));
+    const open = el('button', 'Makni', 'g-text destructive');
+    open.setAttribute('aria-label', `Otvori dan ${slotDate(date)}`);
+    open.addEventListener('click', () => act(() => removeClosedDay(store, date)));
+    item.append(open);
+    closed.append(item);
+  }
+  const form = el('form', undefined, 'g-form wrap');
+  const date = el('input', undefined, 'g-input');
+  date.type = 'date';
+  date.min = today;
+  date.required = true;
+  date.setAttribute('aria-label', 'Datum');
+  const submit = el('button', 'Zatvori dan', 'btn');
+  submit.type = 'submit';
+  form.append(date, submit);
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    act(() => addClosedDay(store, date.value));
+  });
+  closed.append(form);
+  section.append(closed);
 }
 
 function renderMails() {
@@ -371,7 +564,13 @@ function renderMails() {
   }
   const shown = new Set();
   for (const mail of [...store.outbox].reverse().slice(0, 8)) {
-    const item = row(main(mail.subject, `Za: ${mail.to}`, mail.body));
+    const text = main(mail.subject, `Za: ${mail.to}`, mail.body);
+    if (mail.action) {
+      const link = el('a', mail.action.label, 'g-link');
+      link.href = mail.action.url;
+      text.append(link);
+    }
+    const item = row(text);
     item.classList.add('g-mail');
     section.append(growIn('mails', `${mail.sentAt} ${mail.to} ${mail.subject}`, item, shown));
   }
@@ -397,8 +596,10 @@ export function render() {
   const now = new Date();
   renderAccounts(now);
   renderBookings(now);
+  renderOwed();
   renderPacks();
   renderSchedule(now);
+  renderSculpt(now);
   renderMails();
   renderDemoClasses(now);
 }
@@ -417,5 +618,23 @@ $('fill').addEventListener('click', () => {
 $('soon').addEventListener('click', () => {
   act(() => addSoonClass(store, new Date()));
 });
+
+$('remind').addEventListener('click', () => {
+  act(() => {
+    sendReminders(store, new Date(), location.origin + location.pathname);
+    sendMilestoneNotes(store, new Date());
+  });
+});
+
+function renderCreditsMode() {
+  $('credits').textContent = creditsEnabled(store) ? 'Način: Q1, s kreditima (promijeni na prosinac)' : 'Način: prosinac, bez kredita (promijeni na Q1)';
+}
+$('credits').addEventListener('click', () => {
+  act(() => {
+    store.settings.credits = !creditsEnabled(store);
+  }, false);
+  renderCreditsMode();
+});
+renderCreditsMode();
 
 render();

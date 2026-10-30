@@ -2,7 +2,8 @@ import { studioTime, hrDate } from '../time.js';
 import { isBookable } from '../schedule.js';
 import { taughtBy } from '../payroll.js';
 import { bikePosition } from '../layout.js';
-import { balance, nextExpiry, NoCreditError } from '../ledger.js';
+import { balance, nextExpiry, NoCreditError, creditsEnabled } from '../ledger.js';
+import { creditLots } from '../dashboard.js';
 import { purchasePack, canPurchase } from '../purchase.js';
 import { priceFor } from '../admin.js';
 import {
@@ -12,16 +13,19 @@ import {
   cancelDeadline,
   upcomingBookings,
   joinWaitlist,
+  leaveWaitlist,
   BikeTakenError,
   NotBookableError,
 } from '../booking.js';
-import { loadStore, saveStore, mondayOf } from './session.js';
+import { needsWaiver, signWaiver } from '../waiver.js';
+import { loadStore, saveStore, mondayOf, getDemoAccount, setDemoAccount, isCustomer } from './session.js';
 import { fadeIn, slideIn, pop, popOut, expand, collapse, release, reveal, showBanner, haptic } from './motion.js';
 import { openSheet, closeSheet, bindSheet } from './sheet.js';
 
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
 const BIKE_COUNT = 20;
 const WEEKS_SHOWN = 3;
+const LOW_CREDITS = 2;
 
 const ERROR_TEXT = {
   BikeTakenError: 'Bicikl je upravo zauzet.',
@@ -29,6 +33,7 @@ const ERROR_TEXT = {
   NotBookableError: 'Ovaj trening još nije otvoren za rezervacije.',
   NotFullError: 'Ima slobodnih bicikala, rezerviraj jedan.',
   AlreadyBookedError: 'Već imaš bicikl na ovom treningu.',
+  WaiverRequiredError: 'Prije prve vožnje potpiši izjavu o odgovornosti.',
 };
 
 const timeFormat = new Intl.DateTimeFormat('hr-HR', {
@@ -54,6 +59,7 @@ let pickedBike = null;
 let guestName = '';
 let guestOpen = false;
 let openClassId = null;
+let endedOpen = false;
 
 const thisMonday = mondayOf(now);
 
@@ -89,17 +95,40 @@ function renderAccount() {
       select.append(option);
     }
     select.addEventListener('change', () => {
+      setDemoAccount(select.value);
       openClassId = null;
       render();
       fadeIn($('classes'), 6);
       fadeIn($('mine'), 6);
     });
   }
-  const text = `Kredit: ${balance(store, select.value, new Date())}`;
+  if (getDemoAccount() && select.value !== getDemoAccount()) select.value = getDemoAccount();
+  // A customer is signed in as one account. Only staff choose whose bookings they work on.
+  select.closest('label').hidden = isCustomer();
+  const wrap = $('balance').closest('.balance-wrap');
+  if (!creditsEnabled(store)) {
+    // No credits (December): the balance gives way to a price list button.
+    $('nocredit').hidden = true;
+    wrap.hidden = false;
+    wrap.classList.remove('few');
+    $('balance').textContent = '';
+    $('expiry').textContent = '';
+    $('buy').textContent = 'Cjenik';
+    return;
+  }
+  $('buy').textContent = 'Kupi paket';
+  const credits = balance(store, select.value, new Date());
+  // With no credits the balance card gives way to a banner with the buy button.
+  $('nocredit').hidden = credits > 0;
+  $('balance').closest('.balance-wrap').hidden = credits === 0;
+  const text = `${credits} ${credits === 1 ? 'kredit' : 'kredita'}`;
   if ($('balance').textContent && $('balance').textContent !== text) pop($('balance'), 0.85);
   $('balance').textContent = text;
   const expiry = nextExpiry(store, select.value, new Date());
   $('expiry').textContent = expiry ? `ističe ${dayMonthFormat.format(new Date(expiry))}` : '';
+  // Orange when the balance is low or a pack runs out within a week.
+  const expiring = creditLots(store, select.value, new Date()).some((l) => l.expiringSoon);
+  $('balance').closest('.balance-wrap').classList.toggle('few', credits <= LOW_CREDITS || expiring);
 }
 
 // Moves to another day or week, sliding the list from the side the new day sits on.
@@ -125,34 +154,40 @@ function renderWeek() {
   const myDays = new Set(
     upcomingBookings(store, $('account').value, new Date()).map(({ session }) => studioTime.localDate(session.startsAt)),
   );
+  const asDate = (ymd) => new Date(`${ymd}T12:00:00Z`);
   const prev = el('button', '‹', 'nav-week');
+  prev.setAttribute('aria-label', 'Prethodni tjedan');
   prev.disabled = weekOffset === 0;
   prev.addEventListener('click', () => move(() => {
     weekOffset -= 1;
     selectedDay = studioTime.addDays(monday, -7);
   }));
-  nav.append(prev);
-
-  for (let i = 0; i < 7; i += 1) {
-    const day = studioTime.addDays(monday, i);
-    const button = el('button', undefined, 'day');
-    button.setAttribute('aria-pressed', String(day === selectedDay));
-    const dot = el('span', undefined, myDays.has(day) ? 'dot mine-dot' : classDays.has(day) ? 'dot' : 'dot none');
-    button.append(el('small', DAY_NAMES[i]), el('strong', day.slice(8)), dot);
-    if (myDays.has(day)) button.setAttribute('aria-label', `${DAY_NAMES[i]} ${day.slice(8)}, imaš rezervaciju`);
-    button.addEventListener('click', () => move(() => {
-      selectedDay = day;
-    }));
-    nav.append(button);
-  }
-
   const next = el('button', '›', 'nav-week');
+  next.setAttribute('aria-label', 'Sljedeći tjedan');
   next.disabled = weekOffset === WEEKS_SHOWN - 1;
   next.addEventListener('click', () => move(() => {
     weekOffset += 1;
     selectedDay = studioTime.addDays(monday, 7);
   }));
-  nav.append(next);
+  const range = `${dayMonthFormat.format(asDate(monday))} do ${dayMonthFormat.format(asDate(studioTime.addDays(monday, 6)))}`;
+  const head = el('div', undefined, 'week-head');
+  head.append(prev, el('span', range, 'week-label'), next);
+  nav.append(head);
+
+  for (let i = 0; i < 7; i += 1) {
+    const day = studioTime.addDays(monday, i);
+    const isToday = day === today;
+    const button = el('button', undefined, 'day');
+    button.setAttribute('aria-pressed', String(day === selectedDay));
+    const dot = el('span', undefined, myDays.has(day) ? 'dot mine-dot' : classDays.has(day) ? 'dot' : 'dot none');
+    button.append(el('small', isToday ? 'Danas' : DAY_NAMES[i]), el('strong', day.slice(8)), dot);
+    const notes = [isToday && 'danas', myDays.has(day) && 'imaš rezervaciju'].filter(Boolean);
+    if (notes.length) button.setAttribute('aria-label', `${DAY_NAMES[i]} ${day.slice(8)}, ${notes.join(', ')}`);
+    button.addEventListener('click', () => move(() => {
+      selectedDay = day;
+    }));
+    nav.append(button);
+  }
 }
 
 function instructorName(id) {
@@ -177,6 +212,12 @@ function statusButton(session, current, hasBike) {
     return soon;
   }
   if (takenBikes(store, session.id).length >= BIKE_COUNT) {
+    if (store.waitlist.some((w) => w.classId === session.id && w.accountId === $('account').value)) {
+      const waiting = el('button', 'na listi', 'btn secondary');
+      waiting.disabled = true;
+      waiting.dataset.waiting = 'yes';
+      return waiting;
+    }
     const waitlist = el('button', 'lista čekanja', 'btn');
     waitlist.addEventListener('click', () => joinList(session.id));
     return waitlist;
@@ -212,7 +253,7 @@ function renderClasses() {
     return;
   }
 
-  for (const session of sessions) {
+  const buildCard = (session) => {
     const card = el('article', undefined, 'card');
     card.dataset.classId = session.id;
     const info = el('div');
@@ -230,11 +271,23 @@ function renderClasses() {
       info.append(el('div', `Otvara se ${whenFormat.format(new Date(session.releaseOpensAt))}`, 'meta'));
     } else if (current.getTime() < Date.parse(session.startsAt) && isBookable(session, current)) {
       const free = BIKE_COUNT - takenBikes(store, session.id).length;
-      // Plenty of room needs no line; only a nearly full class says so.
-      if (free <= 3) info.append(el('div', free === 0 ? 'Popunjeno' : `Posljednja mjesta: ${free}`, 'meta few'));
+      // The bar is the share of free bikes, so a long bar and a big number say the same thing.
+      const capacity = el('div', undefined, free <= 3 ? 'cap few' : 'cap');
+      const bar = el('span', undefined, 'bar');
+      bar.setAttribute('aria-hidden', 'true');
+      const fill = el('i');
+      fill.style.width = `${(free / BIKE_COUNT) * 100}%`;
+      bar.append(fill);
+      capacity.append(bar, el('span', free === 0 ? 'Popunjeno' : `${free} slobodno`));
+      info.append(capacity);
     }
     const action = statusButton(session, current, mine.length > 0);
-    if (!action.classList.contains('add-bike')) card.append(info, action);
+    if (action.dataset.waiting) {
+      const leave = el('button', 'napusti listu', 'link-btn');
+      leave.addEventListener('click', () => leaveList(session.id));
+      info.append(leave);
+    }
+    if (!action.classList.contains('add-bike')) card.append(info, action.textContent === 'rezerviraj' ? withCost(action) : action);
     else {
       // No button column, so the card is one column and the block reaches the right padding.
       card.classList.add('solo');
@@ -248,15 +301,41 @@ function renderClasses() {
       if (action.classList.contains('add-bike')) block.append(action);
       info.append(block);
     }
-    list.append(card);
+    return card;
+  };
+
+  // Classes that already started fold into one line, so what you can still book comes first.
+  const started = (session) => Date.parse(session.startsAt) <= current.getTime();
+  const upcoming = sessions.filter((s) => !started(s));
+  const finished = sessions.filter(started);
+  for (const session of upcoming) list.append(buildCard(session));
+  if (finished.length) {
+    const fold = el('details', undefined, 'ended');
+    fold.open = endedOpen || upcoming.length === 0;
+    fold.addEventListener('toggle', () => {
+      if (upcoming.length) endedOpen = fold.open;
+    });
+    fold.append(el('summary', `${finished.length} ${finishedWord(finished.length)}`));
+    for (const session of finished) fold.append(buildCard(session));
+    list.append(fold);
   }
+}
+
+const finishedWord = (n) => (n === 1 ? 'završen trening' : n <= 4 ? 'završena treninga' : 'završenih treninga');
+
+// A booking costs one credit. Saying so under the button helps a first-time customer.
+function withCost(button) {
+  const wrap = el('div', undefined, 'act');
+  wrap.append(button);
+  if (creditsEnabled(store)) wrap.append(el('span', '1 kredit', 'cost'));
+  return wrap;
 }
 
 function cancelNote(session, current) {
   const deadline = cancelDeadline(session);
   return current < deadline
     ? `Besplatno otkazivanje do ${whenFormat.format(deadline)}`
-    : 'Manje od 6 sati: kredit propada';
+    : creditsEnabled(store) ? 'Manje od 6 sati: kredit propada' : 'Manje od 6 sati: naplaćuje se trening';
 }
 
 // Cancelling asks first, in a small sheet that says what happens to the credit.
@@ -267,8 +346,11 @@ function cancelButton(booking, session, label) {
 }
 
 let cancelling = null;
-function askCancel(booking, session) {
-  const refund = new Date() < cancelDeadline(session) ? 'Kredit se vraća.' : 'Kredit se ne vraća.';
+export function askCancel(booking, session) {
+  const free = new Date() < cancelDeadline(session);
+  const refund = creditsEnabled(store)
+    ? (free ? 'Kredit se vraća.' : 'Kredit se ne vraća.')
+    : (free ? 'Bez naplate.' : 'Naplaćuje se jedan trening.');
   cancelling = booking.id;
   $('cancel-title').textContent = `Otkazati bicikl ${booking.bikeNo}?`;
   $('cancel-text').textContent = `${session.name}, ${whenFormat.format(new Date(session.startsAt))}. ${refund}`;
@@ -297,12 +379,14 @@ function renderMine() {
     return;
   }
   section.append(el('p', 'Besplatno otkazivanje do 6 sati prije treninga.', 'meta'));
+  // A customer sees the next booking here and the rest in Profil. Staff work on a picked account, so they see all.
+  const shown = isCustomer() ? rows.slice(0, 1) : rows;
   // The "no bookings" line folds away as the first booking opens in.
   if (ghost) {
     section.append(ghost);
     collapse(ghost).then(() => ghost.remove());
   }
-  for (const { booking, session } of rows) {
+  for (const { booking, session } of shown) {
     const card = el('article', undefined, 'card');
     card.dataset.booking = booking.id;
     const info = el('div');
@@ -317,6 +401,48 @@ function renderMine() {
     card.append(info);
     section.append(card);
   }
+  if (shown.length < rows.length) {
+    const more = el('button', `Sve rezervacije (${rows.length}) u profilu`, 'g-text accent');
+    more.type = 'button';
+    more.addEventListener('click', () => window.dispatchEvent(new CustomEvent('tockica:tab', { detail: 'racun' })));
+    section.append(more);
+  }
+}
+
+// "First time ride?" switch. Switched on, it shows the waiver to sign before the first booking.
+function waiverNodes() {
+  const account = store.accounts.find((a) => a.id === $('account').value);
+  if (store.waivers.some((w) => w.accountId === account.id)) return [];
+  const first = el('label', undefined, 'guest-switch');
+  const sw = el('input', undefined, 'switch');
+  sw.type = 'checkbox';
+  sw.setAttribute('role', 'switch');
+  sw.checked = account.firstRide === true;
+  first.append(sw, el('span', 'Prvi put vozim'));
+  sw.addEventListener('change', () => {
+    account.firstRide = sw.checked;
+    saveStore(store);
+    renderBikes();
+  });
+  const nodes = [first];
+  if (account.firstRide) {
+    const block = el('div', undefined, 'guest');
+    const text = el('div', store.waiverText.text, 'g-sub');
+    const name = el('input');
+    name.type = 'text';
+    name.value = account.name;
+    name.setAttribute('aria-label', 'Ime i prezime za potpis');
+    const sign = el('button', 'Potpisujem izjavu', 'btn');
+    sign.addEventListener('click', () => {
+      if (!name.value.trim()) return;
+      signWaiver(store, { accountId: account.id, name: name.value.trim(), now: new Date() });
+      saveStore(store);
+      renderBikes();
+    });
+    block.append(text, name, sign);
+    nodes.push(block);
+  }
+  return nodes;
 }
 
 function renderBikes() {
@@ -391,10 +517,18 @@ function renderBikes() {
     }
   });
   const bar = $('book-bar');
-  const book = el('button', pickedBike ? `Rezerviraj ${pickedBike} · 1 kredit` : 'Odaberi bicikl', 'btn');
-  book.disabled = !pickedBike;
+  const waiverBlock = waiverNodes();
+  const mustSign = needsWaiver(store, $('account').value);
+  const book = el('button', mustSign ? 'Prvo potpiši izjavu' : pickedBike ? `Rezerviraj ${pickedBike}${creditsEnabled(store) ? ' · 1 kredit' : ''}` : 'Odaberi bicikl', 'btn');
+  book.disabled = !pickedBike || mustSign;
   book.addEventListener('click', () => reserve(pickedBike));
-  bar.replaceChildren(guest, toggle, book);
+  bar.replaceChildren(...waiverBlock, guest, toggle, book);
+}
+
+// The banner on Raspored, plus a signal for Moj profil, which shows the same text on its own page.
+function announce(text) {
+  showMessage(text);
+  window.dispatchEvent(new CustomEvent('tockica:changed', { detail: text }));
 }
 
 function mailCount() {
@@ -412,6 +546,12 @@ function joinList(classId) {
   render();
 }
 
+function leaveList(classId) {
+  leaveWaitlist(store, { classId, accountId: $('account').value });
+  showMessage('Maknuto s liste čekanja.');
+  render();
+}
+
 // The cancel takes effect at once: banner, credit and counters change while the booking's card,
 // and its line in the class card, fold away. The lists are re-rendered when the fold is done.
 function cancelMine(bookingId) {
@@ -420,11 +560,10 @@ function cancelMine(bookingId) {
     document.querySelector(`#s-classes .mine-block[data-bookings="${bookingId}"]`),
   ];
   const booking = cancelBooking(store, bookingId, new Date());
-  showMessage(
+  announce(
     booking.status === 'late_cancel'
-      ? `Kasno otkazivanje: kredit se ne vraća.${mailCount()}`
-      : `Otkazano. Kredit je vraćen.${mailCount()}`,
-    false,
+      ? `Kasno otkazivanje: ${creditsEnabled(store) ? 'kredit se ne vraća' : 'naplaćuje se jedan trening'}.${mailCount()}`
+      : `Otkazano. ${creditsEnabled(store) ? 'Kredit je vraćen.' : 'Bez naplate.'}${mailCount()}`,
   );
   saveStore(store);
   renderAccount();
@@ -446,7 +585,7 @@ function reserve(bikeNo) {
     haptic(12);
     // Slide the sheet away, then banner, credit and the new booking all arrive together.
     closeSheet($('book-sheet')).then(() => {
-      showMessage(`Rezervirano: bicikl ${bikeNo}. Kredit: ${balance(store, $('account').value, new Date())}.`);
+      showMessage(`Rezervirano: bicikl ${bikeNo}.${creditsEnabled(store) ? ` Kredit: ${balance(store, $('account').value, new Date())}.` : ''}`);
       render();
       expand(document.querySelector(`#s-mine [data-booking="${booking.id}"]`));
       expand(document.querySelector(`#s-classes .mine-block[data-bookings~="${booking.id}"]`));
@@ -478,9 +617,15 @@ function renderPacks() {
   list.replaceChildren();
   for (const pack of store.packs) {
     const price = priceFor(store, accountId, pack.id);
-    const sub = `Vrijedi ${pack.validDays} dana${tagged && price !== pack.priceEur ? ', Multisport cijena' : ''}`;
+    const sub = `${creditsEnabled(store) ? '' : `${price} €, `}vrijedi ${pack.validDays} dana${tagged && price !== pack.priceEur ? ', Multisport cijena' : ''}`;
     const text = el('div', undefined, 'g-main');
     text.append(el('div', pack.name, 'g-title'), el('div', sub, 'g-sub'));
+    if (!creditsEnabled(store)) {
+      const row = el('div', undefined, 'g-row');
+      row.append(text);
+      list.append(row);
+      continue;
+    }
     const bought = !canPurchase(store, accountId, pack.id);
     const buy = el('button', bought ? 'kupljeno' : `${price} €`, 'btn');
     buy.disabled = bought;
@@ -495,7 +640,7 @@ function buyPack(pack) {
   purchasePack(store, $('account').value, pack.id, new Date());
   saveStore(store);
   closeSheet($('buy-sheet')).then(() => {
-    showMessage(`Kupljeno: ${pack.name}. Kredit: ${balance(store, $('account').value, new Date())}.`);
+    announce(`Kupljeno: ${pack.name}. Kredit: ${balance(store, $('account').value, new Date())}.`);
     render();
   });
 }
@@ -511,10 +656,18 @@ $('cancel-yes').addEventListener('click', () => {
 const buySheet = $('buy-sheet');
 bindSheet(buySheet);
 $('buy-close').addEventListener('click', () => closeSheet(buySheet));
-$('buy').addEventListener('click', () => {
+// Also opened from Moj profil, so the buy and cancel sheets stay the only copy of that flow.
+export function openBuy() {
+  const priceListOnly = !creditsEnabled(store);
+  $('buy-title').textContent = priceListOnly ? 'Cjenik' : 'Kupi paket';
+  buySheet.querySelector('.g-footer').textContent = priceListOnly
+    ? 'Plaćanje je u studiju, na licu mjesta.'
+    : 'Plaćanje još nije spojeno. Ovo je simulacija: paket se odmah upiše na račun.';
   renderPacks();
   openSheet(buySheet);
-});
+}
+$('buy').addEventListener('click', openBuy);
+$('nocredit-buy').addEventListener('click', openBuy);
 
 const bookSheet = $('book-sheet');
 bindSheet(bookSheet);

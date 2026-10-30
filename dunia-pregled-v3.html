@@ -78,27 +78,29 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#raspored">Raspored</a>: kako ga vide klijenti. Odaberi dan, pritisni rezerviraj, odaberi bicikl na planu sobe, otkaži, kupi paket, uđi na listu čekanja.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#recepcija">Recepcija</a>: odaberi dan i vidiš sve treninge tog dana. Check-in prije treninga i oznaka da klijent nije došao. Prikaz Popis ili Karta: karta prati raspored bicikala u prostoriji, s imenom na svakom biciklu.</li>
   <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#izvjestaji">Izvještaji</a>: isplata trenera po mjesecu, zamjene, bonus, i analitika klijenata.</li>
-  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#admin">Admin</a>: računi, rezervacije, cijene paketa, raspored (otvaranje, termini, otkazivanje treninga), vraćanje kredita i poslani mailovi.</li>
+  <li><a href="https://dodai092.github.io/tockica-booking-prototype/prototype/index.html#admin">Admin</a>: računi, rezervacije, cijene paketa, raspored (otvaranje, termini, otkazivanje treninga), vraćanje kredita, najam Sculpt Rooma i poslani mailovi.</li>
+  <li>Sculpt Room: gore u izborniku "Demo prijava" odaberi "Trener Marko". Trener sam rezervira cijele sate, najviše 2 dnevno, do 30 dana unaprijed, i otkazuje kad hoće. Sat koji drži drugi trener je zauzet.</li>
 </ul>
 <p>Isprobaj redom:</p>
 <ol>
   <li>Raspored: rezerviraj bicikl. Kredit se smanji.</li>
-  <li>Otkaži rezervaciju (do 6 sati prije kredit se vraća, poslije propada), pa pritisni "Kupi paket" ispod kredita.</li>
+  <li>Otkaži rezervaciju (do 6 sati prije kredit se vraća, poslije propada), pa pritisni "Kupi paket" pored broja kredita.</li>
   <li>Admin, Demo alati: "Napuni trening (sve bicikle)". Na Rasporedu taj trening sada ima listu čekanja.</li>
   <li>Admin, Demo alati: "Dodaj trening za 20 min". Rezerviraj ga na Rasporedu, pa u Recepciji označi dolazak.</li>
   <li>Admin, Raspored: dodaj termin ili otkaži trening. U "Poslani mailovi" vidiš što su klijenti dobili.</li>
   <li>Izvještaji, Isplata: vidiš treninge i iznos po treneru za mjesec. Pritisni "Treninzi" pa "Tko je vodio" da upišeš zamjenu. "Podijeli sažetak" šalje tekst treneru, a prekidač "Isplaćeno" bilježi isplatu.</li>
   <li>Izvještaji, Klijenti: najpopularniji termin i trener, vožnje po klijentu i pretraga po imenu. Kad u Recepciji označiš dolazak nekome na 50. ili 100. sat, pojavi se zelena poruka.</li>
+  <li>Prijavi se kao "Trener Marko" i u Sculpt Roomu rezerviraj dva sata sutra. Treći ne ide. Odaberi dan u sljedećem mjesecu: piše da mjesec nije plaćen. Zatim se prijavi kao Vlasnica, Admin, Sculpt Room: označi mjesec plaćenim i makni jedan sat. Trener dobiva mail s razlogom.</li>
 </ol>
-<p>Račun mijenjaš izbornikom "Demo račun". Prijave i uloga nema, sve tri stranice vidi svatko. Sve što klikneš ostaje samo u tvom pregledniku. Na adminu gumb "Resetiraj demo" vraća početno stanje. Napiši mi što ti se ne sviđa ili što fali.</p>
+<p>Račun mijenjaš izbornikom "Demo račun". Prave prijave još nema. Gore je izbornik "Demo prijava": Klijent 1 i Klijent 2 vide samo Raspored i Profil, Recepcija vidi Raspored i Recepciju, trener (Marko ili Iva) vidi samo Sculpt Room, a Vlasnica vidi sve. Recepciju, Izvještaje i Admin otvaraš kao Vlasnica. Sve što klikneš ostaje samo u tvom pregledniku. Na adminu gumb "Resetiraj demo" vraća početno stanje. Napiši mi što ti se ne sviđa ili što fali.</p>
 <p>Gore desno su prekidač za tamni način i gumb (i) s adresom, telefonom i radnim vremenom. Te podatke sam preuzeo s tvoje stranice 26.10., provjeri jesu li točni.</p>
-<p>U prototipu nema pravog plaćanja (kupnja je simulacija), Sculpt Rooma ni "dovedi prijatelja". Honorar od 20 € po treningu i bonus u Izvještajima su probni iznosi, ne dogovoreni.</p>
+<p>U prototipu nema pravog plaćanja (kupnja je simulacija, a najam Sculpt Rooma samo označiš kao plaćen) ni "dovedi prijatelja". Honorar od 20 € po treningu i bonus u Izvještajima su probni iznosi, ne dogovoreni.</p>
 
 <h2>Što mi treba od tebe</h2>
 <div class="note"><ol>
   <li>Vlastiti sustav ili gotov (Momence, bsport)? Predlažem vlastiti, u fazama, jer sama vraćaš kredite i određuješ cijene. Gotov sustav traži zakrpe za Multisport, Sculpt Room i plaćanje. Više u dodatku na dnu.</li>
   <li>Neograničeni paket: da ili ne, i koliko dana?</li>
-  <li>Sculpt Room: što trener dobiva za 100 €?</li>
+  <li>Sculpt Room: što trener dobiva za 100 € i do kada radi soba?</li>
   <li>Instruktori: honorar po treningu za svakog (sada probnih 20 €), plaćaš li samo održane treninge, i treba li treneru uz broj i popis treninga? Prag 15 i 2 € po biciklu si potvrdila.</li>
   <li>Benefit Systems: javi što su odgovorili o cijenama i ulazima.</li>
   <li>Stripe: pravni oblik studija (d.o.o. ili obrt) i tko je ovlaštena osoba za otvaranje računa.</li>
@@ -226,8 +228,9 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
 <details>
   <summary><span class="name">14. Sculpt Room</span><span class="tag open">Treba tvoj odgovor</span></summary>
   <div class="body">
-    <p>Trener plaća 100 € mjesečno, ti ručno označiš plaćeno. Dok je plaćeno: do 2 sata dnevno, do 30 dana unaprijed, termini se ne preklapaju.</p>
-    <p><span class="tag open">Što dobiva</span> Što trener dobiva za 100 €?</p>
+    <p>U prototipu: trener sam rezervira u kalendaru, a ti u Adminu označiš da je platio. Spremaju se datum, iznos i napomena. Najam od 100 € vrijedi za kalendarski mjesec. Rezervira se cijeli sat, najviše 2 sata dnevno (ne moraju biti uzastopna), do 30 dana unaprijed, a dva trenera ne mogu imati isti sat. Mjesec koji nije plaćen ne može se rezervirati. Otkazivanje je besplatno u svakom trenutku. Ti možeš maknuti bilo čiji termin, a trener dobiva mail s razlogom. Zatvorene dane postaviš u Adminu, na njih se ne rezervira.</p>
+    <p><span class="tag">Predlažem</span> Ako najam istekne, već rezervirani sati ostaju. Samo se novi ne mogu rezervirati. Pri kraju mjeseca Admin te podsjeti da označiš sljedeći.</p>
+    <p><span class="tag open">Što dobiva</span> Što trener dobiva za 100 €: do 2 sata dnevno, kvotu sati ili fiksni termin? Do kada je soba otvorena (sada probnih 07:00 do 21:00)?</p>
   </div>
 </details>
 
@@ -243,6 +246,7 @@ footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
   <li>Vlasnica: sve, uključujući Izvještaje.</li>
   <li>Recepcija: check-in i no-show.</li>
   <li>Instruktor: svoji treninzi.</li>
+  <li>Trener (Sculpt Room): svoji termini u sobi.</li>
 </ul></div>
 
 <h2>Predlažem, nisi tražila</h2>

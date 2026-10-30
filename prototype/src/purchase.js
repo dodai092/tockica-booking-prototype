@@ -2,7 +2,7 @@ import { grantPack } from './ledger.js';
 import { priceFor } from './admin.js';
 
 // Packs an account may buy only once (the beginner offer).
-const ONCE_PER_ACCOUNT = ['pk_start3'];
+export const ONCE_PER_ACCOUNT = ['pk_intro1', 'pk_start3'];
 
 export class AlreadyPurchasedError extends Error {
   constructor(packId) {

@@ -94,6 +94,7 @@ test('owner can correct a no-show to attended after the class', () => {
 test('closing a class does not mail the waitlist, the class is already over', () => {
   const { store, session } = setup();
   book(store, session, 1, 'acc_test1');
+  store.outbox = [];
   const end = new Date(Date.parse(session.startsAt) + session.durationMin * MIN + MIN);
 
   closeClass(store, session.id, end);

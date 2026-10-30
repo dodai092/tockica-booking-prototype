@@ -12,6 +12,7 @@ import {
   upcomingBookings,
   markNoShow,
   joinWaitlist,
+  leaveWaitlist,
   onBikeFreed,
   BikeTakenError,
   BikeOutOfRangeError,
@@ -261,7 +262,8 @@ test('the person who cancels is not mailed about the bike they freed', () => {
 
   cancelBooking(store, own.id, NOW);
 
-  assert.deepEqual(store.outbox.map((m) => m.to), ['test2@example.com']);
+  const freedMails = store.outbox.filter((m) => m.subject.startsWith('Oslobodilo se mjesto'));
+  assert.deepEqual(freedMails.map((m) => m.to), ['test2@example.com']);
 });
 
 test('freed bike is not held for anyone: first to book takes it', () => {
@@ -306,4 +308,18 @@ test('upcomingBookings lists only the account\'s booked, future classes, soonest
   assert.ok(!result.some((r) => r.booking.id === other.id));
   const afterStart = new Date(startOf(store, classId) + 1000);
   assert.equal(upcomingBookings(store, 'acc_test1', afterStart).length, 0);
+});
+
+test('leaving the waitlist removes only that account from that class', () => {
+  const { store, classId } = setup();
+  for (let bikeNo = 1; bikeNo <= 20; bikeNo += 1) {
+    grantPack(store, 'acc_test2', 'pk_1', NOW);
+    bookBike(store, { classId, bikeNo, accountId: 'acc_test2', now: NOW });
+  }
+  joinWaitlist(store, { classId, accountId: 'acc_test1', now: NOW });
+
+  leaveWaitlist(store, { classId, accountId: 'acc_test2' });
+  assert.equal(store.waitlist.length, 1);
+  leaveWaitlist(store, { classId, accountId: 'acc_test1' });
+  assert.equal(store.waitlist.length, 0);
 });

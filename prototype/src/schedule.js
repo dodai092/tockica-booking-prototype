@@ -38,13 +38,18 @@ export function generateWeek(store, weekStartIso) {
   const monday = studioTime.localDate(weekStartIso);
   for (const entry of store.template) {
     const day = studioTime.addDays(monday, entry.dayOfWeek - 1);
+    if (store.sculpt?.closedDays.includes(day)) continue;
     const startsAt = studioTime.toUtc(`${day}T${entry.time}`);
+    // A class the owner edited no longer matches its entry, so the entry's key keeps the week from refilling.
+    const templateKey = `${startsAt}|${entry.name}|${entry.instructorId}`;
     const exists = store.classes.some(
-      (c) => c.startsAt === startsAt && c.name === entry.name && c.instructorId === entry.instructorId,
+      (c) => c.templateKey === templateKey
+        || (c.startsAt === startsAt && c.name === entry.name && c.instructorId === entry.instructorId),
     );
     if (exists) continue;
     store.classes.push({
       id: newId('cls'),
+      templateKey,
       name: entry.name,
       instructorId: entry.instructorId,
       themeName: entry.themeName,

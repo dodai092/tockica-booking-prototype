@@ -9,6 +9,9 @@ export class NoCreditError extends Error {
   }
 }
 
+// December runs without credits (customers pay at the studio). Q1 turns them on again.
+export const creditsEnabled = (store) => store.settings.credits !== false;
+
 function isUsable(lot, now) {
   return lot.remaining > 0 && Date.parse(lot.expiresAt) > now.getTime();
 }

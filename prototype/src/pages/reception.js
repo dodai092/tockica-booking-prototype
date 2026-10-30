@@ -1,6 +1,8 @@
 import { studioTime, hrDate } from '../time.js';
 import { checkIn, checkInOpen, closeClass, correctStatus } from '../checkin.js';
 import { markNoShow } from '../booking.js';
+import { signGuestWaiver } from '../waiver.js';
+import { moveBooking } from '../admin.js';
 import { taughtBy } from '../payroll.js';
 import { clientRides } from '../analytics.js';
 import { bikePosition } from '../layout.js';
@@ -29,6 +31,8 @@ saveStore(store);
 let day = null;
 let view = sessionStorage.getItem('tockica-reception-view') === 'map' ? 'map' : 'list';
 let selectedId = null;
+// The booking being moved: the map then lets staff tap a free bike.
+let movingId = null;
 
 function el(tag, text, className) {
   const node = document.createElement(tag);
@@ -195,6 +199,8 @@ function milestoneOf(booking) {
   return client?.milestone ? { text: `${client.milestone}. sat! ${client.name}`, celebrate: true } : null;
 }
 
+const guestSigned = (booking) => store.waivers.some((w) => w.bookingId === booking.id);
+
 // The main action (check in) goes at the right of the row; the rest sit in a line below.
 function actionButtons(booking, session, now) {
   const buttons = [];
@@ -213,6 +219,20 @@ function actionButtons(booking, session, now) {
     }
   }
 
+  if (booking.guestName && booking.status === 'booked' && !guestSigned(booking)) {
+    const button = el('button', 'Gost potpisao izjavu', 'g-text accent');
+    button.addEventListener('click', () => act(() => signGuestWaiver(store, { bookingId: booking.id, now: new Date() }), `${booking.guestName}: izjava potpisana`));
+    buttons.push(button);
+  }
+  if (!ended && booking.status === 'booked') {
+    const button = el('button', 'Premjesti', 'g-text accent');
+    button.addEventListener('click', () => {
+      movingId = booking.id;
+      view = 'map';
+      render();
+    });
+    buttons.push(button);
+  }
   if (ended) {
     for (const [status, label] of [['attended', 'Označi dolazak'], ['no_show', 'Označi no-show']]) {
       if (booking.status === status) continue;
@@ -246,12 +266,27 @@ function renderMap(session, now) {
         selectedId = booking.id === selectedId ? null : booking.id;
         render();
       });
+    } else if (movingId) {
+      button.setAttribute('aria-label', `Slobodan bicikl ${bikeNo}, premjesti ovdje`);
+      button.addEventListener('click', () => {
+        const id = movingId;
+        movingId = null;
+        act(() => moveBooking(store, { bookingId: id, toBikeNo: bikeNo, now: new Date() }), `${riderOf(store.bookings.find((b) => b.id === id))}: premješten na bicikl ${bikeNo}`);
+      });
     } else button.disabled = true;
     grid.append(button);
   }
   const picked = bookings.find((b) => b.id === selectedId);
   const bar = el('div', undefined, 'g-row r-pick');
-  if (!picked) bar.append(el('span', 'Dodirni bicikl za dolazak ili no-show.', 'g-sub'));
+  if (movingId) {
+    bar.append(el('span', `Dodirni slobodan bicikl za: ${riderOf(store.bookings.find((b) => b.id === movingId))}.`, 'g-sub'));
+    const cancel = el('button', 'Odustani', 'g-text');
+    cancel.addEventListener('click', () => {
+      movingId = null;
+      render();
+    });
+    bar.append(cancel);
+  } else if (!picked) bar.append(el('span', 'Dodirni bicikl za dolazak ili no-show.', 'g-sub'));
   else {
     const { primary, buttons } = actionButtons(picked, session, now);
     const who = el('div', undefined, 'g-main');
@@ -285,7 +320,7 @@ function renderBookings(session, now) {
     item.dataset.status = booking.status;
     const who = el('div', undefined, 'g-main');
     who.append(el('div', account?.name ?? '', 'g-title'));
-    if (booking.guestName) who.append(el('div', `Gost: ${booking.guestName}`, 'g-sub'));
+    if (booking.guestName) who.append(el('div', `Gost: ${booking.guestName}${guestSigned(booking) ? ' · izjava potpisana' : ' · bez izjave'}`, 'g-sub'));
     item.append(el('div', String(booking.bikeNo), 'bike-badge'), who);
     const { primary, buttons } = actionButtons(booking, session, now);
     // "Rezervirano" is the default, so it is not repeated on every row.

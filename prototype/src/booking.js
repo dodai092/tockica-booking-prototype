@@ -1,7 +1,9 @@
 import { newId } from './model.js';
 import { isBookable } from './schedule.js';
-import { spendCredit, returnCredit } from './ledger.js';
+import { spendCredit, returnCredit, creditsEnabled } from './ledger.js';
 import { send } from './outbox.js';
+import { confirmationMail, cancellationMail } from './mails.js';
+import { needsWaiver, WaiverRequiredError } from './waiver.js';
 
 const HOUR_MS = 60 * 60 * 1000;
 const CANCEL_CUTOFF_MS = 6 * HOUR_MS;
@@ -51,13 +53,14 @@ export function takenBikes(store, classId) {
 export function bookBike(store, { classId, bikeNo, accountId, guestName = null, now }) {
   const session = store.classes.find((c) => c.id === classId);
   if (!isBookable(session, now)) throw new NotBookableError(classId);
+  if (needsWaiver(store, accountId)) throw new WaiverRequiredError(accountId);
   if (!Number.isInteger(bikeNo) || bikeNo < 1 || bikeNo > session.bikeCount) {
     throw new BikeOutOfRangeError(bikeNo);
   }
   if (takenBikes(store, classId).includes(bikeNo)) throw new BikeTakenError(bikeNo);
 
   // Spend last: a rejected booking must never cost a credit.
-  const lot = spendCredit(store, accountId, now);
+  const lot = creditsEnabled(store) ? spendCredit(store, accountId, now) : null;
   const booking = {
     id: newId('bk'),
     classId,
@@ -65,12 +68,14 @@ export function bookBike(store, { classId, bikeNo, accountId, guestName = null, 
     accountId,
     guestName,
     status: 'booked',
-    creditLotId: lot.id,
+    creditLotId: lot?.id ?? null,
     createdAt: now.toISOString(),
   };
   store.bookings.push(booking);
   // Getting a bike ends the wait for this class.
   store.waitlist = store.waitlist.filter((w) => !(w.classId === classId && w.accountId === accountId));
+  const account = store.accounts.find((a) => a.id === accountId);
+  if (account) send(store, confirmationMail(store, booking, session, account, cancelDeadline(session)), now);
   return booking;
 }
 
@@ -99,10 +104,12 @@ export function cancelBooking(store, bookingId, now) {
   if (Date.parse(session.startsAt) - now.getTime() >= CANCEL_CUTOFF_MS) {
     booking.status = 'cancelled';
     const lot = store.lots.find((l) => l.id === booking.creditLotId);
-    returnCredit(store, lot, now, store.settings.returnedCreditDays);
+    if (lot) returnCredit(store, lot, now, store.settings.returnedCreditDays);
   } else {
     booking.status = 'late_cancel';
   }
+  const account = store.accounts.find((a) => a.id === booking.accountId);
+  if (account) send(store, cancellationMail(booking, session, account, booking.status === 'cancelled', CANCEL_CUTOFF_MS / HOUR_MS), now);
 
   onBikeFreed(store, booking.classId, now, booking.accountId);
   return booking;
@@ -129,6 +136,10 @@ export function joinWaitlist(store, { classId, accountId, now }) {
   const entry = { id: newId('wl'), classId, accountId, createdAt: now.toISOString() };
   store.waitlist.push(entry);
   return entry;
+}
+
+export function leaveWaitlist(store, { classId, accountId }) {
+  store.waitlist = store.waitlist.filter((w) => !(w.classId === classId && w.accountId === accountId));
 }
 
 // Mails everyone waiting for this class, except the person who freed the bike.

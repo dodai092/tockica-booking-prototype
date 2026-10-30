@@ -5,10 +5,11 @@ import { createStore } from '../src/model.js';
 import { studioTime } from '../src/time.js';
 import { generateWeek } from '../src/schedule.js';
 import { grantPack, spendCredit, balance } from '../src/ledger.js';
-import { bookBike, joinWaitlist } from '../src/booking.js';
+import { bookBike, joinWaitlist, BikeTakenError, BikeOutOfRangeError } from '../src/booking.js';
 import {
   restoreCredit,
   removeFromClass,
+  moveBooking,
   setMultisportTag,
   setPackPrices,
   priceFor,
@@ -190,6 +191,7 @@ test('cancelling a class returns every credit, mails everyone and closes booking
   bookBike(store, { classId: session.id, bikeNo: 1, accountId: 'acc_test1', now: at });
   bookBike(store, { classId: session.id, bikeNo: 2, accountId: 'acc_test2', now: at });
   assert.equal(balance(store, 'acc_test1', at), 4);
+  store.outbox = [];
 
   const result = cancelClass(store, session.id, at);
 
@@ -201,4 +203,55 @@ test('cancelling a class returns every credit, mails everyone and closes booking
   assert.equal(isBookable(session, at), false);
   assert.throws(() => bookBike(store, { classId: session.id, bikeNo: 3, accountId: 'acc_test1', now: at }));
   assert.throws(() => cancelClass(store, session.id, at), /already/i);
+});
+
+test('moving a booking changes the bike and keeps the credit and the booking', () => {
+  const { store, session } = setup();
+  const booking = bookBike(store, { classId: session.id, bikeNo: 4, accountId: 'acc_test1', now: NOW });
+  const after = balance(store, 'acc_test1', NOW);
+
+  const moved = moveBooking(store, { bookingId: booking.id, toBikeNo: 12, now: NOW });
+
+  assert.equal(moved.id, booking.id);
+  assert.equal(moved.bikeNo, 12);
+  assert.equal(moved.status, 'booked');
+  assert.equal(balance(store, 'acc_test1', NOW), after);
+});
+
+test('moving works inside the 6 hour window', () => {
+  const { store, session } = setup();
+  const booking = bookBike(store, { classId: session.id, bikeNo: 4, accountId: 'acc_test1', now: NOW });
+  const twoHoursBefore = new Date(Date.parse(session.startsAt) - 2 * HOUR);
+
+  assert.equal(moveBooking(store, { bookingId: booking.id, toBikeNo: 12, now: twoHoursBefore }).bikeNo, 12);
+});
+
+test('moving to a taken or missing bike is rejected and changes nothing', () => {
+  const { store, session } = setup();
+  const booking = bookBike(store, { classId: session.id, bikeNo: 4, accountId: 'acc_test1', now: NOW });
+  bookBike(store, { classId: session.id, bikeNo: 12, accountId: 'acc_test2', now: NOW });
+
+  assert.throws(() => moveBooking(store, { bookingId: booking.id, toBikeNo: 12, now: NOW }), BikeTakenError);
+  assert.throws(() => moveBooking(store, { bookingId: booking.id, toBikeNo: 21, now: NOW }), BikeOutOfRangeError);
+  assert.equal(booking.bikeNo, 4);
+});
+
+test('only a booked booking can be moved', () => {
+  const { store, session } = setup();
+  const booking = bookBike(store, { classId: session.id, bikeNo: 4, accountId: 'acc_test1', now: NOW });
+  booking.status = 'cancelled';
+
+  assert.throws(() => moveBooking(store, { bookingId: booking.id, toBikeNo: 12, now: NOW }), /cancelled/);
+});
+
+test('moving mails the rider the new bike and does not mail the waitlist', () => {
+  const { store, session } = setup();
+  const booking = bookBike(store, { classId: session.id, bikeNo: 4, accountId: 'acc_test1', now: NOW });
+  store.outbox = [];
+
+  moveBooking(store, { bookingId: booking.id, toBikeNo: 12, now: NOW });
+
+  assert.equal(store.outbox.length, 1);
+  assert.equal(store.outbox[0].to, 'test1@example.com');
+  assert.match(store.outbox[0].body, /12/);
 });

@@ -1,7 +1,11 @@
 import { newId } from './model.js';
-import { returnCredit, returnedExpiresAt } from './ledger.js';
-import { onBikeFreed } from './booking.js';
+import { returnCredit, returnedExpiresAt, creditsEnabled } from './ledger.js';
+import { onBikeFreed, takenBikes, BikeTakenError, BikeOutOfRangeError } from './booking.js';
 import { send } from './outbox.js';
+import { studioTime, hrDate } from './time.js';
+
+const timeFormat = hrDate({ hour: '2-digit', minute: '2-digit' });
+const dateFormat = hrDate({ weekday: 'long', day: 'numeric', month: 'numeric' });
 
 export class RestoreError extends Error {
   constructor(message) {
@@ -59,11 +63,63 @@ export function removeFromClass(store, { bookingId, reason, now }) {
     {
       to: account.email,
       subject: `Uklonjen si s treninga: ${session.name}`,
-      body: `Uklonjen si s treninga ${session.name}. Razlog: ${reason}. Kredit je vraćen.`,
+      body: `Uklonjen si s treninga ${session.name}. Razlog: ${reason}.${creditsEnabled(store) ? ' Kredit je vraćen.' : ''}`,
     },
     now,
   );
   onBikeFreed(store, booking.classId, now);
+  return booking;
+}
+
+// The owner changes one class in one week. Riders who booked it are told once. The template is not touched.
+export function editClass(store, { classId, name, time, instructorId, themeName, now }) {
+  if (!name.trim() || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new RangeError('Class edit out of range');
+  const session = store.classes.find((c) => c.id === classId);
+  if (session.cancelled) throw new Error(`Class ${classId} is cancelled`);
+
+  const day = studioTime.localDate(session.startsAt);
+  const startsAt = studioTime.toUtc(`${day}T${time}`);
+  const changed = session.name !== name.trim() || session.startsAt !== startsAt || session.instructorId !== instructorId;
+  Object.assign(session, { name: name.trim(), startsAt, instructorId, themeName: themeName || null });
+  if (!changed) return session;
+
+  const riders = new Set(store.bookings.filter((b) => b.classId === classId && b.status === 'booked').map((b) => b.accountId));
+  for (const accountId of riders) {
+    const account = store.accounts.find((a) => a.id === accountId);
+    send(
+      store,
+      {
+        to: account.email,
+        subject: `Promjena treninga: ${session.name}`,
+        body: `Tvoj trening je promijenjen: ${session.name}, ${dateFormat.format(new Date(startsAt))} u ${timeFormat.format(new Date(startsAt))}. Rezervacija ostaje. Ako ti novi termin ne odgovara, javi nam se.`,
+      },
+      now,
+    );
+  }
+  return session;
+}
+
+// Staff move a rider to another bike in the same class. The booking, its credit and the 6 hour rule are untouched.
+// The class stays as full as before, so the waitlist is not mailed.
+export function moveBooking(store, { bookingId, toBikeNo, now }) {
+  const booking = store.bookings.find((b) => b.id === bookingId);
+  if (booking.status !== 'booked') throw new Error(`Booking ${bookingId} is ${booking.status}`);
+  const session = store.classes.find((c) => c.id === booking.classId);
+  if (!Number.isInteger(toBikeNo) || toBikeNo < 1 || toBikeNo > session.bikeCount) throw new BikeOutOfRangeError(toBikeNo);
+  if (takenBikes(store, booking.classId).includes(toBikeNo)) throw new BikeTakenError(toBikeNo);
+
+  const from = booking.bikeNo;
+  booking.bikeNo = toBikeNo;
+  const account = store.accounts.find((a) => a.id === booking.accountId);
+  send(
+    store,
+    {
+      to: account.email,
+      subject: `Novi bicikl na treningu: ${session.name}`,
+      body: `Tvoj bicikl na treningu ${session.name} je promijenjen s ${from} na ${toBikeNo}.`,
+    },
+    now,
+  );
   return booking;
 }
 
@@ -123,14 +179,14 @@ export function cancelClass(store, classId, now) {
   for (const booking of booked) {
     booking.status = 'cancelled';
     const lot = store.lots.find((l) => l.id === booking.creditLotId);
-    returnCredit(store, lot, now, store.settings.returnedCreditDays);
+    if (lot) returnCredit(store, lot, now, store.settings.returnedCreditDays);
     const account = store.accounts.find((a) => a.id === booking.accountId);
     send(
       store,
       {
         to: account.email,
         subject: `Trening je otkazan: ${session.name}`,
-        body: `Trening ${session.name} je otkazan. Kredit je vraćen.`,
+        body: `Trening ${session.name} je otkazan.${creditsEnabled(store) ? ' Kredit je vraćen.' : ''}`,
       },
       now,
     );
