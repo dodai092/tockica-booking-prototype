@@ -20,9 +20,19 @@
   <button id="info-button" type="button" class="info-button" aria-label="Informacije o studiju" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button>
 </header>
 
+<nav class="tab-bar" role="tablist" aria-label="Stranice">
+    <span class="tab-indicator" aria-hidden="true"></span>
+    <button type="button" role="tab" id="tab-raspored" data-tab="raspored" aria-controls="panel-raspored" ><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span class="tab-label">Raspored</span><span class="tab-badge" id="badge-raspored" hidden></span></button>
+    <button type="button" role="tab" id="tab-racun" data-tab="racun" aria-controls="panel-racun" ><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/></svg><span class="tab-label">Profil</span></button>
+    <button type="button" role="tab" id="tab-sculpt" data-tab="sculpt" aria-controls="panel-sculpt" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8v8M18 8v8M3 10.5v3M21 10.5v3M6 12h12"/></svg><span class="tab-label">Sculpt Room</span></button>
+    <button type="button" role="tab" id="tab-recepcija" data-tab="recepcija" aria-controls="panel-recepcija" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6"/></svg><span class="tab-label">Recepcija</span></button>
+    <button type="button" role="tab" id="tab-izvjestaji" data-tab="izvjestaji" aria-controls="panel-izvjestaji" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Izvještaji</button>
+    <button type="button" role="tab" id="tab-admin" data-tab="admin" aria-controls="panel-admin" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span class="tab-label">Admin</span></button>
+</nav>
+
 <main>
   <section id="panel-raspored" class="panel" role="tabpanel" aria-label="Raspored">
-    <h1 class="tab-title">Raspored</h1>
+    <h1 class="tab-title" tabindex="-1">Raspored</h1>
   <nav id="s-week" class="week" aria-label="Dani"></nav>
   <div class="account">
     <label>Demo račun
@@ -38,13 +48,14 @@
     <button id="s-nocredit-buy" type="button" class="btn">Kupi paket</button>
   </div>
   <a id="s-mine-link" class="mine-link" href="#" hidden></a>
+  <button id="s-price" type="button" class="mine-link price-link" hidden>Cjenik</button>
   <p id="s-message" class="message" role="status"></p>
   <section id="s-classes" class="classes" aria-label="Treninzi"></section>
   <section id="s-mine" class="classes" aria-label="Moje rezervacije"></section>
   </section>
 
   <section id="panel-racun" class="panel" role="tabpanel" aria-label="Moj profil" hidden>
-    <h1 class="tab-title">Moj profil</h1>
+    <h1 class="tab-title" tabindex="-1">Moj profil</h1>
     <div class="group">
       <label class="g-row"><span class="g-main g-title">Demo račun</span><select id="m-account" class="g-select"></select></label>
     </div>
@@ -53,7 +64,7 @@
   </section>
 
   <section id="panel-recepcija" class="panel" role="tabpanel" aria-label="Recepcija" hidden>
-    <h1 class="tab-title">Recepcija</h1>
+    <h1 class="tab-title" tabindex="-1">Recepcija</h1>
     <p id="r-message" class="message" role="status"></p>
 
     <div class="group">
@@ -63,11 +74,11 @@
     <div id="r-classes" aria-label="Treninzi"></div>
 
     <div id="r-compact" class="r-compact" aria-hidden="true"><strong id="r-compact-title"></strong><span id="r-compact-counts"></span></div>
-    <div id="r-undo" class="snack" role="status" hidden><span id="r-undo-text"></span><button id="r-undo-button" type="button">Poništi</button></div>
+    <div id="r-undo" class="snack" role="status" hidden><span id="r-undo-text"></span><button id="r-undo-button" type="button">Poništi</button><button id="r-undo-close" type="button">Zatvori</button></div>
   </section>
 
   <section id="panel-izvjestaji" class="panel" role="tabpanel" aria-label="Izvještaji" hidden>
-    <h1 class="tab-title">Izvještaji</h1>
+    <h1 class="tab-title" tabindex="-1">Izvještaji</h1>
     <p id="i-message" class="message" role="status"></p>
 
     <div class="segmented" id="i-segments" role="tablist" aria-label="Izvještaji">
@@ -102,12 +113,12 @@
   </section>
 
   <section id="panel-sculpt" class="panel" role="tabpanel" aria-label="Sculpt Room" hidden>
-    <h1 class="tab-title">Sculpt Room</h1>
+    <h1 class="tab-title" tabindex="-1">Sculpt Room</h1>
     <p id="t-message" class="message" role="status"></p>
     <div class="group">
       <label class="g-row"><span class="g-main g-title">Dan</span><select id="t-day" class="g-select"></select></label>
     </div>
-    <div id="t-notice" class="nocredit" hidden></div>
+    <div id="t-notice" class="nocredit" role="status"></div>
     <section id="t-hours" class="group" aria-label="Sati"></section>
     <h2 class="g-header">Moje rezervacije</h2>
     <section id="t-mine" class="group" aria-label="Moje rezervacije"></section>
@@ -115,7 +126,7 @@
   </section>
 
   <section id="panel-admin" class="panel" role="tabpanel" aria-label="Admin" hidden>
-    <h1 class="tab-title">Admin</h1>
+    <h1 class="tab-title" tabindex="-1">Admin</h1>
     <p id="a-message" class="message" role="status"></p>
 
     <h2 class="g-header">Računi</h2>
@@ -156,16 +167,6 @@
     <p class="g-footer">Ovo ne postoji u pravoj aplikaciji.</p>
   </section>
 </main>
-
-<nav class="tab-bar" role="tablist" aria-label="Stranice">
-    <span class="tab-indicator" aria-hidden="true"></span>
-    <button type="button" role="tab" id="tab-raspored" data-tab="raspored" aria-controls="panel-raspored" ><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span class="tab-label">Raspored</span><span class="tab-badge" id="badge-raspored" hidden></span></button>
-    <button type="button" role="tab" id="tab-racun" data-tab="racun" aria-controls="panel-racun" ><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/></svg><span class="tab-label">Profil</span></button>
-    <button type="button" role="tab" id="tab-sculpt" data-tab="sculpt" aria-controls="panel-sculpt" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8v8M18 8v8M3 10.5v3M21 10.5v3M6 12h12"/></svg><span class="tab-label">Sculpt Room</span></button>
-    <button type="button" role="tab" id="tab-recepcija" data-tab="recepcija" aria-controls="panel-recepcija" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4"/><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6"/></svg><span class="tab-label">Recepcija</span></button>
-    <button type="button" role="tab" id="tab-izvjestaji" data-tab="izvjestaji" aria-controls="panel-izvjestaji" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Izvještaji</button>
-    <button type="button" role="tab" id="tab-admin" data-tab="admin" aria-controls="panel-admin" ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span class="tab-label">Admin</span></button>
-</nav>
 
 <dialog id="info-sheet" class="sheet" aria-labelledby="info-title">
   <div class="sheet-head">

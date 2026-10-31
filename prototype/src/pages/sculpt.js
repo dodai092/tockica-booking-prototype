@@ -2,6 +2,7 @@ import { hrDate, studioTime } from '../time.js';
 import { bookSlot, cancelSlot, cellState, mySlots, bookableDates, SculptError } from '../sculpt.js';
 import { loadStore, saveStore, getLogin } from './session.js';
 import { showBanner, fadeIn } from './motion.js';
+import { keepFocus } from './focus.js';
 
 const dayFormat = hrDate({ weekday: 'short', day: '2-digit', month: '2-digit' });
 // Reasons that hold for the whole day are said once above the list, not on every hour.
@@ -58,8 +59,8 @@ function renderHours(now, trainerId) {
   for (let hour = openHour; hour < closeHour; hour += 1) cells.push([hour, cellState(store, trainerId, day, hour, now)]);
 
   const dayLevel = cells.find(([, c]) => c.state === 'blocked' && DAY_LEVEL.includes(c.code));
+  // The region stays rendered (see #t-notice:empty in styles.css), so screen readers announce the text when it changes.
   const notice = $('notice');
-  notice.hidden = !dayLevel;
   notice.replaceChildren();
   if (dayLevel) notice.append(el('span', dayLevel[1].reason));
 
@@ -110,6 +111,10 @@ function renderMine(now, trainerId) {
 }
 
 export function render() {
+  keepFocus(draw);
+}
+
+function draw() {
   const trainerId = getLogin();
   if (!store.sculpt.trainers.some((t) => t.id === trainerId)) return;
   const now = new Date();

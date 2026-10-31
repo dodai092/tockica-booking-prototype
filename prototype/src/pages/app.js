@@ -46,6 +46,10 @@ function show(tab) {
   if (!first) panels[tab].classList.add('entering');
   window.scrollTo(0, 0);
   history.replaceState(null, '', `#${tab}`);
+  const heading = panels[tab].querySelector('h1');
+  document.title = `${heading.textContent} · Točkica: booking prototip`;
+  // Focus moves to the new heading, except when the tab bar has focus: arrow keys move between tabs there.
+  if (!first && !bar.contains(document.activeElement)) heading.focus({ preventScroll: true });
 }
 
 // Other pages can ask for a tab, for example a report linking to a class in Recepcija.

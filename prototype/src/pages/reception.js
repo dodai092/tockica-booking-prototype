@@ -8,6 +8,7 @@ import { clientRides } from '../analytics.js';
 import { bikePosition } from '../layout.js';
 import { loadStore, saveStore } from './session.js';
 import { fadeIn, fadeOut, pop, showBanner, resize, release, haptic } from './motion.js';
+import { keepFocus } from './focus.js';
 
 const STATUS_TEXT = {
   booked: 'Rezervirano',
@@ -50,7 +51,7 @@ function showMessage(text, isError = false) {
 }
 
 // Runs an action, saves, and re-renders. Errors show as a message; a success shows in the
-// row itself and offers an undo for a few seconds.
+// row itself and offers an undo until the next action or until it is dismissed.
 // `label` is the undo text, or a function run after the action that may return a celebration.
 function act(action, label) {
   const snapshot = structuredClone(store);
@@ -79,13 +80,13 @@ function act(action, label) {
   if (changed) for (const count of $('classes').querySelectorAll('.s-counts strong')) pop(count, 0.85);
 }
 
-// The undo snackbar: the last action's before-state, kept for 5 seconds.
+// The undo snackbar: the last action's before-state. It stays until the next action, a dismiss,
+// or leaving this tab (the snapshot would be stale by then). No timer: someone using a keyboard or
+// screen reader needs longer than 5 seconds to reach it.
 let undoState = null;
-let undoTimer = 0;
 let undoToken = 0;
 
 function hideUndo(animate = true) {
-  clearTimeout(undoTimer);
   undoState = null;
   const snack = $('undo');
   const token = ++undoToken;
@@ -104,7 +105,6 @@ function hideUndo(animate = true) {
 
 function showUndo({ text, celebrate = false }, snapshot) {
   const snack = $('undo');
-  clearTimeout(undoTimer);
   undoToken += 1;
   undoState = snapshot;
   $('undo-text').textContent = text;
@@ -114,8 +114,12 @@ function showUndo({ text, celebrate = false }, snapshot) {
   snack.hidden = false;
   fadeIn(snack, 8, 200);
   if (celebrate) pop(snack, 0.94);
-  undoTimer = setTimeout(hideUndo, 5000);
 }
+
+$('undo-close').addEventListener('click', () => hideUndo());
+new MutationObserver(() => {
+  if ($('undo').closest('.panel').hidden) hideUndo(false);
+}).observe($('undo').closest('.panel'), { attributes: true, attributeFilter: ['hidden'] });
 
 $('undo-button').addEventListener('click', () => {
   if (!undoState) return;
@@ -210,10 +214,12 @@ function actionButtons(booking, session, now) {
   if (!ended && booking.status === 'booked') {
     if (checkInOpen(session, now)) {
       primary = el('button', 'Dolazak', 'btn');
+      primary.setAttribute('aria-label', `Dolazak ${riderOf(booking)}, bicikl ${booking.bikeNo}`);
       primary.addEventListener('click', () => act(() => checkIn(store, booking.id, new Date()), () => milestoneOf(booking) ?? `${riderOf(booking)}, bicikl ${booking.bikeNo}: došao`));
     }
     if (now.getTime() >= Date.parse(session.startsAt)) {
       const button = el('button', 'No-show', 'g-text destructive');
+      button.setAttribute('aria-label', `No-show ${riderOf(booking)}, bicikl ${booking.bikeNo}`);
       button.addEventListener('click', () => act(() => markNoShow(store, booking.id), `${riderOf(booking)}, bicikl ${booking.bikeNo}: no-show`));
       buttons.push(button);
     }
@@ -258,10 +264,12 @@ function renderMap(session, now) {
     const button = el('button', undefined, `bike${booking ? ` map-${booking.status}` : ''}${booking && booking.id === selectedId ? ' sel' : ''}`);
     button.type = 'button';
     button.append(el('b', String(bikeNo)), el('span', booking ? riderOf(booking).split(' ')[0] : ''));
+    button.setAttribute('aria-label', `Bicikl ${bikeNo}`);
     const { column, row } = bikePosition(bikeNo);
     button.style.gridArea = `${row} / ${column}`;
     if (booking) {
       button.setAttribute('aria-label', `Bicikl ${bikeNo}, ${riderOf(booking)}, ${STATUS_TEXT[booking.status].toLowerCase()}`);
+      button.setAttribute('aria-pressed', String(booking.id === selectedId));
       button.addEventListener('click', () => {
         selectedId = booking.id === selectedId ? null : booking.id;
         render();
@@ -364,6 +372,10 @@ let summaryObserver = null;
 const scrolledPast = new Map();
 
 export function render() {
+  keepFocus(draw);
+}
+
+function draw() {
   const now = new Date();
   renderDayPicker(now);
   summaryObserver?.disconnect();
