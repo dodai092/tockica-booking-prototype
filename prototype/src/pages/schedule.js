@@ -21,6 +21,7 @@ import { needsWaiver, signWaiver } from '../waiver.js';
 import { loadStore, saveStore, mondayOf, getDemoAccount, setDemoAccount, isCustomer } from './session.js';
 import { fadeIn, slideIn, pop, popOut, expand, collapse, release, reveal, showBanner, haptic } from './motion.js';
 import { openSheet, closeSheet, bindSheet } from './sheet.js';
+import { keepFocus } from './focus.js';
 
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
 const WEEKS_SHOWN = 3;
@@ -106,16 +107,13 @@ function renderAccount() {
   select.closest('label').hidden = isCustomer();
   const wrap = $('balance').closest('.balance-wrap');
   if (!creditsEnabled(store)) {
-    // No credits (December): the balance gives way to a price list button.
+    // No credits (December): no balance card, just a price list link under the account.
     $('nocredit').hidden = true;
-    wrap.hidden = false;
-    wrap.classList.remove('few');
-    $('balance').textContent = '';
-    $('expiry').textContent = '';
-    $('buy').textContent = 'Cjenik';
+    wrap.hidden = true;
+    $('price').hidden = false;
     return;
   }
-  $('buy').textContent = 'Kupi paket';
+  $('price').hidden = true;
   const credits = balance(store, select.value, new Date());
   // With no credits the balance card gives way to a banner with the buy button.
   $('nocredit').hidden = credits > 0;
@@ -179,9 +177,11 @@ function renderWeek() {
     const button = el('button', undefined, 'day');
     button.setAttribute('aria-pressed', String(day === selectedDay));
     const dot = el('span', undefined, myDays.has(day) ? 'dot mine-dot' : classDays.has(day) ? 'dot' : 'dot none');
-    button.append(el('small', isToday ? 'Danas' : DAY_NAMES[i]), el('strong', day.slice(8)), dot);
-    const notes = [isToday && 'danas', myDays.has(day) && 'imaš rezervaciju'].filter(Boolean);
-    if (notes.length) button.setAttribute('aria-label', `${DAY_NAMES[i]} ${day.slice(8)}, ${notes.join(', ')}`);
+    // The space keeps the text "Pon 02" in the DOM, the same as the name. The small label is a block, so the space is not drawn.
+    button.append(el('small', isToday ? 'Danas' : DAY_NAMES[i]), ' ', el('strong', day.slice(8)), dot);
+    // The visible small label is "Danas" on today, so the name starts with that word.
+    const notes = [myDays.has(day) && 'imaš rezervaciju'].filter(Boolean);
+    button.setAttribute('aria-label', [`${isToday ? 'Danas' : DAY_NAMES[i]} ${day.slice(8)}`, ...notes].join(', '));
     button.addEventListener('click', () => move(() => {
       selectedDay = day;
     }));
@@ -280,9 +280,9 @@ function renderClasses() {
       capacity.append(bar, el('span', free === 0 ? 'Popunjeno' : `${free} slobodno`));
       info.append(capacity);
     }
-    const action = statusButton(session, current, mine.length > 0);
+    const action = nameForClass(statusButton(session, current, mine.length > 0), session);
     if (action.dataset.waiting) {
-      const leave = el('button', 'napusti listu', 'link-btn');
+      const leave = nameForClass(el('button', 'napusti listu', 'link-btn'), session);
       leave.addEventListener('click', () => leaveList(session.id));
       info.append(leave);
     }
@@ -322,6 +322,12 @@ function renderClasses() {
 
 const finishedWord = (n) => (n === 1 ? 'završen trening' : n <= 4 ? 'završena treninga' : 'završenih treninga');
 
+// Card buttons repeat on every card, so the name adds the class it acts on after the visible text.
+function nameForClass(button, session) {
+  button.setAttribute('aria-label', `${button.textContent} ${session.name} ${timeFormat.format(new Date(session.startsAt))}`);
+  return button;
+}
+
 // A booking costs one credit. Saying so under the button helps a first-time customer.
 function withCost(button) {
   const wrap = el('div', undefined, 'act');
@@ -340,6 +346,7 @@ function cancelNote(session, current) {
 // Cancelling asks first, in a small sheet that says what happens to the credit.
 function cancelButton(booking, session, label) {
   const cancel = el('button', label, 'btn secondary cancel');
+  cancel.setAttribute('aria-label', `${label} ${session.name}, ${whenFormat.format(new Date(session.startsAt))}`);
   cancel.addEventListener('click', () => askCancel(booking, session));
   return cancel;
 }
@@ -431,20 +438,37 @@ function waiverNodes() {
     name.type = 'text';
     name.value = account.name;
     name.setAttribute('aria-label', 'Ime i prezime za potpis');
+    const error = el('p', undefined, 'field-error');
+    error.id = 'waiver-name-error';
+    name.setAttribute('aria-describedby', error.id);
+    name.addEventListener('input', () => {
+      if (!name.value.trim()) return;
+      error.textContent = '';
+      name.removeAttribute('aria-invalid');
+    });
     const sign = el('button', 'Potpisujem izjavu', 'btn');
     sign.addEventListener('click', () => {
-      if (!name.value.trim()) return;
+      if (!name.value.trim()) {
+        error.textContent = 'Upiši ime i prezime.';
+        name.setAttribute('aria-invalid', 'true');
+        name.focus({ preventScroll: true });
+        return;
+      }
       signWaiver(store, { accountId: account.id, name: name.value.trim(), now: new Date() });
       saveStore(store);
       renderBikes();
     });
-    block.append(text, name, sign);
+    block.append(text, name, error, sign);
     nodes.push(block);
   }
   return nodes;
 }
 
 function renderBikes() {
+  keepFocus(drawBikes);
+}
+
+function drawBikes() {
   if (!openClassId) return;
   const panel = $('bikes');
   const taken = takenBikes(store, openClassId);
@@ -464,6 +488,7 @@ function renderBikes() {
   grid.append(stage);
   for (let bikeNo = 1; bikeNo <= session.bikeCount; bikeNo += 1) {
     const button = el('button', String(bikeNo), 'bike');
+    button.setAttribute('aria-label', `Bicikl ${bikeNo}`);
     button.disabled = taken.includes(bikeNo);
     button.setAttribute('aria-pressed', String(bikeNo === pickedBike));
     const { column, row } = bikePosition(bikeNo);
@@ -486,7 +511,6 @@ function renderBikes() {
   sw.setAttribute('role', 'switch');
   sw.checked = guestOpen;
   toggle.append(sw, el('span', 'Za gosta'));
-  sw.setAttribute('aria-label', 'Rezerviram za nekoga drugog');
   const guest = el('div', undefined, 'guest');
   guest.hidden = !guestOpen;
   const guestInput = el('input');
@@ -601,6 +625,10 @@ function reserve(bikeNo) {
 }
 
 export function render() {
+  keepFocus(draw);
+}
+
+function draw() {
   saveStore(store);
   renderAccount();
   renderWeek();
@@ -666,6 +694,7 @@ export function openBuy() {
   openSheet(buySheet);
 }
 $('buy').addEventListener('click', openBuy);
+$('price').addEventListener('click', openBuy);
 $('nocredit-buy').addEventListener('click', openBuy);
 
 const bookSheet = $('book-sheet');

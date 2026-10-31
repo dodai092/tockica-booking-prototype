@@ -28,6 +28,7 @@ import { owedClasses, markCharged } from '../owed.js';
 import { creditsEnabled } from '../ledger.js';
 import { loadStore, saveStore, resetStore, generateUpcoming } from './session.js';
 import { showBanner, expand, collapse, release, pop } from './motion.js';
+import { keepFocus } from './focus.js';
 
 const timeFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', hour: '2-digit', minute: '2-digit' });
 const dayFormat = hrDate({ weekday: 'short', day: '2-digit', month: '2-digit' });
@@ -167,6 +168,7 @@ function renderAccounts(now) {
     const box = el('input', undefined, 'switch');
     box.type = 'checkbox';
     box.setAttribute('role', 'switch');
+    box.setAttribute('aria-label', `Multisport ${account.name}`);
     box.checked = account.multisportTag;
     box.addEventListener('change', () => act(() => setMultisportTag(store, account.id, box.checked), false));
     switchRow.append(el('span', 'Multisport', 'g-main g-title'), box);
@@ -227,14 +229,14 @@ function renderBookings(now) {
   seen.bookings = shown;
 }
 
-function priceRow(label, value, placeholder) {
+function priceRow(label, value, placeholder, packName) {
   const input = el('input', undefined, 'g-input g-price');
   input.type = 'number';
   input.min = '0';
   input.inputMode = 'decimal';
   input.value = value;
   input.placeholder = placeholder;
-  input.setAttribute('aria-label', label);
+  input.setAttribute('aria-label', `${label} ${packName}`);
   const node = el('label', undefined, 'g-row');
   node.append(el('span', label, 'g-main g-title'), input, el('span', '€', 'g-trail'));
   return { node, input };
@@ -246,8 +248,8 @@ function renderPacks() {
   for (const pack of store.packs) {
     const group = el('div', undefined, 'group');
     group.append(row(main(pack.name, `${pack.validDays} dana`)));
-    const price = priceRow('Cijena', String(pack.priceEur), '0');
-    const multi = priceRow('Multisport cijena', pack.multisportPriceEur ?? '', 'nema');
+    const price = priceRow('Cijena', String(pack.priceEur), '0', pack.name);
+    const multi = priceRow('Multisport cijena', pack.multisportPriceEur ?? '', 'nema', pack.name);
     const save = () => act(() => setPackPrices(store, pack.id, {
       priceEur: Number(price.input.value),
       multisportPriceEur: multi.input.value === '' ? null : Number(multi.input.value),
@@ -444,6 +446,7 @@ function renderOwed() {
   for (const { booking, session, account } of owed) {
     const what = booking.status === 'late_cancel' ? 'Kasno otkazano' : 'No-show';
     const charged = el('button', 'Naplaćeno', 'g-text accent');
+    charged.setAttribute('aria-label', `Naplaćeno ${account.name}, ${what} · ${classLabel(session)}`);
     charged.addEventListener('click', () => act(() => markCharged(store, booking.id, new Date()), true, 'Označeno kao naplaćeno.'));
     section.append(row(main(account.name, `${what} · ${classLabel(session)}`), charged));
   }
@@ -540,7 +543,7 @@ function renderSculpt(now) {
   for (const date of store.sculpt.closedDays) {
     const item = row(el('span', slotDate(date), 'g-main g-title'));
     const open = el('button', 'Makni', 'g-text destructive');
-    open.setAttribute('aria-label', `Otvori dan ${slotDate(date)}`);
+    open.setAttribute('aria-label', `Makni zatvoreni dan ${slotDate(date)}`);
     open.addEventListener('click', () => act(() => removeClosedDay(store, date)));
     item.append(open);
     closed.append(item);
@@ -601,6 +604,10 @@ function renderDemoClasses(now) {
 }
 
 export function render() {
+  keepFocus(draw);
+}
+
+function draw() {
   const now = new Date();
   renderAccounts(now);
   renderBookings(now);

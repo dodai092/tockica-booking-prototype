@@ -7,6 +7,7 @@ import { upcomingBookings } from '../booking.js';
 import { loadStore, saveStore, getDemoAccount, setDemoAccount, isCustomer } from './session.js';
 import { showBanner, fadeIn } from './motion.js';
 import { askCancel, openBuy } from './schedule.js';
+import { keepFocus } from './focus.js';
 
 const STATUS_TEXT = {
   attended: 'Došao',
@@ -144,6 +145,7 @@ function ridesGroup() {
   if (rides === 0) return null;
   const bar = el('div', undefined, 'progress');
   bar.setAttribute('role', 'progressbar');
+  bar.setAttribute('aria-label', 'Napredak do sljedeće prekretnice');
   bar.setAttribute('aria-valuenow', String(percent));
   bar.setAttribute('aria-valuemin', '0');
   bar.setAttribute('aria-valuemax', '100');
@@ -185,7 +187,6 @@ function profileGroup() {
   referralText.append(el('div', 'Preporučio/la te prijatelj?', 'g-title'), el('div', 'Upiši ime i prezime prijatelja, ako jest.', 'g-sub'));
   const referrer = el('input', undefined, 'g-input');
   referrer.value = account.referredBy ?? '';
-  referrer.setAttribute('aria-label', 'Ime prijatelja koji te preporučio');
   referrer.addEventListener('change', () => {
     account.referredBy = referrer.value.trim() || null;
     saveStore(store);
@@ -201,6 +202,10 @@ function profileGroup() {
 }
 
 export function render() {
+  keepFocus(draw);
+}
+
+function draw() {
   const now = new Date();
   const select = $('account');
   if (select.options.length === 0) {

@@ -8,6 +8,7 @@ import { openSheet, closeSheet, bindSheet } from './sheet.js';
 import { tabKeys } from './tabkeys.js';
 import { chevron, foldToggle } from './admin.js';
 import { openClass } from './reception.js';
+import { keepFocus } from './focus.js';
 
 const MONTH_NAMES = ['Siječanj', 'Veljača', 'Ožujak', 'Travanj', 'Svibanj', 'Lipanj', 'Srpanj', 'Kolovoz', 'Rujan', 'Listopad', 'Studeni', 'Prosinac'];
 const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
@@ -164,6 +165,7 @@ function renderPayroll() {
     const paidBox = el('input', undefined, 'switch');
     paidBox.type = 'checkbox';
     paidBox.setAttribute('role', 'switch');
+    paidBox.setAttribute('aria-label', `Isplaćeno ${r.name}, ${$('month').textContent}`);
     paidBox.checked = Boolean(paidNow);
     const paidSub = !paidNow ? '' : paidNow.total !== r.total
       ? `Iznos se promijenio od isplate (bilo ${euro.format(paidNow.total)})`
@@ -173,6 +175,7 @@ function renderPayroll() {
     group.append(paidRow);
     const share = el('button', undefined, 'g-row g-action');
     share.type = 'button';
+    share.setAttribute('aria-label', `Podijeli sažetak ${r.name}, ${$('month').textContent}`);
     share.append(el('span', 'Podijeli sažetak', 'g-main g-title'), chevron());
     share.addEventListener('click', () => shareSummary(summaryText(report, r, $('month').textContent, instructorName), `${r.name}, ${$('month').textContent}`));
     group.append(share);
@@ -340,6 +343,10 @@ function renderAnalytics() {
 }
 
 export function render() {
+  keepFocus(draw);
+}
+
+function draw() {
   renderPayroll();
   renderRates();
   renderAnalytics();
