@@ -1,3 +1,4 @@
+import { keep, restored } from './keep.js';
 import { studioTime, hrDate } from '../time.js';
 import { checkIn, checkInOpen, closeClass, correctStatus } from '../checkin.js';
 import { markNoShow } from '../booking.js';
@@ -9,13 +10,14 @@ import { bikePosition } from '../layout.js';
 import { loadStore, saveStore } from './session.js';
 import { fadeIn, fadeOut, pop, showBanner, resize, release, haptic } from './motion.js';
 import { keepFocus } from './focus.js';
+import { t } from '../i18n.js';
 
 const STATUS_TEXT = {
-  booked: 'Rezervirano',
-  attended: 'Došao',
+  booked: t('Rezervirano'),
+  attended: t('Došao'),
   no_show: 'No-show',
-  cancelled: 'Otkazano',
-  late_cancel: 'Kasno otkazano',
+  cancelled: t('Otkazano'),
+  late_cancel: t('Kasno otkazano'),
 };
 const CLASS_MIN_MS = 60 * 1000;
 
@@ -29,7 +31,8 @@ const dayFormat = hrDate({
 const $ = (id) => document.getElementById('r-' + id);
 const store = loadStore();
 saveStore(store);
-let day = null;
+let day = restored('reception') ?? null;
+keep('reception', () => day);
 let view = sessionStorage.getItem('tockica-reception-view') === 'map' ? 'map' : 'list';
 let selectedId = null;
 // The booking being moved: the map then lets staff tap a free bike.
@@ -143,7 +146,7 @@ function renderDayPicker(now) {
 
   select.replaceChildren();
   for (const d of days) {
-    const option = el('option', dayFormat.format(new Date(Date.parse(studioTime.toUtc(`${d}T12:00`)))) + (d === today ? ' · danas' : ''));
+    const option = el('option', dayFormat.format(new Date(Date.parse(studioTime.toUtc(`${d}T12:00`)))) + (d === today ? ` · ${t('danas')}` : ''));
     option.value = d;
     option.selected = d === day;
     select.append(option);
@@ -159,11 +162,11 @@ function renderSummary(session, now) {
 
   let state;
   let tone;
-  if (now.getTime() >= endOf(session)) [state, tone] = ['Trening je završio', 'muted'];
-  else if (checkInOpen(session, now)) [state, tone] = ['Check-in je otvoren', 'open'];
+  if (now.getTime() >= endOf(session)) [state, tone] = [t('Trening je završio'), 'muted'];
+  else if (checkInOpen(session, now)) [state, tone] = [t('Check-in je otvoren'), 'open'];
   else {
     const opens = new Date(start - 30 * CLASS_MIN_MS);
-    [state, tone] = [`Check-in se otvara ${dayFormat.format(opens)} u ${timeFormat.format(opens)}`, 'wait'];
+    [state, tone] = [t('Check-in se otvara {day} u {time}', { day: dayFormat.format(opens), time: timeFormat.format(opens) }), 'wait'];
   }
 
   const info = el('div');
@@ -174,7 +177,7 @@ function renderSummary(session, now) {
   );
   const side = el('div', undefined, 's-side');
   const counts = el('div', undefined, 's-counts');
-  for (const [value, label] of [[`${reserved}/${session.bikeCount}`, 'rezervirano'], [String(attended), 'došlo']]) {
+  for (const [value, label] of [[`${reserved}/${session.bikeCount}`, t('rezervirano')], [String(attended), t('došlo')]]) {
     const box = el('div');
     box.append(el('strong', value), el('span', label));
     counts.append(box);
@@ -182,7 +185,7 @@ function renderSummary(session, now) {
   side.append(el('span', state, `pill pill-${tone}`), counts);
   const card = el('div', undefined, 'summary');
   card.dataset.title = `${timeFormat.format(new Date(start))} ${session.name}`;
-  card.dataset.counts = `${reserved}/${session.bikeCount} · ${attended} došlo`;
+  card.dataset.counts = `${reserved}/${session.bikeCount} · ${attended} ${t('došlo')}`;
   card.append(info, side);
   return card;
 }
@@ -200,7 +203,7 @@ const riderOf = (booking) => booking.guestName || store.accounts.find((a) => a.i
 function milestoneOf(booking) {
   if (booking.guestName) return null;
   const client = clientRides(store).find((c) => c.accountId === booking.accountId);
-  return client?.milestone ? { text: `${client.milestone}. sat! ${client.name}`, celebrate: true } : null;
+  return client?.milestone ? { text: t('{n}. sat! {name}', { n: client.milestone, name: client.name }), celebrate: true } : null;
 }
 
 const guestSigned = (booking) => store.waivers.some((w) => w.bookingId === booking.id);
@@ -213,25 +216,25 @@ function actionButtons(booking, session, now) {
 
   if (!ended && booking.status === 'booked') {
     if (checkInOpen(session, now)) {
-      primary = el('button', 'Dolazak', 'btn');
-      primary.setAttribute('aria-label', `Dolazak ${riderOf(booking)}, bicikl ${booking.bikeNo}`);
-      primary.addEventListener('click', () => act(() => checkIn(store, booking.id, new Date()), () => milestoneOf(booking) ?? `${riderOf(booking)}, bicikl ${booking.bikeNo}: došao`));
+      primary = el('button', t('Dolazak'), 'btn');
+      primary.setAttribute('aria-label', t('Dolazak {name}, bicikl {bike}', { name: riderOf(booking), bike: booking.bikeNo }));
+      primary.addEventListener('click', () => act(() => checkIn(store, booking.id, new Date()), () => milestoneOf(booking) ?? t('{name}, bicikl {bike}: došao', { name: riderOf(booking), bike: booking.bikeNo })));
     }
     if (now.getTime() >= Date.parse(session.startsAt)) {
       const button = el('button', 'No-show', 'g-text destructive');
-      button.setAttribute('aria-label', `No-show ${riderOf(booking)}, bicikl ${booking.bikeNo}`);
-      button.addEventListener('click', () => act(() => markNoShow(store, booking.id), `${riderOf(booking)}, bicikl ${booking.bikeNo}: no-show`));
+      button.setAttribute('aria-label', t('No-show {name}, bicikl {bike}', { name: riderOf(booking), bike: booking.bikeNo }));
+      button.addEventListener('click', () => act(() => markNoShow(store, booking.id), t('{name}, bicikl {bike}: no-show', { name: riderOf(booking), bike: booking.bikeNo })));
       buttons.push(button);
     }
   }
 
   if (booking.guestName && booking.status === 'booked' && !guestSigned(booking)) {
-    const button = el('button', 'Gost potpisao izjavu', 'g-text accent');
-    button.addEventListener('click', () => act(() => signGuestWaiver(store, { bookingId: booking.id, now: new Date() }), `${booking.guestName}: izjava potpisana`));
+    const button = el('button', t('Gost potpisao izjavu'), 'g-text accent');
+    button.addEventListener('click', () => act(() => signGuestWaiver(store, { bookingId: booking.id, now: new Date() }), t('{name}: izjava potpisana', { name: booking.guestName })));
     buttons.push(button);
   }
   if (!ended && booking.status === 'booked') {
-    const button = el('button', 'Premjesti', 'g-text accent');
+    const button = el('button', t('Premjesti'), 'g-text accent');
     button.addEventListener('click', () => {
       movingId = booking.id;
       view = 'map';
@@ -240,10 +243,10 @@ function actionButtons(booking, session, now) {
     buttons.push(button);
   }
   if (ended) {
-    for (const [status, label] of [['attended', 'Označi dolazak'], ['no_show', 'Označi no-show']]) {
+    for (const [status, label] of [['attended', t('Označi dolazak')], ['no_show', t('Označi no-show')]]) {
       if (booking.status === status) continue;
       const button = el('button', label, status === 'no_show' ? 'g-text destructive' : 'g-text accent');
-      button.addEventListener('click', () => act(() => correctStatus(store, booking.id, status, new Date()), `${riderOf(booking)}, bicikl ${booking.bikeNo}: ${STATUS_TEXT[status].toLowerCase()}`));
+      button.addEventListener('click', () => act(() => correctStatus(store, booking.id, status, new Date()), t('{name}, bicikl {bike}: {status}', { name: riderOf(booking), bike: booking.bikeNo, status: STATUS_TEXT[status].toLowerCase() })));
       buttons.push(button);
     }
   }
@@ -256,7 +259,7 @@ const ON_MAP = ['booked', 'attended', 'no_show'];
 // The room as in the booking sheet, with the rider's first name on each bike. Tap a bike for its actions.
 function renderMap(session, now) {
   const wrap = el('section', undefined, 'group');
-  wrap.setAttribute('aria-label', 'Karta bicikala');
+  wrap.setAttribute('aria-label', t('Karta bicikala'));
   const bookings = store.bookings.filter((b) => b.classId === session.id && ON_MAP.includes(b.status));
   const grid = el('div', undefined, 'bike-grid r-map');
   for (let bikeNo = 1; bikeNo <= session.bikeCount; bikeNo += 1) {
@@ -264,22 +267,22 @@ function renderMap(session, now) {
     const button = el('button', undefined, `bike${booking ? ` map-${booking.status}` : ''}${booking && booking.id === selectedId ? ' sel' : ''}`);
     button.type = 'button';
     button.append(el('b', String(bikeNo)), el('span', booking ? riderOf(booking).split(' ')[0] : ''));
-    button.setAttribute('aria-label', `Bicikl ${bikeNo}`);
+    button.setAttribute('aria-label', t('Bicikl {n}', { n: bikeNo }));
     const { column, row } = bikePosition(bikeNo);
     button.style.gridArea = `${row} / ${column}`;
     if (booking) {
-      button.setAttribute('aria-label', `Bicikl ${bikeNo}, ${riderOf(booking)}, ${STATUS_TEXT[booking.status].toLowerCase()}`);
+      button.setAttribute('aria-label', t('Bicikl {n}, {name}, {status}', { n: bikeNo, name: riderOf(booking), status: STATUS_TEXT[booking.status].toLowerCase() }));
       button.setAttribute('aria-pressed', String(booking.id === selectedId));
       button.addEventListener('click', () => {
         selectedId = booking.id === selectedId ? null : booking.id;
         render();
       });
     } else if (movingId) {
-      button.setAttribute('aria-label', `Slobodan bicikl ${bikeNo}, premjesti ovdje`);
+      button.setAttribute('aria-label', t('Slobodan bicikl {n}, premjesti ovdje', { n: bikeNo }));
       button.addEventListener('click', () => {
         const id = movingId;
         movingId = null;
-        act(() => moveBooking(store, { bookingId: id, toBikeNo: bikeNo, now: new Date() }), `${riderOf(store.bookings.find((b) => b.id === id))}: premješten na bicikl ${bikeNo}`);
+        act(() => moveBooking(store, { bookingId: id, toBikeNo: bikeNo, now: new Date() }), t('{name}: premješten na bicikl {n}', { name: riderOf(store.bookings.find((b) => b.id === id)), n: bikeNo }));
       });
     } else button.disabled = true;
     grid.append(button);
@@ -287,18 +290,18 @@ function renderMap(session, now) {
   const picked = bookings.find((b) => b.id === selectedId);
   const bar = el('div', undefined, 'g-row r-pick');
   if (movingId) {
-    bar.append(el('span', `Dodirni slobodan bicikl za: ${riderOf(store.bookings.find((b) => b.id === movingId))}.`, 'g-sub'));
-    const cancel = el('button', 'Odustani', 'g-text');
+    bar.append(el('span', t('Dodirni slobodan bicikl za: {name}.', { name: riderOf(store.bookings.find((b) => b.id === movingId)) }), 'g-sub'));
+    const cancel = el('button', t('Odustani'), 'g-text');
     cancel.addEventListener('click', () => {
       movingId = null;
       render();
     });
     bar.append(cancel);
-  } else if (!picked) bar.append(el('span', 'Dodirni bicikl za dolazak ili no-show.', 'g-sub'));
+  } else if (!picked) bar.append(el('span', t('Dodirni bicikl za dolazak ili no-show.'), 'g-sub'));
   else {
     const { primary, buttons } = actionButtons(picked, session, now);
     const who = el('div', undefined, 'g-main');
-    who.append(el('div', riderOf(picked), 'g-title'), el('div', `Bicikl ${picked.bikeNo} · ${STATUS_TEXT[picked.status]}`, 'g-sub'));
+    who.append(el('div', riderOf(picked), 'g-title'), el('div', t('Bicikl {n} · {status}', { n: picked.bikeNo, status: STATUS_TEXT[picked.status] }), 'g-sub'));
     bar.append(who);
     if (primary) bar.append(primary);
     for (const button of buttons) bar.append(button);
@@ -310,14 +313,14 @@ function renderMap(session, now) {
 function renderBookings(session, now) {
   if (view === 'map') return renderMap(session, now);
   const list = el('section', undefined, 'group');
-  list.setAttribute('aria-label', 'Rezervacije');
+  list.setAttribute('aria-label', t('Rezervacije'));
   const classId = session.id;
 
   const all = store.bookings.filter((b) => b.classId === classId);
   const rows = all.sort((a, b) => a.bikeNo - b.bikeNo);
 
   if (rows.length === 0) {
-    list.append(row(el('span', 'Još nema rezervacija za ovaj trening.', 'g-sub')));
+    list.append(row(el('span', t('Još nema rezervacija za ovaj trening.'), 'g-sub')));
     return list;
   }
 
@@ -328,7 +331,7 @@ function renderBookings(session, now) {
     item.dataset.status = booking.status;
     const who = el('div', undefined, 'g-main');
     who.append(el('div', account?.name ?? '', 'g-title'));
-    if (booking.guestName) who.append(el('div', `Gost: ${booking.guestName}${guestSigned(booking) ? ' · izjava potpisana' : ' · bez izjave'}`, 'g-sub'));
+    if (booking.guestName) who.append(el('div', `${t('Gost: {name}', { name: booking.guestName })}${guestSigned(booking) ? ` · ${t('izjava potpisana')}` : ` · ${t('bez izjave')}`}`, 'g-sub'));
     item.append(el('div', String(booking.bikeNo), 'bike-badge'), who);
     const { primary, buttons } = actionButtons(booking, session, now);
     // "Rezervirano" is the default, so it is not repeated on every row.
@@ -341,7 +344,7 @@ function renderBookings(session, now) {
       actions.append(...buttons);
       const more = el('button', '⋯', 'r-more');
       more.type = 'button';
-      more.setAttribute('aria-label', `Više za bicikl ${booking.bikeNo}`);
+      more.setAttribute('aria-label', t('Više za bicikl {n}', { n: booking.bikeNo }));
       more.setAttribute('aria-expanded', 'false');
       more.addEventListener('click', () => {
         actions.hidden = !actions.hidden;
@@ -357,11 +360,11 @@ function renderBookings(session, now) {
 // Ended class with people still marked "booked": offer to close it.
 function closeButton(session, now) {
   if (now.getTime() < endOf(session) || !store.bookings.some((b) => b.classId === session.id && b.status === 'booked')) return null;
-  const button = el('button', 'Zatvori trening', 'g-row g-action destructive');
+  const button = el('button', t('Zatvori trening'), 'g-row g-action destructive');
   button.type = 'button';
   button.addEventListener('click', () => {
-    if (!window.confirm('Zatvoriti trening? Svi koji nisu došli bit će označeni kao no-show.')) return;
-    act(() => closeClass(store, session.id, new Date()), 'Trening zatvoren');
+    if (!window.confirm(t('Zatvoriti trening? Svi koji nisu došli bit će označeni kao no-show.'))) return;
+    act(() => closeClass(store, session.id, new Date()), t('Trening zatvoren'));
   });
   const wrap = el('div', undefined, 'group');
   wrap.append(button);

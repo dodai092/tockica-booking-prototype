@@ -8,24 +8,25 @@ import { loadStore, saveStore, getDemoAccount, setDemoAccount, isCustomer } from
 import { showBanner, fadeIn } from './motion.js';
 import { askCancel, openBuy } from './schedule.js';
 import { keepFocus } from './focus.js';
+import { t, plural } from '../i18n.js';
 
 const STATUS_TEXT = {
-  attended: 'Došao',
+  attended: t('Došao'),
   no_show: 'No-show',
-  cancelled: 'Otkazano',
-  late_cancel: 'Kasno otkazano',
+  cancelled: t('Otkazano'),
+  late_cancel: t('Kasno otkazano'),
 };
 const STATUS_NOTE = {
   attended: '',
-  no_show: 'Kredit je potrošen.',
-  cancelled: 'Kredit je vraćen.',
-  late_cancel: 'Kredit nije vraćen.',
+  no_show: t('Kredit je potrošen.'),
+  cancelled: t('Kredit je vraćen.'),
+  late_cancel: t('Kredit nije vraćen.'),
 };
 const STATUS_NOTE_NO_CREDITS = {
   attended: '',
-  no_show: 'Naplaćuje se trening.',
-  cancelled: 'Bez naplate.',
-  late_cancel: 'Naplaćuje se trening.',
+  no_show: t('Naplaćuje se trening.'),
+  cancelled: t('Bez naplate.'),
+  late_cancel: t('Naplaćuje se trening.'),
 };
 const HISTORY_LIMIT = 10;
 
@@ -78,36 +79,37 @@ function nextCard(now) {
   const info = el('div');
   const next = nextTraining(store, accountId(), now);
   if (!next) {
-    info.append(el('div', 'Nema rezervacije', 's-name'), el('div', 'Odaberi trening i bicikl.', 's-meta'));
-    card.append(info, button('Rezerviraj', 'btn', () => goTo('raspored')));
+    info.append(el('div', t('Nema rezervacije'), 's-name'), el('div', t('Odaberi trening i bicikl.'), 's-meta'));
+    card.append(info, button(t('Rezerviraj'), 'btn', () => goTo('raspored')));
     return card;
   }
   const { booking, session } = next;
   const guest = booking.guestName ? ` (${booking.guestName})` : '';
+  const cancelCost = creditsEnabled(store) ? t('kredit se ne vraća') : t('naplaćuje se trening');
   info.append(
-    el('div', 'Sljedeći trening', 's-meta'),
+    el('div', t('Sljedeći trening'), 's-meta'),
     el('div', whenFormat.format(new Date(session.startsAt)), 's-name'),
-    el('div', `${session.name} · bicikl ${booking.bikeNo}${guest}`, 's-meta'),
-    el('div', next.freeCancel ? `Besplatno otkazivanje do ${whenFormat.format(next.deadline)}` : `Manje od 6 sati: ${creditsEnabled(store) ? 'kredit se ne vraća' : 'naplaćuje se trening'}`, 's-meta'),
+    el('div', `${session.name} · ${t('Bicikl {n}', { n: booking.bikeNo })}${guest}`, 's-meta'),
+    el('div', next.freeCancel ? t('Besplatno otkazivanje do {when}', { when: whenFormat.format(next.deadline) }) : t('Manje od 6 sati: {cost}', { cost: cancelCost }), 's-meta'),
   );
-  card.append(info, button('Otkaži', 'btn secondary', () => askCancel(booking, session)));
+  card.append(info, button(t('Otkaži'), 'btn secondary', () => askCancel(booking, session)));
   return card;
 }
 
 function otherUpcoming(now) {
   const rest = upcomingBookings(store, accountId(), now).slice(1);
   if (rest.length === 0) return null;
-  return group('Nadolazeće', ...rest.map(({ booking, session }) => {
+  return group(t('Nadolazeće'), ...rest.map(({ booking, session }) => {
     const guest = booking.guestName ? ` (${booking.guestName})` : '';
-    return row(`${whenFormat.format(new Date(session.startsAt))} · ${session.name}`, `Bicikl ${booking.bikeNo}${guest} · ${instructor(session)}`,
-      button('Otkaži', 'g-text destructive', () => askCancel(booking, session)));
+    return row(`${whenFormat.format(new Date(session.startsAt))} · ${session.name}`, `${t('Bicikl {n}', { n: booking.bikeNo })}${guest} · ${instructor(session)}`,
+      button(t('Otkaži'), 'g-text destructive', () => askCancel(booking, session)));
   }));
 }
 
 function waitlistGroup(now) {
   const entries = waitlistEntries(store, accountId(), now);
   if (entries.length === 0) return null;
-  return group('Lista čekanja', ...entries.map(({ session }) => row(`${whenFormat.format(new Date(session.startsAt))} · ${session.name}`, 'Dobit ćeš mail kad se mjesto oslobodi.')));
+  return group(t('Lista čekanja'), ...entries.map(({ session }) => row(`${whenFormat.format(new Date(session.startsAt))} · ${session.name}`, t('Dobit ćeš mail kad se mjesto oslobodi.'))));
 }
 
 function creditsGroup(now) {
@@ -117,52 +119,54 @@ function creditsGroup(now) {
   const soon = lots.filter((l) => l.expiringSoon);
   if (soon.length) {
     const count = soon.reduce((sum, l) => sum + l.remaining, 0);
-    const text = `Ističe ${dayFormat.format(new Date(soon[0].expiresAt))}: ${count} ${count === 1 ? 'kredit' : 'kredita'}`;
-    const warning = row(text, 'Rezerviraj prije isteka.', button('Rezerviraj', 'btn', () => goTo('raspored')), true);
+    const countText = `${count} ${plural(count, ['kredit', 'kredita', 'kredita'], ['credit', 'credits'])}`;
+    const text = t('Ističe {day}: {count}', { day: dayFormat.format(new Date(soon[0].expiresAt)), count: countText });
+    const warning = row(text, t('Rezerviraj prije isteka.'), button(t('Rezerviraj'), 'btn', () => goTo('raspored')), true);
     warning.classList.add('credit-warning');
     rows.push(warning);
   }
-  rows.push(row(`Kredit: ${balance(store, accountId(), now)}`));
+  rows.push(row(t('Kredit: {n}', { n: balance(store, accountId(), now) })));
   for (const lot of lots) {
-    const origin = lot.origin === 'returned' ? 'Vraćeni kredit' : lot.packName;
-    rows.push(row(`${origin}: ${lot.remaining}`, `Ističe ${dayFormat.format(new Date(lot.expiresAt))}`));
+    const origin = lot.origin === 'returned' ? t('Vraćeni kredit') : lot.packName;
+    rows.push(row(`${origin}: ${lot.remaining}`, t('Ističe {day}', { day: dayFormat.format(new Date(lot.expiresAt)) })));
   }
   const buy = el('button', undefined, 'g-row g-action');
   buy.type = 'button';
-  buy.append(el('span', 'Kupi paket', 'g-main g-title accent-text'));
+  buy.append(el('span', t('Kupi paket'), 'g-main g-title accent-text'));
   buy.addEventListener('click', openBuy);
   rows.push(buy);
-  return group('Krediti', ...rows);
+  return group(t('Krediti'), ...rows);
 }
 
 // A first-time account gets the intro packs; once it has ridden, the bar to the next milestone.
 function ridesGroup() {
   const offer = introOffer(store, accountId());
   if (offer.length) {
-    return group('Za početak', ...offer.map((pack) => row(pack.name, `${priceFor(store, accountId(), pack.id)} €, vrijedi ${pack.validDays} dana`, creditsEnabled(store) ? button('Kupi', 'btn', openBuy) : undefined)));
+    return group(t('Za početak'), ...offer.map((pack) => row(pack.name, t('{price} €, vrijedi {days} dana', { price: priceFor(store, accountId(), pack.id), days: pack.validDays }), creditsEnabled(store) ? button(t('Kupi'), 'btn', openBuy) : undefined)));
   }
   const { rides, next, toNext, percent } = rideProgress(store, accountId());
   if (rides === 0) return null;
   const bar = el('div', undefined, 'progress');
   bar.setAttribute('role', 'progressbar');
-  bar.setAttribute('aria-label', 'Napredak do sljedeće prekretnice');
+  bar.setAttribute('aria-label', t('Napredak do sljedeće prekretnice'));
   bar.setAttribute('aria-valuenow', String(percent));
   bar.setAttribute('aria-valuemin', '0');
   bar.setAttribute('aria-valuemax', '100');
   bar.append(el('span'));
   bar.firstChild.style.width = `${percent}%`;
-  const line = row(`${rides} ${rides === 1 ? 'vožnja' : 'vožnji'}`, next ? `Još ${toNext} do ${next}. sata` : 'Sve prekretnice su iza tebe');
+  const ridesText = `${rides} ${plural(rides, ['vožnja', 'vožnje', 'vožnji'], ['ride', 'rides'])}`;
+  const line = row(ridesText, next ? t('Još {n} do {m}. sata', { n: toNext, m: next }) : t('Sve prekretnice su iza tebe'));
   line.classList.add('wrap');
   line.append(bar);
-  return group('Vožnje', line);
+  return group(t('Vožnje'), line);
 }
 
 function historyGroup() {
   const past = pastBookings(store, accountId(), HISTORY_LIMIT);
   if (past.length === 0) return null;
-  return group('Povijest', ...past.map(({ booking, session }) => {
+  return group(t('Povijest'), ...past.map(({ booking, session }) => {
     const guest = booking.guestName ? ` (${booking.guestName})` : '';
-    const note = [`Bicikl ${booking.bikeNo}${guest}`, (creditsEnabled(store) ? STATUS_NOTE : STATUS_NOTE_NO_CREDITS)[booking.status]].filter(Boolean).join(' · ');
+    const note = [`${t('Bicikl {n}', { n: booking.bikeNo })}${guest}`, (creditsEnabled(store) ? STATUS_NOTE : STATUS_NOTE_NO_CREDITS)[booking.status]].filter(Boolean).join(' · ');
     return row(`${whenFormat.format(new Date(session.startsAt))} · ${session.name}`, note, el('span', STATUS_TEXT[booking.status], `pill pill-${booking.status}`));
   }));
 }
@@ -173,18 +177,18 @@ function profileGroup() {
   marketing.type = 'checkbox';
   marketing.setAttribute('role', 'switch');
   marketing.checked = Boolean(account.marketingOptIn);
-  marketing.setAttribute('aria-label', 'Primaj obavijesti o akcijama');
+  marketing.setAttribute('aria-label', t('Primaj obavijesti o akcijama'));
   marketing.addEventListener('change', () => {
     account.marketingOptIn = marketing.checked;
     saveStore(store);
   });
   const marketingRow = el('label', undefined, 'g-row');
   const text = el('span', undefined, 'g-main');
-  text.append(el('div', 'Obavijesti o akcijama', 'g-title'), el('div', 'Odvojeno od obavijesti o rezervacijama.', 'g-sub'));
+  text.append(el('div', t('Obavijesti o akcijama'), 'g-title'), el('div', t('Odvojeno od obavijesti o rezervacijama.'), 'g-sub'));
   marketingRow.append(text, marketing);
   const referral = el('label', undefined, 'g-row');
   const referralText = el('span', undefined, 'g-main');
-  referralText.append(el('div', 'Preporučio/la te prijatelj?', 'g-title'), el('div', 'Upiši ime i prezime prijatelja, ako jest.', 'g-sub'));
+  referralText.append(el('div', t('Preporučio/la te prijatelj?'), 'g-title'), el('div', t('Upiši ime i prezime prijatelja, ako jest.'), 'g-sub'));
   const referrer = el('input', undefined, 'g-input');
   referrer.value = account.referredBy ?? '';
   referrer.addEventListener('change', () => {
@@ -192,11 +196,11 @@ function profileGroup() {
     saveStore(store);
   });
   referral.append(referralText, referrer);
-  return group('Podaci',
-    row('Ime', undefined, el('span', account.name, 'g-trail')),
+  return group(t('Podaci'),
+    row(t('Ime'), undefined, el('span', account.name, 'g-trail')),
     row('Email', undefined, el('span', account.email, 'g-trail')),
-    row('Telefon', undefined, el('span', account.phone ?? '', 'g-trail')),
-    row('Multisport', 'Oznaku postavlja studio.', el('span', account.multisportTag ? 'Da' : 'Ne', 'g-trail')),
+    row(t('Telefon'), undefined, el('span', account.phone ?? '', 'g-trail')),
+    row('Multisport', t('Oznaku postavlja studio.'), el('span', account.multisportTag ? t('Da') : t('Ne'), 'g-trail')),
     referral,
     marketingRow);
 }

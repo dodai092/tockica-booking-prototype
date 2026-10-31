@@ -1,3 +1,5 @@
+import { getLang } from './i18n.js';
+
 const STUDIO_TZ = 'Europe/Zagreb';
 
 const WEEKDAY_NUMBER = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
@@ -64,8 +66,22 @@ export const studioTime = {
   },
 };
 
-// Croatian date formatter without the space after the dot: "29.10." instead of "29. 10.".
+// Studio date formatter. Numbers always use the Croatian pattern ("29.10.", 24-hour time), without the space
+// after the dot ("29. 10." becomes "29.10."). In English, weekday and month names come from en-GB.
 export function hrDate(options) {
-  const formatter = new Intl.DateTimeFormat('hr-HR', { timeZone: STUDIO_TZ, ...options });
-  return { format: (date) => formatter.format(date).replace(/\.\s(?=\d{1,4}\.)/g, '.') };
+  const numeric = new Intl.DateTimeFormat('hr-HR', { timeZone: STUDIO_TZ, ...options });
+  const namedMonth = options.month === 'long' || options.month === 'short';
+  const englishName = (type, date) =>
+    new Intl.DateTimeFormat('en-GB', { timeZone: STUDIO_TZ, [type]: options[type] })
+      .formatToParts(date).find((part) => part.type === type).value;
+  return {
+    format(date) {
+      const english = getLang() === 'en';
+      const text = numeric.formatToParts(date).map((part) => {
+        const isName = part.type === 'weekday' || (part.type === 'month' && namedMonth);
+        return english && isName ? englishName(part.type, date) : part.value;
+      }).join('');
+      return text.replace(/\.\s(?=\d{1,4}\.)/g, '.');
+    },
+  };
 }

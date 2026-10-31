@@ -29,11 +29,12 @@ import { creditsEnabled } from '../ledger.js';
 import { loadStore, saveStore, resetStore, generateUpcoming } from './session.js';
 import { showBanner, expand, collapse, release, pop } from './motion.js';
 import { keepFocus } from './focus.js';
+import { t } from '../i18n.js';
 
 const timeFormat = new Intl.DateTimeFormat('hr-HR', { timeZone: 'Europe/Zagreb', hour: '2-digit', minute: '2-digit' });
 const dayFormat = hrDate({ weekday: 'short', day: '2-digit', month: '2-digit' });
 
-const DAY_NAMES = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
+const DAY_NAMES = [t('Pon'), t('Uto'), t('Sri'), t('Čet'), t('Pet'), t('Sub'), t('Ned')];
 
 const $ = (id) => document.getElementById('a-' + id);
 const store = loadStore();
@@ -53,7 +54,7 @@ function showMessage(text, isError = false) {
 // Runs an admin action, saves, and re-renders. Errors show as a message. Edits that already
 // show on screen (a switch, a price) pass rerender = false, so focus and the switch's own
 // animation are not thrown away. Returns whether the action worked.
-function act(action, rerender = true, text = 'Spremljeno.') {
+function act(action, rerender = true, text = t('Spremljeno.')) {
   let ok = true;
   try {
     action();
@@ -125,20 +126,20 @@ function restoreForm(account, trail) {
   count.type = 'number';
   count.min = '1';
   count.value = '1';
-  count.setAttribute('aria-label', 'Broj kredita');
+  count.setAttribute('aria-label', t('Broj kredita'));
   const reason = el('input', undefined, 'g-input g-reason');
-  reason.placeholder = 'Razlog';
-  reason.setAttribute('aria-label', 'Razlog');
-  const submit = el('button', 'Vrati', 'btn');
+  reason.placeholder = t('Razlog');
+  reason.setAttribute('aria-label', t('Razlog'));
+  const submit = el('button', t('Vrati'), 'btn');
   submit.type = 'submit';
   form.append(count, reason, submit);
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     if (!reason.value.trim()) {
-      showMessage('Upiši razlog.', true);
+      showMessage(t('Upiši razlog.'), true);
       return;
     }
-    const sure = window.confirm(`Vratiti ${count.value} kredita za ${account.name}?\nRazlog: ${reason.value.trim()}`);
+    const sure = window.confirm(t('Vratiti {count} kredita za {name}?\nRazlog: {reason}', { count: count.value, name: account.name, reason: reason.value.trim() }));
     if (!sure) return;
     const ok = act(() => restoreCredit(store, {
       accountId: account.id,
@@ -148,7 +149,7 @@ function restoreForm(account, trail) {
     }), false);
     if (!ok) return;
     // The new credit shows at once while the form folds shut.
-    trail.textContent = `Kredit ${balance(store, account.id, new Date())}`;
+    trail.textContent = t('Kredit {n}', { n: balance(store, account.id, new Date()) });
     pop(trail, 0.85);
     collapse(form).then(render);
   });
@@ -160,15 +161,15 @@ function renderAccounts(now) {
   section.replaceChildren();
   for (const account of store.accounts) {
     const group = el('div', undefined, 'group');
-    const trail = el('span', `Kredit ${balance(store, account.id, now)}`, 'g-trail');
-    const who = main(account.name, account.email, account.referredBy ? `Preporuka: ${account.referredBy}` : null);
+    const trail = el('span', t('Kredit {n}', { n: balance(store, account.id, now) }), 'g-trail');
+    const who = main(account.name, account.email, account.referredBy ? t('Preporuka: {name}', { name: account.referredBy }) : null);
     group.append(row(...(creditsEnabled(store) ? [who, trail] : [who])));
 
     const switchRow = el('label', undefined, 'g-row');
     const box = el('input', undefined, 'switch');
     box.type = 'checkbox';
     box.setAttribute('role', 'switch');
-    box.setAttribute('aria-label', `Multisport ${account.name}`);
+    box.setAttribute('aria-label', t('Multisport {name}', { name: account.name }));
     box.checked = account.multisportTag;
     box.addEventListener('change', () => act(() => setMultisportTag(store, account.id, box.checked), false));
     switchRow.append(el('span', 'Multisport', 'g-main g-title'), box);
@@ -182,7 +183,7 @@ function renderAccounts(now) {
     const toggle = el('button', undefined, 'g-row g-action');
     toggle.type = 'button';
     toggle.setAttribute('aria-expanded', 'false');
-    toggle.append(el('span', 'Vrati kredit', 'g-main g-title'), chevron());
+    toggle.append(el('span', t('Vrati kredit'), 'g-main g-title'), chevron());
     foldToggle(toggle, form, reason);
     group.append(toggle, form);
     section.append(group);
@@ -199,7 +200,7 @@ function renderBookings(now) {
     .sort((a, b) => a.session.startsAt.localeCompare(b.session.startsAt));
 
   if (upcoming.length === 0) {
-    section.append(row(el('span', 'Nema nadolazećih rezervacija.', 'g-sub')));
+    section.append(row(el('span', t('Nema nadolazećih rezervacija.'), 'g-sub')));
     seen.bookings = new Set();
     return;
   }
@@ -208,15 +209,16 @@ function renderBookings(now) {
   for (const { booking, session } of upcoming) {
     const account = store.accounts.find((a) => a.id === booking.accountId);
     const when = `${dayFormat.format(new Date(session.startsAt))} ${timeFormat.format(new Date(session.startsAt))}`;
-    const guest = booking.guestName ? ` · Gost: ${booking.guestName}` : '';
-    const item = row(main(session.name, when, `Bicikl ${booking.bikeNo} · ${account?.name ?? ''}${guest}`));
-    const remove = el('button', 'Makni', 'g-text destructive');
-    remove.setAttribute('aria-label', `Makni s treninga: ${account?.name ?? ''}, bicikl ${booking.bikeNo}`);
+    const guest = booking.guestName ? ` · ${t('Gost: {name}', { name: booking.guestName })}` : '';
+    const item = row(main(session.name, when, `${t('Bicikl {n}', { n: booking.bikeNo })} · ${account?.name ?? ''}${guest}`));
+    const remove = el('button', t('Makni'), 'g-text destructive');
+    remove.setAttribute('aria-label', t('Makni s treninga: {name}, bicikl {n}', { name: account?.name ?? '', n: booking.bikeNo }));
     remove.addEventListener('click', () => {
-      const reason = window.prompt('Razlog za micanje s treninga:');
+      const reason = window.prompt(t('Razlog za micanje s treninga:'));
       if (!reason || !reason.trim()) return;
+      const who = creditsEnabled(store) ? t('Kredit se vraća, a klijent') : t('Klijent');
       const sure = window.confirm(
-        `Makni ${account?.name ?? 'klijenta'} (bicikl ${booking.bikeNo}) s treninga ${session.name}?\n${creditsEnabled(store) ? 'Kredit se vraća, a klijent' : 'Klijent'} dobiva mail.`,
+        t('Makni {name} (bicikl {n}) s treninga {session}?\n{who} dobiva mail.', { name: account?.name ?? t('klijenta'), n: booking.bikeNo, session: session.name, who }),
       );
       if (!sure) return;
       // The banner shows at once while the row folds away.
@@ -247,9 +249,9 @@ function renderPacks() {
   section.replaceChildren();
   for (const pack of store.packs) {
     const group = el('div', undefined, 'group');
-    group.append(row(main(pack.name, `${pack.validDays} dana`)));
-    const price = priceRow('Cijena', String(pack.priceEur), '0', pack.name);
-    const multi = priceRow('Multisport cijena', pack.multisportPriceEur ?? '', 'nema', pack.name);
+    group.append(row(main(pack.name, t('{n} dana', { n: pack.validDays }))));
+    const price = priceRow(t('Cijena'), String(pack.priceEur), '0', pack.name);
+    const multi = priceRow(t('Multisport cijena'), pack.multisportPriceEur ?? '', t('nema'), pack.name);
     const save = () => act(() => setPackPrices(store, pack.id, {
       priceEur: Number(price.input.value),
       multisportPriceEur: multi.input.value === '' ? null : Number(multi.input.value),
@@ -295,9 +297,9 @@ function renderSchedule(now) {
   const setting = (key) => (select) => act(() => setReleaseSettings(store, { ...settings, [key]: Number(select.value) }), false);
   const opens = el('div', undefined, 'group');
   opens.append(
-    selectRow('Rezervacije se otvaraju (dan)', days, String(settings.dayOfWeek), setting('dayOfWeek')),
-    selectRow('Sat otvaranja', Array.from({ length: 24 }, (_, h) => [String(h), `${String(h).padStart(2, '0')}:00`]), String(settings.hour), setting('hour')),
-    selectRow('Tjedana unaprijed', Array.from({ length: 8 }, (_, w) => [String(w + 1), String(w + 1)]), String(settings.weeksAhead), setting('weeksAhead')),
+    selectRow(t('Rezervacije se otvaraju (dan)'), days, String(settings.dayOfWeek), setting('dayOfWeek')),
+    selectRow(t('Sat otvaranja'), Array.from({ length: 24 }, (_, h) => [String(h), `${String(h).padStart(2, '0')}:00`]), String(settings.hour), setting('hour')),
+    selectRow(t('Tjedana unaprijed'), Array.from({ length: 8 }, (_, w) => [String(w + 1), String(w + 1)]), String(settings.weeksAhead), setting('weeksAhead')),
   );
   section.append(opens);
 
@@ -306,13 +308,13 @@ function renderSchedule(now) {
   const listToggle = el('button', undefined, 'g-row g-action');
   listToggle.type = 'button';
   listToggle.setAttribute('aria-expanded', 'false');
-  listToggle.append(el('span', `Tjedni predložak (${store.template.length})`, 'g-main g-title'), chevron());
+  listToggle.append(el('span', t('Tjedni predložak ({n})', { n: store.template.length }), 'g-main g-title'), chevron());
   const list = el('div', undefined, 'g-list');
   list.hidden = true;
   store.template.forEach((entry, index) => {
     const item = row(main(`${DAY_NAMES[entry.dayOfWeek - 1]} ${entry.time} ${entry.name}`, store.instructors.find((i) => i.id === entry.instructorId)?.name));
-    const remove = el('button', 'Makni', 'g-text destructive');
-    remove.setAttribute('aria-label', `Makni iz predloška: ${entry.name}`);
+    const remove = el('button', t('Makni'), 'g-text destructive');
+    remove.setAttribute('aria-label', t('Makni iz predloška: {name}', { name: entry.name }));
     remove.addEventListener('click', () => {
       if (act(() => removeTemplateEntry(store, index), false)) collapse(item).then(render);
     });
@@ -324,11 +326,11 @@ function renderSchedule(now) {
   const addToggle = el('button', undefined, 'g-row g-action');
   addToggle.type = 'button';
   addToggle.setAttribute('aria-expanded', 'false');
-  addToggle.append(el('span', 'Dodaj termin', 'g-main g-title'), chevron());
+  addToggle.append(el('span', t('Dodaj termin'), 'g-main g-title'), chevron());
   const form = el('form', undefined, 'g-form wrap');
   form.hidden = true;
   const day = el('select', undefined, 'g-select');
-  day.setAttribute('aria-label', 'Dan');
+  day.setAttribute('aria-label', t('Dan'));
   for (const [value, text] of days) {
     const option = el('option', text);
     option.value = value;
@@ -337,18 +339,18 @@ function renderSchedule(now) {
   const time = el('input', undefined, 'g-input');
   time.type = 'time';
   time.value = '18:00';
-  time.setAttribute('aria-label', 'Vrijeme');
+  time.setAttribute('aria-label', t('Vrijeme'));
   const name = el('input', undefined, 'g-input g-name');
-  name.placeholder = 'Ime treninga';
-  name.setAttribute('aria-label', 'Ime treninga');
+  name.placeholder = t('Ime treninga');
+  name.setAttribute('aria-label', t('Ime treninga'));
   const instructor = el('select', undefined, 'g-select');
-  instructor.setAttribute('aria-label', 'Instruktor');
+  instructor.setAttribute('aria-label', t('Instruktor'));
   for (const [value, text] of instructors) {
     const option = el('option', text);
     option.value = value;
     instructor.append(option);
   }
-  const submit = el('button', 'Dodaj', 'btn');
+  const submit = el('button', t('Dodaj'), 'btn');
   submit.type = 'submit';
   form.append(name, day, time, instructor, submit);
   form.addEventListener('submit', (event) => {
@@ -366,18 +368,21 @@ function renderSchedule(now) {
   // The studio cancels a class.
   const cancel = el('div', undefined, 'group');
   const classes = upcomingClasses(now);
-  const picker = selectRow('Otkaži trening', classes.map((c) => [c.id, classLabel(c)]), classes[0]?.id ?? '', () => {});
-  const go = el('button', 'Otkaži odabrani trening', 'g-row g-action destructive');
+  const picker = selectRow(t('Otkaži trening'), classes.map((c) => [c.id, classLabel(c)]), classes[0]?.id ?? '', () => {});
+  const go = el('button', t('Otkaži odabrani trening'), 'g-row g-action destructive');
   go.type = 'button';
   go.disabled = classes.length === 0;
   go.addEventListener('click', () => {
     const picked = classes.find((c) => c.id === picker.querySelector('select').value);
     const booked = store.bookings.filter((b) => b.classId === picked.id && b.status === 'booked').length;
-    if (!window.confirm(`Otkazati trening ${picked.name}?\nRezervacija: ${booked}. Svi dobivaju ${creditsEnabled(store) ? 'kredit natrag i ' : ''}mail.`)) return;
+    const credit = creditsEnabled(store) ? t('kredit natrag i ') : '';
+    if (!window.confirm(t('Otkazati trening {name}?\nRezervacija: {booked}. Svi dobivaju {credit}mail.', { name: picked.name, booked, credit }))) return;
     let result;
     act(() => {
       result = cancelClass(store, picked.id, new Date());
-    }, true, () => (creditsEnabled(store) ? `Trening otkazan. Kredit vraćen: ${result.cancelledBookings}.` : `Trening otkazan. Obaviješteno: ${result.cancelledBookings}.`));
+    }, true, () => (creditsEnabled(store)
+      ? t('Trening otkazan. Kredit vraćen: {n}.', { n: result.cancelledBookings })
+      : t('Trening otkazan. Obaviješteno: {n}.', { n: result.cancelledBookings })));
   });
   cancel.append(picker, go);
   section.append(cancel);
@@ -386,29 +391,29 @@ function renderSchedule(now) {
   const edit = el('div', undefined, 'group');
   const editForm = el('form', undefined, 'g-form wrap');
   const editName = el('input', undefined, 'g-input g-name');
-  editName.setAttribute('aria-label', 'Ime treninga za uređivanje');
+  editName.setAttribute('aria-label', t('Ime treninga za uređivanje'));
   const editTime = el('input', undefined, 'g-input');
   editTime.type = 'time';
-  editTime.setAttribute('aria-label', 'Vrijeme treninga za uređivanje');
+  editTime.setAttribute('aria-label', t('Vrijeme treninga za uređivanje'));
   const editInstructor = el('select', undefined, 'g-select');
-  editInstructor.setAttribute('aria-label', 'Instruktor treninga za uređivanje');
+  editInstructor.setAttribute('aria-label', t('Instruktor treninga za uređivanje'));
   for (const instructor of store.instructors) {
     const option = el('option', instructor.name);
     option.value = instructor.id;
     editInstructor.append(option);
   }
   const editTheme = el('input', undefined, 'g-input');
-  editTheme.placeholder = 'Tema (nije obavezno)';
-  editTheme.setAttribute('aria-label', 'Tema treninga za uređivanje');
+  editTheme.placeholder = t('Tema (nije obavezno)');
+  editTheme.setAttribute('aria-label', t('Tema treninga za uređivanje'));
   const editBikes = el('input', undefined, 'g-input');
   editBikes.type = 'number';
   editBikes.min = '1';
   editBikes.max = '20';
-  editBikes.setAttribute('aria-label', 'Broj bicikala na treningu');
-  const save = el('button', 'Spremi', 'btn');
+  editBikes.setAttribute('aria-label', t('Broj bicikala na treningu'));
+  const save = el('button', t('Spremi'), 'btn');
   save.type = 'submit';
   const bikesField = el('label', undefined, 'g-field');
-  bikesField.append(editBikes, el('span', 'bicikala'));
+  bikesField.append(editBikes, el('span', t('bicikala')));
   editForm.append(editName, editTime, bikesField, editInstructor, editTheme, save);
   const fill = (id) => {
     const picked = classes.find((c) => c.id === id);
@@ -419,13 +424,13 @@ function renderSchedule(now) {
     editTheme.value = picked.themeName ?? '';
     editBikes.value = picked.bikeCount;
   };
-  const editPicker = selectRow('Uredi trening', classes.map((c) => [c.id, classLabel(c)]), classes[0]?.id ?? '', (select) => fill(select.value));
+  const editPicker = selectRow(t('Uredi trening'), classes.map((c) => [c.id, classLabel(c)]), classes[0]?.id ?? '', (select) => fill(select.value));
   fill(classes[0]?.id);
   editForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const id = editPicker.querySelector('select').value;
     if (!id) return;
-    act(() => editClass(store, { classId: id, name: editName.value, time: editTime.value, instructorId: editInstructor.value, themeName: editTheme.value.trim(), bikeCount: Number(editBikes.value), now: new Date() }), true, 'Trening je uređen.');
+    act(() => editClass(store, { classId: id, name: editName.value, time: editTime.value, instructorId: editInstructor.value, themeName: editTheme.value.trim(), bikeCount: Number(editBikes.value), now: new Date() }), true, t('Trening je uređen.'));
   });
   edit.append(editPicker, editForm);
   section.append(edit);
@@ -440,14 +445,14 @@ function renderOwed() {
   if (!on) return;
   const owed = owedClasses(store);
   if (owed.length === 0) {
-    section.append(row(el('span', 'Ništa za naplatiti.', 'g-sub')));
+    section.append(row(el('span', t('Ništa za naplatiti.'), 'g-sub')));
     return;
   }
   for (const { booking, session, account } of owed) {
-    const what = booking.status === 'late_cancel' ? 'Kasno otkazano' : 'No-show';
-    const charged = el('button', 'Naplaćeno', 'g-text accent');
-    charged.setAttribute('aria-label', `Naplaćeno ${account.name}, ${what} · ${classLabel(session)}`);
-    charged.addEventListener('click', () => act(() => markCharged(store, booking.id, new Date()), true, 'Označeno kao naplaćeno.'));
+    const what = booking.status === 'late_cancel' ? t('Kasno otkazano') : 'No-show';
+    const charged = el('button', t('Naplaćeno'), 'g-text accent');
+    charged.setAttribute('aria-label', t('Naplaćeno {name}, {what} · {session}', { name: account.name, what, session: classLabel(session) }));
+    charged.addEventListener('click', () => act(() => markCharged(store, booking.id, new Date()), true, t('Označeno kao naplaćeno.')));
     section.append(row(main(account.name, `${what} · ${classLabel(session)}`), charged));
   }
 }
@@ -458,8 +463,8 @@ const slotHour = (hour) => `${String(hour).padStart(2, '0')}:00 - ${String(hour 
 const shortDate = (date) => `${Number(date.slice(8))}.${Number(date.slice(5, 7))}.`;
 
 function sculptWarning(status) {
-  if (status.status === 'lapsed') return `${monthLabel(status.month)} nije plaćen.`;
-  if (status.status === 'ending') return `Plaćeno do kraja mjeseca, još ${status.daysLeft + 1} dana. Označi sljedeći mjesec.`;
+  if (status.status === 'lapsed') return t('{month} nije plaćen.', { month: monthLabel(status.month) });
+  if (status.status === 'ending') return t('Plaćeno do kraja mjeseca, još {n} dana. Označi sljedeći mjesec.', { n: status.daysLeft + 1 });
   return null;
 }
 
@@ -472,12 +477,12 @@ function renderTrainer(trainer, now) {
 
   const paid = store.sculpt.paidMonths.filter((p) => p.trainerId === trainer.id).sort((a, b) => a.month.localeCompare(b.month));
   for (const entry of paid) {
-    const detail = `Plaćeno ${shortDate(entry.paidOn)} · ${entry.amountEur} €${entry.note ? ` · ${entry.note}` : ''}`;
+    const detail = `${t('Plaćeno {date}', { date: shortDate(entry.paidOn) })} · ${entry.amountEur} €${entry.note ? ` · ${entry.note}` : ''}`;
     const item = row(main(`${monthLabel(entry.month)} ${entry.month.slice(0, 4)}`, detail));
-    const undo = el('button', 'Poništi', 'g-text destructive');
-    undo.setAttribute('aria-label', `Poništi plaćanje: ${trainer.name}, ${monthLabel(entry.month)}`);
+    const undo = el('button', t('Poništi'), 'g-text destructive');
+    undo.setAttribute('aria-label', t('Poništi plaćanje: {name}, {month}', { name: trainer.name, month: monthLabel(entry.month) }));
     undo.addEventListener('click', () => {
-      if (!window.confirm(`Poništiti plaćanje za ${monthLabel(entry.month)} (${trainer.name})?\nVeć rezervirani sati ostaju, novi se ne mogu rezervirati.`)) return;
+      if (!window.confirm(t('Poništiti plaćanje za {month} ({name})?\nVeć rezervirani sati ostaju, novi se ne mogu rezervirati.', { month: monthLabel(entry.month), name: trainer.name }))) return;
       act(() => unmarkMonthPaid(store, { trainerId: trainer.id, month: entry.month }));
     });
     item.append(undo);
@@ -491,12 +496,12 @@ function renderTrainer(trainer, now) {
   if (options.length > 0) {
     const form = el('form', undefined, 'g-form wrap');
     const month = el('select', undefined, 'g-select');
-    month.setAttribute('aria-label', 'Mjesec');
+    month.setAttribute('aria-label', t('Mjesec'));
     for (const [value, text] of options) month.append(Object.assign(el('option', text), { value }));
     const note = el('input', undefined, 'g-input g-name');
-    note.placeholder = 'Napomena (npr. gotovina)';
-    note.setAttribute('aria-label', 'Napomena');
-    const submit = el('button', 'Označi plaćeno', 'btn');
+    note.placeholder = t('Napomena (npr. gotovina)');
+    note.setAttribute('aria-label', t('Napomena'));
+    const submit = el('button', t('Označi plaćeno'), 'btn');
     submit.type = 'submit';
     form.append(month, note, submit);
     form.addEventListener('submit', (event) => {
@@ -514,22 +519,22 @@ function renderSculpt(now) {
   for (const trainer of store.sculpt.trainers) section.append(renderTrainer(trainer, now));
 
   // Booked hours, with the owner's remove.
-  section.append(el('h3', 'Rezervirani sati', 'g-header'));
+  section.append(el('h3', t('Rezervirani sati'), 'g-header'));
   const booked = el('div', undefined, 'group');
   const today = studioTime.localDate(now.toISOString());
   const upcoming = store.sculpt.slots
     .filter((slot) => slot.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date) || a.hour - b.hour);
-  if (upcoming.length === 0) booked.append(row(el('span', 'Nema rezerviranih sati.', 'g-sub')));
+  if (upcoming.length === 0) booked.append(row(el('span', t('Nema rezerviranih sati.'), 'g-sub')));
   for (const slot of upcoming) {
-    const trainer = store.sculpt.trainers.find((t) => t.id === slot.trainerId);
+    const trainer = store.sculpt.trainers.find((tr) => tr.id === slot.trainerId);
     const item = row(main(trainer.name, `${slotDate(slot.date)} ${slotHour(slot.hour)}`));
-    const remove = el('button', 'Makni', 'g-text destructive');
-    remove.setAttribute('aria-label', `Makni termin: ${trainer.name}, ${slotDate(slot.date)} ${slotHour(slot.hour)}`);
+    const remove = el('button', t('Makni'), 'g-text destructive');
+    remove.setAttribute('aria-label', t('Makni termin: {name}, {date} {hour}', { name: trainer.name, date: slotDate(slot.date), hour: slotHour(slot.hour) }));
     remove.addEventListener('click', () => {
-      const reason = window.prompt('Razlog za micanje termina:');
+      const reason = window.prompt(t('Razlog za micanje termina:'));
       if (!reason || !reason.trim()) return;
-      if (!window.confirm(`Maknuti termin ${slotDate(slot.date)} ${slotHour(slot.hour)} (${trainer.name})?\nTrener dobiva mail.`)) return;
+      if (!window.confirm(t('Maknuti termin {date} {hour} ({name})?\nTrener dobiva mail.', { date: slotDate(slot.date), hour: slotHour(slot.hour), name: trainer.name }))) return;
       act(() => removeSlot(store, { slotId: slot.id, reason: reason.trim(), now: new Date() }));
     });
     item.append(remove);
@@ -538,12 +543,12 @@ function renderSculpt(now) {
   section.append(booked);
 
   // Closed days: the room cannot be booked on them.
-  section.append(el('h3', 'Zatvoreni dani', 'g-header'));
+  section.append(el('h3', t('Zatvoreni dani'), 'g-header'));
   const closed = el('div', undefined, 'group');
   for (const date of store.sculpt.closedDays) {
     const item = row(el('span', slotDate(date), 'g-main g-title'));
-    const open = el('button', 'Makni', 'g-text destructive');
-    open.setAttribute('aria-label', `Makni zatvoreni dan ${slotDate(date)}`);
+    const open = el('button', t('Makni'), 'g-text destructive');
+    open.setAttribute('aria-label', t('Makni zatvoreni dan {date}', { date: slotDate(date) }));
     open.addEventListener('click', () => act(() => removeClosedDay(store, date)));
     item.append(open);
     closed.append(item);
@@ -553,8 +558,8 @@ function renderSculpt(now) {
   date.type = 'date';
   date.min = today;
   date.required = true;
-  date.setAttribute('aria-label', 'Datum');
-  const submit = el('button', 'Zatvori dan', 'btn');
+  date.setAttribute('aria-label', t('Datum'));
+  const submit = el('button', t('Zatvori dan'), 'btn');
   submit.type = 'submit';
   form.append(date, submit);
   form.addEventListener('submit', (event) => {
@@ -569,13 +574,13 @@ function renderMails() {
   const section = $('mails');
   section.replaceChildren();
   if (store.outbox.length === 0) {
-    section.append(row(el('span', 'Još nema poslanih mailova.', 'g-sub')));
+    section.append(row(el('span', t('Još nema poslanih mailova.'), 'g-sub')));
     seen.mails = new Set();
     return;
   }
   const shown = new Set();
   for (const mail of [...store.outbox].reverse().slice(0, 8)) {
-    const text = main(mail.subject, `Za: ${mail.to}`, mail.body);
+    const text = main(mail.subject, t('Za: {to}', { to: mail.to }), mail.body);
     if (mail.action) {
       const link = el('a', mail.action.label, 'g-link');
       link.href = mail.action.url;
@@ -642,7 +647,7 @@ $('remind').addEventListener('click', () => {
 });
 
 function renderCreditsMode() {
-  $('credits').textContent = creditsEnabled(store) ? 'Način: Q1, s kreditima (promijeni na prosinac)' : 'Način: prosinac, bez kredita (promijeni na Q1)';
+  $('credits').textContent = creditsEnabled(store) ? t('Način: Q1, s kreditima (promijeni na prosinac)') : t('Način: prosinac, bez kredita (promijeni na Q1)');
 }
 $('credits').addEventListener('click', () => {
   act(() => {

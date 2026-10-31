@@ -1,8 +1,10 @@
+import { keep, restored } from './keep.js';
 import { hrDate, studioTime } from '../time.js';
 import { bookSlot, cancelSlot, cellState, mySlots, bookableDates, SculptError } from '../sculpt.js';
 import { loadStore, saveStore, getLogin } from './session.js';
 import { showBanner, fadeIn } from './motion.js';
 import { keepFocus } from './focus.js';
+import { t } from '../i18n.js';
 
 const dayFormat = hrDate({ weekday: 'short', day: '2-digit', month: '2-digit' });
 // Reasons that hold for the whole day are said once above the list, not on every hour.
@@ -11,7 +13,8 @@ const DAY_LEVEL = ['unpaid', 'closed_day', 'too_far', 'day_full'];
 const $ = (id) => document.getElementById('t-' + id);
 const store = loadStore();
 saveStore(store);
-let day = null;
+let day = restored('sculpt') ?? null;
+keep('sculpt', () => day);
 
 function el(tag, text, className) {
   const node = document.createElement(tag);
@@ -45,7 +48,7 @@ function renderDayPicker(now) {
   if (!day || !dates.includes(day)) day = dates[0];
   select.replaceChildren();
   for (const date of dates) {
-    const suffix = date === dates[0] ? ' · danas' : store.sculpt.closedDays.includes(date) ? ' · zatvoreno' : '';
+    const suffix = date === dates[0] ? ` · ${t('danas')}` : store.sculpt.closedDays.includes(date) ? ` · ${t('zatvoreno')}` : '';
     const option = el('option', dateText(date) + suffix);
     option.value = date;
     option.selected = date === day;
@@ -68,18 +71,18 @@ function renderHours(now, trainerId) {
     const row = el('div', undefined, 'g-row t-row');
     row.append(el('div', hourText(hour), 'g-main g-title'));
     if (cell.state === 'free') {
-      const book = el('button', 'Rezerviraj', 'btn');
-      book.setAttribute('aria-label', `Rezerviraj ${hourText(hour)}`);
-      book.addEventListener('click', () => act(() => bookSlot(store, { trainerId, date: day, hour, now: new Date() }), `Rezervirano: ${dateText(day)}, ${hourText(hour)}.`));
+      const book = el('button', t('Rezerviraj'), 'btn');
+      book.setAttribute('aria-label', t('Rezerviraj {time}', { time: hourText(hour) }));
+      book.addEventListener('click', () => act(() => bookSlot(store, { trainerId, date: day, hour, now: new Date() }), t('Rezervirano: {date}, {time}.', { date: dateText(day), time: hourText(hour) })));
       row.append(book);
     } else if (cell.state === 'mine') {
-      row.append(el('span', 'Moj termin', 'pill pill-attended'), cancelButton(cell.slot, trainerId));
+      row.append(el('span', t('Moj termin'), 'pill pill-attended'), cancelButton(cell.slot, trainerId));
     } else if (cell.state === 'taken') {
       row.classList.add('off');
       row.append(el('span', cell.by, 'g-trail'));
     } else {
       row.classList.add('off');
-      row.append(el('span', cell.code === 'past' ? 'prošlo' : 'nedostupno', 'g-trail'));
+      row.append(el('span', cell.code === 'past' ? t('prošlo') : t('nedostupno'), 'g-trail'));
     }
     return row;
   });
@@ -87,9 +90,9 @@ function renderHours(now, trainerId) {
 }
 
 function cancelButton(slot, trainerId) {
-  const button = el('button', 'Otkaži', 'g-text destructive');
-  button.setAttribute('aria-label', `Otkaži ${dateText(slot.date)}, ${hourText(slot.hour)}`);
-  button.addEventListener('click', () => act(() => cancelSlot(store, { slotId: slot.id, trainerId, now: new Date() }), `Otkazano: ${dateText(slot.date)}, ${hourText(slot.hour)}.`));
+  const button = el('button', t('Otkaži'), 'g-text destructive');
+  button.setAttribute('aria-label', t('Otkaži {date}, {time}', { date: dateText(slot.date), time: hourText(slot.hour) }));
+  button.addEventListener('click', () => act(() => cancelSlot(store, { slotId: slot.id, trainerId, now: new Date() }), t('Otkazano: {date}, {time}.', { date: dateText(slot.date), time: hourText(slot.hour) })));
   return button;
 }
 
@@ -104,7 +107,7 @@ function renderMine(now, trainerId) {
   });
   if (rows.length === 0) {
     const empty = el('div', undefined, 'g-row');
-    empty.append(el('span', 'Još nemaš rezervacija.', 'g-sub'));
+    empty.append(el('span', t('Još nemaš rezervacija.'), 'g-sub'));
     rows.push(empty);
   }
   $('mine').replaceChildren(...rows);
@@ -116,7 +119,7 @@ export function render() {
 
 function draw() {
   const trainerId = getLogin();
-  if (!store.sculpt.trainers.some((t) => t.id === trainerId)) return;
+  if (!store.sculpt.trainers.some((trainer) => trainer.id === trainerId)) return;
   const now = new Date();
   renderDayPicker(now);
   renderHours(now, trainerId);

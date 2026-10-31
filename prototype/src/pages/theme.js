@@ -1,12 +1,13 @@
 // The sun/moon button in the top bar flips between light and dark and remembers the choice.
 import { EASE_DRAWER } from './motion.js';
+import { t } from '../i18n.js';
 
 const root = document.documentElement;
 const button = document.getElementById('theme-button');
 
 function apply(theme) {
   root.dataset.theme = theme;
-  button.setAttribute('aria-label', theme === 'dark' ? 'Svijetli način' : 'Tamni način');
+  button.setAttribute('aria-label', theme === 'dark' ? t('Svijetli način') : t('Tamni način'));
 }
 
 apply(root.dataset.theme);
