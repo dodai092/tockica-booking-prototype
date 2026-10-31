@@ -335,10 +335,16 @@ body { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
 @view-transition { navigation: auto; }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 400ms; animation-timing-function: ease-in-out; }
 @media (prefers-reduced-motion: reduce) { ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 200ms; } }
-/* Language switch: the old page fades out, then the new one fades in, so the text change is not seen as a cut. */
+/* Language switch: the old page fades out, then the new one fades in, so the text change is not seen as a cut.
+   The top bar and the tab bar are their own layers, so they swap in place and do not fade. */
+.top { view-transition-name: top-bar; }
+.tab-bar { view-transition-name: tab-bar; }
+::view-transition-group(top-bar), ::view-transition-group(tab-bar) { animation-duration: 400ms; animation-timing-function: ease-in-out; }
 html[data-vt="lang"]::view-transition-old(root), html[data-vt="lang"]::view-transition-new(root) { mix-blend-mode: normal; }
 html[data-vt="lang"]::view-transition-old(root) { animation: lang-out 180ms ease-in both; }
 html[data-vt="lang"]::view-transition-new(root) { animation: lang-in 260ms ease-out 140ms both; }
+html[data-vt="lang"]::view-transition-old(top-bar), html[data-vt="lang"]::view-transition-old(tab-bar) { animation: none; opacity: 0; }
+html[data-vt="lang"]::view-transition-new(top-bar), html[data-vt="lang"]::view-transition-new(tab-bar) { animation: none; }
 @keyframes lang-out { to { opacity: 0; } }
 @keyframes lang-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
