@@ -54,7 +54,7 @@ h1, h2, h3, button, .balance {
 
 main { max-width: 760px; margin: 0 auto; padding: 16px; }
 
-.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: center; margin-bottom: 16px; }
+.week { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; align-items: center; margin-bottom: 16px; }
 .week-head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; }
 .week-label { font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--ink); font-variant-numeric: tabular-nums; }
 
@@ -255,6 +255,8 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
 .card .few { color: #B54708; font-weight: 500; }
 .price-link { padding: 0; border: 0; background: none; cursor: pointer; }
 .mine-link { display: block; width: fit-content; margin-bottom: 8px; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--green-ink); }
+#s-mine-link { min-height: 1.3125rem; transition: opacity .25s; }
+#s-mine-link.is-empty { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .25s, visibility 0s .25s; }
 
 /* Bottom nav: floating pill, icon over label. The chosen tab takes the brand green. */
 .tab-bar {
@@ -329,8 +331,20 @@ body { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
 }
 /* Theme change crossfades one snapshot of the whole page (theme.js), so text,
    backgrounds and icons all switch together. */
+/* The language switch reloads the page; the same crossfade as the dark-mode change plays across the reload. */
+@view-transition { navigation: auto; }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 400ms; animation-timing-function: ease-in-out; }
 @media (prefers-reduced-motion: reduce) { ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 200ms; } }
+/* Language switch: the old page fades out, then the new one fades in, so the text change is not seen as a cut. */
+html[data-vt="lang"]::view-transition-old(root), html[data-vt="lang"]::view-transition-new(root) { mix-blend-mode: normal; }
+html[data-vt="lang"]::view-transition-old(root) { animation: lang-out 180ms ease-in both; }
+html[data-vt="lang"]::view-transition-new(root) { animation: lang-in 260ms ease-out 140ms both; }
+@keyframes lang-out { to { opacity: 0; } }
+@keyframes lang-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  html[data-vt="lang"]::view-transition-old(root) { animation-duration: 100ms; }
+  html[data-vt="lang"]::view-transition-new(root) { animation-duration: 140ms; animation-delay: 80ms; }
+}
 [data-theme="dark"] .message { background: #1c3a1b; color: #a9e3a4; }
 [data-theme="dark"] .message.error { background: #3d1a17; color: #ffb4ab; }
 [data-theme="dark"] .tab-bar { background: rgba(27,32,39,.72); border-color: rgba(255,255,255,.08); }
@@ -587,7 +601,15 @@ h2 { letter-spacing: .04em; }
 .g-row.wrap { flex-wrap: wrap; }
 .login-select { height: 36px; margin-left: auto; padding: 0 10px; border: 0; border-radius: 18px; background: rgba(255, 255, 255, .1); color: #fff; font: inherit; font-size: 0.875rem; }
 .login-select option { color: #000; }
-.login-select + .theme-button { margin-left: 8px; }
+/* Language flag: same round button as theme and info, shows the flag of the language it switches to. */
+.lang-button { display: grid; place-items: center; width: 44px; height: 44px; margin-left: 8px; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .1); cursor: pointer; transition: background .2s, transform .35s var(--ease-spring); }
+@media (hover: hover) and (pointer: fine) {
+  .lang-button:hover { background: rgba(255, 255, 255, .18); }
+}
+.lang-button:active { transform: scale(.92); transition-duration: .08s; }
+.lang-button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.lang-button img { display: block; width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.lang-button + .theme-button { margin-left: 8px; }
 .tab-bar button[hidden] { display: none; }
 .card .cap { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 0.8125rem; color: var(--muted); }
 .card .cap .bar { flex: 0 0 90px; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
@@ -641,4 +663,16 @@ h2 { letter-spacing: .04em; }
   .switch::after { top: 0; left: 0; background: ButtonText; box-shadow: none; }
   .switch:checked { background: Highlight; border-color: Highlight; }
   .switch:checked::after { background: HighlightText; }
+}
+
+/* Phones: the header row must fit. The round buttons keep 44px and the login select gives way. */
+.logo, .info-button, .theme-button, .lang-button { flex: none; }
+.login-select { min-width: 0; text-overflow: ellipsis; }
+@media (max-width: 480px) {
+  .top { gap: 8px; padding: 12px 16px; }
+  .lang-button, .lang-button + .theme-button { margin-left: 0; }
+}
+@media (max-width: 359px) {
+  .top { padding: 12px; }
+  .logo { height: 44px; }
 }

@@ -3,6 +3,7 @@ import { returnCredit, returnedExpiresAt, creditsEnabled } from './ledger.js';
 import { onBikeFreed, takenBikes, BikeTakenError, BikeOutOfRangeError } from './booking.js';
 import { send } from './outbox.js';
 import { studioTime, hrDate } from './time.js';
+import { t } from './i18n.js';
 
 const timeFormat = hrDate({ hour: '2-digit', minute: '2-digit' });
 const dateFormat = hrDate({ weekday: 'long', day: 'numeric', month: 'numeric' });
@@ -79,7 +80,7 @@ export function editClass(store, { classId, name, time, instructorId, themeName,
   if (session.cancelled) throw new Error(`Class ${classId} is cancelled`);
   const capacity = bikeCount ?? session.bikeCount;
   const highestBooked = Math.max(0, ...takenBikes(store, classId));
-  if (!isInt(capacity, 1, 20) || capacity < highestBooked) throw new RangeError(`Broj bicikala mora biti od ${Math.max(1, highestBooked)} do 20.`);
+  if (!isInt(capacity, 1, 20) || capacity < highestBooked) throw new RangeError(t('Broj bicikala mora biti od {min} do 20.', { min: Math.max(1, highestBooked) }));
 
   const day = studioTime.localDate(session.startsAt);
   const startsAt = studioTime.toUtc(`${day}T${time}`);

@@ -1,9 +1,10 @@
 import { newId } from './model.js';
-import { studioTime } from './time.js';
+import { studioTime, hrDate } from './time.js';
 import { send } from './outbox.js';
+import { t, plural } from './i18n.js';
 
 // Sculpt Room: trainers rent it one calendar month at a time and book whole hours.
-// Messages are Croatian because they are shown to the trainer as they are.
+// Messages are Croatian source text, shown to the trainer through t() in the active language.
 export class SculptError extends Error {
   constructor(code, message) {
     super(message);
@@ -12,9 +13,9 @@ export class SculptError extends Error {
   }
 }
 
-const monthName = new Intl.DateTimeFormat('hr-HR', { timeZone: 'UTC', month: 'long' });
+const monthName = hrDate({ month: 'long' });
 export const monthLabel = (month) => monthName.format(new Date(`${month}-15T12:00:00Z`));
-const hoursText = (n) => `${n} ${n === 1 ? 'sat' : 'sata'}`;
+const hoursText = (n) => `${n} ${plural(n, ['sat', 'sata', 'sati'], ['hour', 'hours'])}`;
 
 export const monthOf = (date) => date.slice(0, 7);
 const todayOf = (now) => studioTime.localDate(now.toISOString());
@@ -32,20 +33,20 @@ export function nextMonth(month) {
 function problem(store, { trainerId, date, hour, now }) {
   const { settings, closedDays, slots } = store.sculpt;
   if (!Number.isInteger(hour) || hour < settings.openHour || hour >= settings.closeHour) {
-    return ['hour_range', 'Sat je izvan radnog vremena.'];
+    return ['hour_range', t('Sat je izvan radnog vremena.')];
   }
-  if (startOf(date, hour) <= now.getTime()) return ['past', 'Taj sat je prošao.'];
+  if (startOf(date, hour) <= now.getTime()) return ['past', t('Taj sat je prošao.')];
   if (date > studioTime.addDays(todayOf(now), settings.daysAhead)) {
-    return ['too_far', `Moguće je rezervirati do ${settings.daysAhead} dana unaprijed.`];
+    return ['too_far', t('Moguće je rezervirati do {days} dana unaprijed.', { days: settings.daysAhead })];
   }
-  if (closedDays.includes(date)) return ['closed_day', 'Studio je taj dan zatvoren.'];
+  if (closedDays.includes(date)) return ['closed_day', t('Studio je taj dan zatvoren.')];
   if (!isPaid(store, trainerId, monthOf(date))) {
     const label = monthLabel(monthOf(date));
-    return ['unpaid', `${label[0].toUpperCase()}${label.slice(1)} nije plaćen. Javi se vlasnici.`];
+    return ['unpaid', t('{month} nije plaćen. Javi se vlasnici.', { month: `${label[0].toUpperCase()}${label.slice(1)}` })];
   }
-  if (slots.some((s) => s.date === date && s.hour === hour)) return ['taken', 'Sat je već zauzet.'];
+  if (slots.some((s) => s.date === date && s.hour === hour)) return ['taken', t('Sat je već zauzet.')];
   const mine = slots.filter((s) => s.trainerId === trainerId && s.date === date).length;
-  if (mine >= settings.maxHoursPerDay) return ['day_full', `Najviše ${hoursText(settings.maxHoursPerDay)} dnevno.`];
+  if (mine >= settings.maxHoursPerDay) return ['day_full', t('Najviše {hours} dnevno.', { hours: hoursText(settings.maxHoursPerDay) })];
   return null;
 }
 
@@ -60,15 +61,15 @@ export function bookSlot(store, { trainerId, date, hour, now }) {
 // A trainer gives back their own slot, any time before it starts.
 export function cancelSlot(store, { slotId, trainerId, now }) {
   const slot = store.sculpt.slots.find((s) => s.id === slotId);
-  if (!slot || slot.trainerId !== trainerId) throw new SculptError('not_yours', 'To nije tvoj termin.');
-  if (startOf(slot.date, slot.hour) <= now.getTime()) throw new SculptError('past', 'Taj sat je prošao.');
+  if (!slot || slot.trainerId !== trainerId) throw new SculptError('not_yours', t('To nije tvoj termin.'));
+  if (startOf(slot.date, slot.hour) <= now.getTime()) throw new SculptError('past', t('Taj sat je prošao.'));
   store.sculpt.slots.splice(store.sculpt.slots.indexOf(slot), 1);
 }
 
 // The owner removes a slot. The trainer is told why.
 export function removeSlot(store, { slotId, reason, now }) {
   const slot = store.sculpt.slots.find((s) => s.id === slotId);
-  if (!slot) throw new SculptError('missing', 'Termin ne postoji.');
+  if (!slot) throw new SculptError('missing', t('Termin ne postoji.'));
   const trainer = trainerOf(store, slot.trainerId);
   store.sculpt.slots.splice(store.sculpt.slots.indexOf(slot), 1);
   const when = `${Number(slot.date.slice(8))}.${Number(slot.date.slice(5, 7))}. u ${String(slot.hour).padStart(2, '0')}:00`;
@@ -82,8 +83,8 @@ export function removeSlot(store, { slotId, reason, now }) {
 
 // The owner marks a month paid (cash today). The record keeps date, amount and a note.
 export function markMonthPaid(store, { trainerId, month, now, note = '' }) {
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new SculptError('bad_month', 'Mjesec mora biti oblika GGGG-MM.');
-  if (isPaid(store, trainerId, month)) throw new SculptError('already_paid', `${monthLabel(month)} je već plaćen.`);
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new SculptError('bad_month', t('Mjesec mora biti oblika GGGG-MM.'));
+  if (isPaid(store, trainerId, month)) throw new SculptError('already_paid', t('{month} je već plaćen.', { month: monthLabel(month) }));
   const entry = { trainerId, month, paidOn: todayOf(now), amountEur: store.sculpt.settings.rentalEur, note };
   store.sculpt.paidMonths.push(entry);
   return entry;
@@ -93,14 +94,14 @@ export function markMonthPaid(store, { trainerId, month, now, note = '' }) {
 export function unmarkMonthPaid(store, { trainerId, month }) {
   const { paidMonths } = store.sculpt;
   const index = paidMonths.findIndex((p) => p.trainerId === trainerId && p.month === month);
-  if (index === -1) throw new SculptError('not_paid', 'Taj mjesec nije označen kao plaćen.');
+  if (index === -1) throw new SculptError('not_paid', t('Taj mjesec nije označen kao plaćen.'));
   paidMonths.splice(index, 1);
 }
 
 export function addClosedDay(store, date) {
   const { closedDays, slots } = store.sculpt;
   if (closedDays.includes(date)) return;
-  if (slots.some((s) => s.date === date)) throw new SculptError('has_slots', 'Taj dan već ima rezervacije. Prvo ih makni.');
+  if (slots.some((s) => s.date === date)) throw new SculptError('has_slots', t('Taj dan već ima rezervacije. Prvo ih makni.'));
   closedDays.push(date);
   closedDays.sort();
 }

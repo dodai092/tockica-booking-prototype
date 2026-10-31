@@ -7,6 +7,9 @@ import { render as renderAdmin } from './admin.js';
 import { render as renderSculpt } from './sculpt.js';
 import './info.js';
 import './theme.js';
+import './language.js';
+import { t, translatePage } from '../i18n.js';
+import { keep, restored, restoredScroll } from './keep.js';
 import { tabKeys } from './tabkeys.js';
 import { LOGINS, getLogin, setLogin, loadStore } from './session.js';
 import { askCancel } from './schedule.js';
@@ -47,7 +50,7 @@ function show(tab) {
   window.scrollTo(0, 0);
   history.replaceState(null, '', `#${tab}`);
   const heading = panels[tab].querySelector('h1');
-  document.title = `${heading.textContent} · Točkica: booking prototip`;
+  document.title = `${heading.textContent} · ${t('Točkica: booking prototip')}`;
   // Focus moves to the new heading, except when the tab bar has focus: arrow keys move between tabs there.
   if (!first && !bar.contains(document.activeElement)) heading.focus({ preventScroll: true });
 }
@@ -74,7 +77,8 @@ function applyRole() {
 
 // Demo sign-in: switches between two customers, Reception, the Owner and two trainers.
 const login = document.getElementById('login');
-for (const [value, label] of LOGINS) login.append(new Option(label, value));
+translatePage();
+for (const [value, label] of LOGINS) login.append(new Option(t(label), value));
 login.value = getLogin();
 login.addEventListener('change', () => {
   setLogin(login.value);
@@ -90,11 +94,14 @@ document.fonts?.ready.then(() => moveIndicator(current, false));
 // A link like #racun/otkazi/<booking id> (from the reminder mail) opens Moj profil and asks to cancel that booking,
 // but only for the signed-in customer who owns it.
 const [start, action, bookingId] = location.hash.slice(1).split('/');
-show(TABS.includes(start) ? start : allowed()[0]);
+keep('tab', () => current);
+const keptTab = restored('tab');
+show(TABS.includes(start) ? start : TABS.includes(keptTab) ? keptTab : allowed()[0]);
 if (action === 'otkazi' && current === 'racun') {
   const store = loadStore();
   const booking = store.bookings.find((b) => b.id === bookingId && b.status === 'booked' && b.accountId === getLogin());
   const session = booking && store.classes.find((c) => c.id === booking.classId);
   if (session && Date.parse(session.startsAt) > Date.now()) askCancel(booking, session);
 }
+window.scrollTo(0, restoredScroll());
 bar.classList.add('ready'); // from now on a newly selected tab icon pops
