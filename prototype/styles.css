@@ -173,6 +173,8 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
 .card .mine-block { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; margin-top: 12px; padding: 6px 6px 6px 14px; border-radius: 10px; background: color-mix(in srgb, var(--green) 14%, transparent); }
 .card .mine { margin: 0; padding: 6px 0; font-family: Montserrat, sans-serif; font-weight: 800; font-size: 1.125rem; color: var(--green-ink); }
 .add-bike { min-height: 44px; padding: 0 16px; border: 1.5px solid var(--green-ink); border-radius: 999px; background: transparent; font-family: Montserrat, sans-serif; font-weight: 700; font-size: 0.875rem; color: var(--green-ink); cursor: pointer; }
+.card > .act .mine-block { margin: 0; padding: 0; background: none; }
+.card > .act .mine { padding: 0; font-size: 0.9375rem; text-align: center; }
 .card .mine ~ .btn.secondary { margin: 8px 8px 0 0; }
 .bike[aria-pressed="true"] { background: var(--green-fill); border-color: var(--green-fill); color: #fff; }
 /* An empty status region stays rendered, so a screen reader hears the text when it is added. It is only hidden visually. */
@@ -181,6 +183,8 @@ h2 { font-size: 1.125rem; color: var(--ink); margin: 24px 0 8px; text-transform:
 .field-error:empty { display: none; }
 .message { min-height: 0; padding: 10px 14px; border-radius: 8px; background: #E8F5E7; color: #1F6B1B; }
 .message.error { background: var(--danger-bg); color: var(--danger); }
+/* Floats like .snack, so a booking never pushes the schedule down. */
+#s-message:not(:empty) { position: fixed; left: 16px; right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 19; max-width: 420px; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); }
 
 /* Reception */
 .summary {

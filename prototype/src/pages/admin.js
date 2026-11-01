@@ -290,7 +290,7 @@ function renderSchedule(now) {
   const section = $('schedule');
   section.replaceChildren();
   const instructors = store.instructors.map((i) => [i.id, i.name]);
-  const days = DAY_NAMES.map((name, i) => [String(i + 1), name]);
+  const days = DAY_NAMES.slice(0, 6).map((name, i) => [String(i + 1), name]);
 
   // When bookings open.
   const { settings } = store;

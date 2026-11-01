@@ -88,8 +88,12 @@ function el(tag, text, className) {
   return node;
 }
 
+// The banner floats over the page (see #s-message), so it clears itself instead of staying.
+let messageTimer;
 function showMessage(text, isError = false, node = $('message')) {
   showBanner(node, text, isError);
+  clearTimeout(messageTimer);
+  if (text) messageTimer = setTimeout(() => showBanner(node, ''), 6000);
 }
 
 function renderAccount() {
@@ -293,19 +297,23 @@ function renderClasses() {
       leave.addEventListener('click', () => leaveList(session.id));
       info.append(leave);
     }
-    if (action.dataset.action !== 'add-bike') card.append(info, action.dataset.action === 'book' ? withCost(action) : action);
-    else {
-      // No button column, so the card is one column and the block reaches the right padding.
-      card.classList.add('solo');
-      card.append(info);
-    }
-    if (mine.length && current.getTime() < Date.parse(session.startsAt)) {
+    const upcomingMine = mine.length > 0 && current.getTime() < Date.parse(session.startsAt);
+    const mineBlock = () => {
       const bikes = mine.map((b) => (b.guestName ? `${b.bikeNo} (${b.guestName})` : b.bikeNo)).join(', ');
       const block = el('div', undefined, 'mine-block');
       block.dataset.bookings = mine.map((b) => b.id).join(' ');
       block.append(el('div', `${mine.length > 1 ? t('Tvoji bicikli') : t('Tvoj bicikl')}: ${bikes}`, 'mine'));
-      if (action.dataset.action === 'add-bike') block.append(action);
-      info.append(block);
+      return block;
+    };
+    if (action.dataset.action === 'add-bike' && upcomingMine) {
+      // Count and bar stay on the left; the right column holds the button with "your bike" under it,
+      // so booking adds no height to the card.
+      const act = el('div', undefined, 'act');
+      act.append(action, mineBlock());
+      card.append(info, act);
+    } else {
+      card.append(info, action.dataset.action === 'book' ? withCost(action) : action);
+      if (upcomingMine) info.append(mineBlock());
     }
     return card;
   };
