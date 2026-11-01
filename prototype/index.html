@@ -71,7 +71,7 @@ addEventListener("pagereveal", (e) => { if (!e.viewTransition) return; const r =
 
     <div class="group">
       <label class="g-row"><span class="g-main g-title" data-i18n>Dan</span><select id="r-day" class="g-select"></select></label>
-      <div class="g-row"><span class="g-main g-title" data-i18n>Prikaz</span><div class="seg" role="group" data-i18n-attr="aria-label" aria-label="Prikaz"><button type="button" id="r-view-list" aria-pressed="true" data-i18n>Popis</button><button type="button" id="r-view-map" aria-pressed="false" data-i18n>Karta</button></div></div>
+      <div class="g-row"><span class="g-main g-title" data-i18n>Prikaz</span><div class="seg" data-impeccable-ignore="cramped-padding" role="group" data-i18n-attr="aria-label" aria-label="Prikaz"><button type="button" id="r-view-list" aria-pressed="true" data-i18n>Popis</button><button type="button" id="r-view-map" aria-pressed="false" data-i18n>Karta</button></div></div>
     </div>
     <div id="r-classes" data-i18n-attr="aria-label" aria-label="Treninzi"></div>
 
@@ -83,7 +83,7 @@ addEventListener("pagereveal", (e) => { if (!e.viewTransition) return; const r =
     <h1 class="tab-title" tabindex="-1" data-i18n>Izvještaji</h1>
     <p id="i-message" class="message" role="status"></p>
 
-    <div class="segmented" id="i-segments" role="tablist" data-i18n-attr="aria-label" aria-label="Izvještaji">
+    <div class="segmented" data-impeccable-ignore="cramped-padding" id="i-segments" role="tablist" data-i18n-attr="aria-label" aria-label="Izvještaji">
       <span class="seg-thumb" aria-hidden="true"></span>
       <button type="button" role="tab" data-seg="isplata" aria-controls="i-isplata" aria-selected="true" data-i18n>Isplata</button>
       <button type="button" role="tab" data-seg="klijenti" aria-controls="i-klijenti" aria-selected="false" data-i18n>Klijenti</button>
